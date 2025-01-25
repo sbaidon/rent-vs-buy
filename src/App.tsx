@@ -1,17 +1,29 @@
-import React from 'react';
-import Calculator from './components/Calculator';
-import { CalculatorProvider } from './context/CalculatorContext';
+import Calculator from "./components/calculator";
+import Results from "./components/results";
+import { CalculatorProvider } from "./context/calculator-context";
+import { Monitoring } from "react-scan/monitoring";
 
 function App() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <main className="max-w-4xl mx-auto">
+      <div className="container py-8">
+        <main className="flex gap-8">
           <CalculatorProvider>
-            <Calculator />
+            <div className="space-y-12">
+              <Calculator />
+            </div>
+            <div className="w-[auto] sticky top-4 self-start">
+              <Results />
+            </div>
           </CalculatorProvider>
         </main>
       </div>
+      <Monitoring
+        apiKey="fIbgVe71jICFv6C2_0GdDX8saszFAUMU"
+        url="https://monitoring.react-scan.com/api/v1/ingest"
+        params={{}}
+        path={"/"}
+      />
     </div>
   );
 }
