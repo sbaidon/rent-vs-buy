@@ -1,83 +1,66 @@
-import React from "react";
-import { useCalculator } from "../context/calculator-context";
+import React, { useCallback } from "react";
+import { CalculatorValues, useCalculator } from "../context/calculator-context";
 import FlameGraph from "./flame-graph";
+import { useTranslation } from "react-i18next";
+import { useCurrency } from "../context/currency-context";
+import { formatCurrency } from "../utils/format-currency";
 
 const Calculator: React.FC = () => {
   const { values, updateValue } = useCalculator();
+  const { t } = useTranslation();
+  const { currency } = useCurrency();
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const formatPercentage = useCallback(
+    (value: number) => `${(value * 100).toFixed(2)}%`,
+    []
+  );
 
-  const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;
+  const formatCurrencyValue = useCallback(
+    (value: number) => formatCurrency(value, currency),
+    [currency]
+  );
+
+  // Create a memoized handler factory
+  const createChangeHandler = useCallback(
+    (parameter: keyof CalculatorValues) => (value: number) =>
+      updateValue(parameter, value),
+    [updateValue]
+  );
 
   return (
     <>
-      <section>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">The Basics</h1>
-        <p className="text-gray-600 mb-8">
-          Adjust these numbers to get an estimate for your situation. These are
-          some of the most important factors in your decision, and they're the
-          only ones we can't estimate for you.
-        </p>
-
+      <section className="pt-12">
         <div className="space-y-12">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Home Price, if You Buy
-            </h2>
-            <p className="text-gray-600 mb-4">
-              A very important factor, but not the only one. Our estimate will
-              improve as you enter more details below.
-            </p>
             <FlameGraph
               value={values.homePrice}
               parameter="homePrice"
               min={100000}
               max={2000000}
               step={10000}
-              onChange={(v) => updateValue("homePrice", v)}
-              format={formatCurrency}
-              label="Home price"
+              onChange={createChangeHandler("homePrice")}
+              format={formatCurrencyValue}
+              label={t("calculator.sections.basics.homePrice")}
             />
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Monthly Rent, if You Rent
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Setting a target rent allows for a direct comparison of potential
-              costs.
-            </p>
             <FlameGraph
               value={values.monthlyRent}
               parameter="monthlyRent"
               min={500}
               max={10000}
               step={100}
-              onChange={(v) => updateValue("monthlyRent", v)}
-              format={formatCurrency}
-              label="Monthly rent"
+              onChange={createChangeHandler("monthlyRent")}
+              format={formatCurrencyValue}
+              label={t("calculator.sections.basics.monthlyRent")}
             />
           </div>
         </div>
       </section>
 
-      <section>
-        <h2 className="text-4xl font-bold text-gray-900 mb-4">
-          What Are Your Mortgage Details?
-        </h2>
-        <p className="text-gray-600 mb-8">
-          The calculator assumes you have a fixed-rate mortgage. It also
-          calculates your main opportunity cost of buying — the amount you could
-          have earned by investing the down payment instead — and checks whether
-          you can take advantage of the mortgage-interest tax deduction.
-        </p>
-
+      <section className="pt-12">
+        <h2 className="mb-4">{t("calculator.sections.mortgage.title")}</h2>
         <div className="space-y-8">
           <div>
             <FlameGraph
@@ -86,9 +69,9 @@ const Calculator: React.FC = () => {
               min={0}
               max={0.15}
               step={0.001}
-              onChange={(v) => updateValue("mortgageRate", v)}
+              onChange={createChangeHandler("mortgageRate")}
               format={formatPercentage}
-              label="Mortgage rate"
+              label={t("calculator.sections.mortgage.rate")}
             />
           </div>
 
@@ -99,9 +82,9 @@ const Calculator: React.FC = () => {
               min={0}
               max={1}
               step={0.01}
-              onChange={(v) => updateValue("downPayment", v)}
+              onChange={createChangeHandler("downPayment")}
               format={formatPercentage}
-              label="Down payment"
+              label={t("calculator.sections.mortgage.downPayment")}
             />
           </div>
 
@@ -112,9 +95,9 @@ const Calculator: React.FC = () => {
               min={1}
               max={40}
               step={1}
-              onChange={(v) => updateValue("yearsToStay", v)}
-              format={(v) => `${v} years`}
-              label="Years to stay"
+              onChange={createChangeHandler("yearsToStay")}
+              format={(v) => `${v} ${t("years")}`}
+              label={t("calculator.sections.mortgage.yearsToStay")}
             />
           </div>
 
@@ -125,9 +108,9 @@ const Calculator: React.FC = () => {
               min={1}
               max={30}
               step={1}
-              onChange={(v) => updateValue("mortgageTerm", v)}
-              format={(v) => `${v} years`}
-              label="Length of mortgage"
+              onChange={createChangeHandler("mortgageTerm")}
+              format={(v) => `${v} ${t("years")}`}
+              label={t("calculator.sections.mortgage.mortgageLength")}
             />
           </div>
 
@@ -138,36 +121,19 @@ const Calculator: React.FC = () => {
               min={0}
               max={0.1}
               step={0.01}
-              onChange={(v) => updateValue("pmi", v)}
+              onChange={createChangeHandler("pmi")}
               format={formatPercentage}
-              label="Private mortgage insurance"
+              label={t("calculator.sections.mortgage.pmi")}
             />
           </div>
         </div>
       </section>
 
-      <section>
-        <h2 className="text-4xl font-bold text-gray-900 mb-4">
-          Advanced Options
-        </h2>
-        <p className="text-gray-600 mb-8">
-          Some of these inputs will matter a lot, and others less. We've filled
-          in some reasonable guesses for you to start.
-        </p>
-
+      <section className="pt-12">
+        <h2 className="mb-4">{t("calculator.sections.future.title")}</h2>
         <div className="space-y-12">
           {/* Future projections section */}
           <div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-              What Does the Future Hold?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              How much home prices, rents and stock prices change can have a
-              large impact on your outcome. Unfortunately, these are some of the
-              hardest things to predict and can vary significantly across the
-              country.
-            </p>
-
             <div className="space-y-8">
               <FlameGraph
                 value={values.homePriceGrowth}
@@ -175,9 +141,9 @@ const Calculator: React.FC = () => {
                 min={-0.05}
                 max={0.15}
                 step={0.001}
-                onChange={(v) => updateValue("homePriceGrowth", v)}
+                onChange={createChangeHandler("homePriceGrowth")}
                 format={formatPercentage}
-                label="Home price growth rate"
+                label={t("calculator.sections.future.homePriceGrowth")}
               />
 
               <FlameGraph
@@ -186,9 +152,9 @@ const Calculator: React.FC = () => {
                 min={-0.05}
                 max={0.9}
                 step={0.01}
-                onChange={(v) => updateValue("rentGrowth", v)}
+                onChange={createChangeHandler("rentGrowth")}
                 format={formatPercentage}
-                label="Rent growth rate"
+                label={t("calculator.sections.future.rentGrowth")}
               />
 
               <FlameGraph
@@ -197,9 +163,9 @@ const Calculator: React.FC = () => {
                 min={-0.9}
                 max={0.9}
                 step={0.01}
-                onChange={(v) => updateValue("investmentReturn", v)}
+                onChange={createChangeHandler("investmentReturn")}
                 format={formatPercentage}
-                label="Investment return rate"
+                label={t("calculator.sections.future.investmentReturn")}
               />
 
               <FlameGraph
@@ -208,25 +174,19 @@ const Calculator: React.FC = () => {
                 min={-0.05}
                 max={0.1}
                 step={0.001}
-                onChange={(v) => updateValue("inflationRate", v)}
+                onChange={createChangeHandler("inflationRate")}
                 format={formatPercentage}
-                label="Inflation rate"
+                label={t("calculator.sections.future.inflationRate")}
               />
             </div>
           </div>
 
           {/* Tax section */}
           <div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">Taxes</h3>
-            <p className="text-gray-600 mb-6">
-              Property taxes and mortgage-interest costs are significant but
-              also deductible. The higher your marginal tax rate, the bigger the
-              deduction.
-            </p>
-
+            <h2 className="900 mb-2">{t("calculator.sections.taxes.title")}</h2>
             <div className="space-y-8">
               <div className="flex items-center space-x-4 mb-4">
-                <span className="text-gray-700">How you file your taxes:</span>
+                <p>{t("calculator.sections.taxes.filingType")}</p>
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
@@ -234,7 +194,9 @@ const Calculator: React.FC = () => {
                     checked={!values.isJointReturn}
                     onChange={() => updateValue("isJointReturn", false)}
                   />
-                  <span className="ml-2">Individual Return</span>
+                  <span className="text-acadia-100 ml-2">
+                    {t("calculator.sections.taxes.individual")}
+                  </span>
                 </label>
                 <label className="inline-flex items-center">
                   <input
@@ -243,7 +205,9 @@ const Calculator: React.FC = () => {
                     checked={values.isJointReturn}
                     onChange={() => updateValue("isJointReturn", true)}
                   />
-                  <span className="ml-2">Joint Return</span>
+                  <span className="text-acadia-100 ml-2">
+                    {t("calculator.sections.taxes.joint")}
+                  </span>
                 </label>
               </div>
 
@@ -253,9 +217,9 @@ const Calculator: React.FC = () => {
                 min={0}
                 max={0.1}
                 step={0.001}
-                onChange={(v) => updateValue("propertyTaxRate", v)}
+                onChange={createChangeHandler("propertyTaxRate")}
                 format={formatPercentage}
-                label="Property tax rate"
+                label={t("calculator.sections.taxes.propertyTaxRate")}
               />
 
               <FlameGraph
@@ -264,9 +228,9 @@ const Calculator: React.FC = () => {
                 min={0}
                 max={0.5}
                 step={0.01}
-                onChange={(v) => updateValue("marginalTaxRate", v)}
+                onChange={createChangeHandler("marginalTaxRate")}
                 format={formatPercentage}
-                label="Marginal tax rate"
+                label={t("calculator.sections.taxes.marginalTaxRate")}
               />
 
               <FlameGraph
@@ -275,15 +239,13 @@ const Calculator: React.FC = () => {
                 min={0}
                 max={100000}
                 step={1000}
-                onChange={(v) => updateValue("otherDeductions", v)}
-                format={formatCurrency}
-                label="Other itemized deductions"
+                onChange={createChangeHandler("otherDeductions")}
+                format={formatCurrencyValue}
+                label={t("calculator.sections.taxes.otherDeductions")}
               />
 
               <div className="flex items-center space-x-4">
-                <span className="text-gray-700">
-                  Assume the 2017 Tax Cuts and Jobs Act will:
-                </span>
+                <p>{t("calculator.sections.taxes.taxCutsQuestion")}</p>
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
@@ -291,7 +253,9 @@ const Calculator: React.FC = () => {
                     checked={values.taxCutsExpire}
                     onChange={() => updateValue("taxCutsExpire", true)}
                   />
-                  <span className="ml-2">Expire</span>
+                  <span className="text-acadia-100 ml-2">
+                    {t("calculator.sections.taxes.expire")}
+                  </span>
                 </label>
                 <label className="inline-flex items-center">
                   <input
@@ -300,7 +264,9 @@ const Calculator: React.FC = () => {
                     checked={!values.taxCutsExpire}
                     onChange={() => updateValue("taxCutsExpire", false)}
                   />
-                  <span className="ml-2">Be renewed</span>
+                  <span className="text-acadia-100 ml-2">
+                    {t("calculator.sections.taxes.renew")}
+                  </span>
                 </label>
               </div>
             </div>
@@ -308,14 +274,9 @@ const Calculator: React.FC = () => {
 
           {/* Closing costs section */}
           <div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-              Closing Costs
-            </h3>
-            <p className="text-gray-600 mb-6">
-              You'll have to pay a set of one-time fees when you buy your home,
-              and also when you sell it.
-            </p>
-
+            <h2 className="mb-2">
+              {t("calculator.sections.closingCosts.title")}
+            </h2>
             <div className="space-y-8">
               <FlameGraph
                 parameter="buyingCosts"
@@ -323,9 +284,9 @@ const Calculator: React.FC = () => {
                 min={0}
                 max={0.1}
                 step={0.001}
-                onChange={(v) => updateValue("buyingCosts", v)}
+                onChange={createChangeHandler("buyingCosts")}
                 format={formatPercentage}
-                label="Costs of buying home"
+                label={t("calculator.sections.closingCosts.buyingCosts")}
               />
 
               <FlameGraph
@@ -334,32 +295,27 @@ const Calculator: React.FC = () => {
                 min={0}
                 max={0.1}
                 step={0.001}
-                onChange={(v) => updateValue("sellingCosts", v)}
+                onChange={createChangeHandler("sellingCosts")}
                 format={formatPercentage}
-                label="Costs of selling home"
+                label={t("calculator.sections.closingCosts.sellingCosts")}
               />
             </div>
           </div>
 
           {/* Maintenance and fees section */}
           <div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-              Maintenance and Fees
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Owning a home comes with a variety of expenses, including fixing
-              things and paying certain utility bills.
-            </p>
-
+            <h2 className="mb-2">
+              {t("calculator.sections.maintenance.title")}
+            </h2>
             <div className="space-y-8">
               <FlameGraph
                 value={values.maintenanceRate}
                 min={0}
                 max={0.1}
                 step={0.001}
-                onChange={(v) => updateValue("maintenanceRate", v)}
+                onChange={createChangeHandler("maintenanceRate")}
                 format={formatPercentage}
-                label="Maintenance/renovation"
+                label={t("calculator.sections.maintenance.maintenanceRate")}
                 parameter="maintenanceRate"
               />
 
@@ -368,34 +324,30 @@ const Calculator: React.FC = () => {
                 min={0}
                 max={0.1}
                 step={0.001}
-                onChange={(v) => updateValue("homeInsuranceRate", v)}
+                onChange={createChangeHandler("homeInsuranceRate")}
                 format={formatPercentage}
-                label="Homeowner's insurance"
+                label={t("calculator.sections.maintenance.insurance")}
                 parameter="homeInsuranceRate"
               />
 
               <FlameGraph
-                value={values.extraUtilities}
+                value={values.extraPayments}
                 min={0}
                 max={2000}
                 step={50}
-                onChange={(v) => updateValue("extraUtilities", v)}
-                format={formatCurrency}
-                label="Extra monthly utilities"
-                parameter="extraUtilities"
+                onChange={createChangeHandler("extraPayments")}
+                format={formatCurrencyValue}
+                label={t("calculator.sections.maintenance.extraPayments")}
+                parameter="extraPayments"
               />
             </div>
           </div>
 
           {/* Additional renting costs section */}
           <div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-              Additional Renting Costs
-            </h3>
-            <p className="text-gray-600 mb-6">
-              These are the costs on top of rent, such as the fee you pay to a
-              broker and the opportunity cost on your security deposit.
-            </p>
+            <h2 className="mb-2">
+              {t("calculator.sections.rentingCosts.title")}
+            </h2>
 
             <div className="space-y-8">
               <FlameGraph
@@ -404,9 +356,9 @@ const Calculator: React.FC = () => {
                 min={0}
                 max={12}
                 step={1}
-                onChange={(v) => updateValue("securityDeposit", v)}
-                format={(v) => `${v} month${v === 1 ? "" : "s"}`}
-                label="Security deposit"
+                onChange={createChangeHandler("securityDeposit")}
+                format={(v) => `${v} ${v === 1 ? t("month") : t("months")}`}
+                label={t("calculator.sections.rentingCosts.securityDeposit")}
               />
 
               <FlameGraph
@@ -415,20 +367,22 @@ const Calculator: React.FC = () => {
                 min={0}
                 max={0.5}
                 step={0.01}
-                onChange={(v) => updateValue("brokerFee", v)}
+                onChange={createChangeHandler("brokerFee")}
                 format={formatPercentage}
-                label="Broker's fee"
+                label={t("calculator.sections.rentingCosts.brokerFee")}
               />
 
               <FlameGraph
-                parameter="rentersInsuranceRate"
-                value={values.rentersInsuranceRate}
+                parameter="monthlyRentersInsurance"
+                value={values.monthlyRentersInsurance}
                 min={0}
-                max={0.1}
-                step={0.001}
-                onChange={(v) => updateValue("rentersInsuranceRate", v)}
-                format={formatPercentage}
-                label="Renter's insurance"
+                max={1000}
+                step={10}
+                onChange={createChangeHandler("monthlyRentersInsurance")}
+                format={formatCurrencyValue}
+                label={t(
+                  "calculator.sections.rentingCosts.monthlyRentersInsurance"
+                )}
               />
             </div>
           </div>

@@ -1,0 +1,104 @@
+{
+  "calculator": {
+    "title": "Rentar vs Comprar",
+    "propertyValue": "Valor de la Propiedad",
+    "downPayment": "Pago Inicial",
+    "calculate": "Calcular",
+    "monthlyPayment": "Pago Mensual",
+    "propertyTax": "Impuesto Predial",
+    "insurance": "Seguro",
+    "maintenance": "Mantenimiento",
+    "utilities": "Servicios",
+    "hoa": "Cuota de Mantenimiento",
+    "rent": "Renta",
+    "results": {
+      "buy": "Comprar",
+      "initialCosts": "Costos Iniciales",
+      "recurringCosts": "Costos Recurrentes",
+      "netProceeds": "Ingresos Netos",
+      "total": "Total",
+      "opportunityCosts": "Costos de Oportunidad",
+      "title": "Resultados",
+      "monthlyPayment": "Pago Mensual",
+      "totalCost": "Costo Total",
+      "buyingCosts": "Costos de Compra",
+      "closingCosts": "Costos de Cierre",
+      "downPayment": "Pago Inicial",
+      "loanAmount": "Monto del Préstamo",
+      "propertyTax": "Impuesto Predial",
+      "insurance": "Seguro",
+      "maintenance": "Mantenimiento",
+      "utilities": "Servicios",
+      "hoa": "Cuota de Mantenimiento",
+      "costs": "Costos",
+      "overYears": "en {{years}} años",
+      "savesYou": "te ahorra",
+      "renting": "Rentar",
+      "buying": "Comprar",
+      "show": "▲ Mostrar Resultados",
+      "hide": "▼ Ocultar Resultados"
+    },
+    "sections": {
+      "basics": {
+        "title": "Básicos",
+        "homePrice": "Precio de la casa",
+        "monthlyRent": "Renta mensual"
+      },
+      "mortgage": {
+        "title": "Hipoteca",
+        "rate": "Tasa hipotecaria",
+        "downPayment": "Pago inicial",
+        "yearsToStay": "Años de estancia",
+        "mortgageLength": "Duración de la hipoteca",
+        "pmi": "Seguro hipotecario privado"
+      },
+      "advanced": {
+        "title": "Opciones Avanzadas"
+      },
+      "future": {
+        "title": "Futuro",
+        "homePriceGrowth": "Tasa de crecimiento del precio de la vivienda",
+        "rentGrowth": "Tasa de crecimiento de la renta",
+        "investmentReturn": "Tasa de retorno de inversión",
+        "inflationRate": "Tasa de inflación"
+      },
+      "taxes": {
+        "title": "Impuestos",
+        "filingType": "Cómo presentas tus impuestos:",
+        "individual": "Declaración Individual",
+        "joint": "Declaración Conjunta",
+        "propertyTaxRate": "Tasa de impuesto a la propiedad",
+        "marginalTaxRate": "Tasa impositiva marginal",
+        "otherDeductions": "Otras deducciones detalladas",
+        "taxCutsQuestion": "Asumir que la Ley de Recortes Fiscales y Empleos de 2017:",
+        "expire": "Expirará",
+        "renew": "Será renovada"
+      },
+      "closingCosts": {
+        "title": "Costos de Cierre",
+        "buyingCosts": "Costos de compra de casa",
+        "sellingCosts": "Costos de venta de casa"
+      },
+      "maintenance": {
+        "title": "Mantenimiento y Tarifas",
+        "maintenanceRate": "Mantenimiento/renovación",
+        "insurance": "Seguro de propietario",
+        "extraPayments": "Pagos extra mensuales (p. ej Asociación de Vecinos)"
+      },
+      "rentingCosts": {
+        "title": "Costos Adicionales de Renta",
+        "securityDeposit": "Depósito de seguridad",
+        "brokerFee": "Tarifa del corredor",
+        "monthlyRentersInsurance": "Seguro de inquilino mensual"
+      }
+    },
+  "about": "Está basado en la excelente calculadora de Renta vs Compra del New York Times, que puedes encontrar <a href='https://www.nytimes.com/interactive/2016/06/29/upshot/should-you-rent-or-buy-calculator.html' target='_blank'>aquí</a>. Esta simplemente es una versión gratis. Próximamente se añadirá soporte para países con reglas fiscales específicas.",
+  "reset": "Reiniciar"
+  },
+  "currency": {
+    "USD": "USD",
+    "EUR": "EUR"
+  },
+  "month": "mes",
+  "months": "meses"
+} 

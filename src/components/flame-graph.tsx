@@ -1,35 +1,11 @@
-import React, {
-  useMemo,
-  memo,
-  useCallback,
-  useLayoutEffect,
-  useState,
-  useRef,
-} from "react";
+import React, { useMemo, memo, useCallback, useState, useRef } from "react";
 import { CalculatorValues, useCalculator } from "../context/calculator-context";
 import { RentingCostsCalculator } from "../utils/rent-costs-calculator";
 import { BuyingCostsCalculator } from "../utils/buy-costs-calculator";
 import { findIntersectionPoint } from "../utils/calculator";
+import { type PriceOutcome } from "../utils/calculator";
 import { FlameGraphCanvas } from "./flame-graph-canvas";
-
-type SegmentValue = {
-  value: number;
-  rentingIsBetter: boolean;
-};
-
-type FlameGraphVisualizationProps = {
-  segmentValues: SegmentValue[];
-  width: number;
-  height: number;
-  leftColor: string;
-  rightColor: string;
-  format: (value: number) => string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (value: number) => void;
-};
+import { COLORS } from "../constants/colors";
 
 type FlameGraphProps = {
   value: number;
@@ -47,83 +23,6 @@ type FlameGraphProps = {
 
 const height = 50;
 
-const FlameGraphVisualization = memo<FlameGraphVisualizationProps>(
-  ({
-    segmentValues,
-    width,
-    height,
-    leftColor,
-    rightColor,
-    value,
-    min,
-    max,
-    step,
-    onChange,
-  }) => {
-    const scaleValue = useCallback(
-      (val: number) => {
-        const domain = max - min;
-        const range = width;
-        return ((val - min) / domain) * range;
-      },
-      [min, max, width]
-    );
-
-    const handleDrag = useCallback(
-      (e: React.PointerEvent) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const newValue = min + (x / width) * (max - min);
-        const snappedValue = Math.round(newValue / step) * step;
-
-        if (snappedValue >= min && snappedValue <= max) {
-          onChange(snappedValue);
-        }
-      },
-      [min, max, width, step, onChange]
-    );
-
-    const segmentWidth = useMemo(
-      () => Math.max(width / segmentValues.length - 1, 0),
-      [segmentValues, width]
-    );
-
-    return (
-      <svg
-        width="100%"
-        height={height}
-        className="cursor-pointer"
-        onPointerDown={handleDrag}
-        onPointerMove={(e) => e.buttons === 1 && handleDrag(e)}
-      >
-        <g>
-          {segmentValues.map((segment, i) => (
-            <rect
-              key={i}
-              x={scaleValue(segment.value)}
-              y={0}
-              width={segmentWidth}
-              height={height}
-              fill={segment.rentingIsBetter ? leftColor : rightColor}
-            />
-          ))}
-        </g>
-        <path
-          d="M0,-12 L8,0 L0,12 L-8,0 Z"
-          fill="#4b5563"
-          transform={`translate(${scaleValue(value)}, ${height / 2})`}
-        />
-      </svg>
-    );
-  }
-);
-
-type PriceOutcome =
-  | "rent"
-  | "buy"
-  | "start-rent-end-buy"
-  | "start-buy-end-rent";
-
 const FlameGraph: React.FC<FlameGraphProps> = ({
   value,
   min,
@@ -131,8 +30,8 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
   step,
   onChange,
   format = (v) => v.toString(),
-  leftColor = "rgb(59, 130, 246)",
-  rightColor = "rgb(139, 92, 246)",
+  leftColor = COLORS.RENT,
+  rightColor = COLORS.BUY,
   label,
   sublabel,
   parameter,
@@ -146,7 +45,10 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     [onChange]
   );
 
-  const segments = Math.ceil(Math.abs(max - min) / step);
+  const segments = Math.ceil(
+    Math.min(Math.max(Math.abs(max - min) / step, 100), 100000)
+  );
+  console.log(segments);
   const minValues = useMemo(
     () => ({
       ...values,
@@ -190,21 +92,38 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     return outcome;
   }, [maxValues, minValues]);
 
+  const getOpacity = useCallback(
+    (index: number, intersectionIndex: number | null) => {
+      if (intersectionIndex === null) return 1; // Full opacity when no intersection
+
+      // Calculate distance from intersection point (0 to 1 scale)
+      const distance = Math.abs(index - intersectionIndex) / (segments / 2);
+      // Convert distance to opacity (0.4 to 1 range)
+      return 0.6 + distance * 0.7;
+    },
+    [segments]
+  );
+
   const segmentValues = useMemo(() => {
     const length = segments;
-    const arr = new Array<{ value: number; rentingIsBetter: boolean }>(length);
+    const arr = new Array<{
+      value: number;
+      rentingIsBetter: boolean;
+      opacity: number;
+    }>(length);
+    const flameGraphStep = (max - min) / (segments - 1);
 
     switch (priceOutcome) {
       case "rent":
         for (let i = 0; i < length; i++) {
-          const x = min + i * step;
-          arr[i] = { value: x, rentingIsBetter: true };
+          const x = min + i * flameGraphStep;
+          arr[i] = { value: x, rentingIsBetter: true, opacity: 1 };
         }
         break;
       case "buy":
         for (let i = 0; i < length; i++) {
-          const x = min + i * step;
-          arr[i] = { value: x, rentingIsBetter: false };
+          const x = min + i * flameGraphStep;
+          arr[i] = { value: x, rentingIsBetter: false, opacity: 1 };
         }
         break;
       case "start-buy-end-rent": {
@@ -214,12 +133,13 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
           min,
           max,
           segments,
-          step
+          flameGraphStep
         );
         for (let i = 0; i < length; i++) {
           arr[i] = {
-            value: min + i * step,
+            value: min + i * flameGraphStep,
             rentingIsBetter: i > intersectionIndex,
+            opacity: getOpacity(i, intersectionIndex),
           };
         }
         break;
@@ -231,12 +151,13 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
           min,
           max,
           segments,
-          step
+          flameGraphStep
         );
         for (let i = 0; i < length; i++) {
           arr[i] = {
-            value: min + i * step,
+            value: min + i * flameGraphStep,
             rentingIsBetter: i < intersectionIndex,
+            opacity: getOpacity(i, intersectionIndex),
           };
         }
         break;
@@ -244,23 +165,9 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     }
 
     return arr;
-  }, [min, max, step, segments, parameter, values, priceOutcome]);
+  }, [min, max, segments, parameter, values, priceOutcome, getOpacity]);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const [width, setWidth] = React.useState(1000);
-
-  useLayoutEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setWidth(containerRef.current.offsetWidth);
-      }
-    };
-
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, []);
-
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -275,7 +182,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
       const snappedValue = Math.round(value / step) * step;
       const clampedValue = Math.min(Math.max(snappedValue, min), max);
       handleChange(clampedValue);
-      return [true, value] as const;
+      return [true, clampedValue] as const;
     }
     return [false, value] as const;
   };
@@ -308,50 +215,74 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
   };
 
   return (
-    <div className="space-y-2 relative" ref={containerRef}>
+    <div className="space-y-2 min-h-full h-auto w-full" ref={containerRef}>
       <div className="flex justify-between items-baseline">
-        <div>
-          {isEditing ? (
-            <input
-              ref={inputRef}
-              type="number"
-              min={min}
-              step={step}
-              max={max}
-              className="text-2xl font-normal text-gray-900 w-32 outline-none border-b border-gray-300"
-              value={tempValue}
-              onChange={handleInputChange}
-              onKeyDown={handleInputKeyDown}
-              onBlur={handleInputBlur}
-              autoFocus
-            />
-          ) : (
-            <span
-              className="text-2xl font-normal text-gray-900 cursor-text"
-              onClick={handleStartEditing}
-            >
-              {format(value)}
-            </span>
-          )}
-          {sublabel && (
-            <div className="text-sm text-gray-500 mt-1">{sublabel}</div>
-          )}
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="number"
+            min={min}
+            step={step}
+            max={max}
+            className={`w-32 border-b text-acadia-100 border-gray-300 ${
+              isEditing ? "opacity-100" : "opacity-0 absolute"
+            }`}
+            value={isEditing ? tempValue : value}
+            onChange={handleInputChange}
+            onKeyDown={handleInputKeyDown}
+            onBlur={handleInputBlur}
+            onFocus={handleStartEditing}
+            aria-label={`Enter ${label}`}
+          />
+          <p
+            className={`cursor-text ${
+              isEditing ? "opacity-0 absolute" : "opacity-100"
+            }`}
+            onClick={handleStartEditing}
+          >
+            {format(value)}
+          </p>
         </div>
-        <div className="text-sm text-gray-500">{label}</div>
+        {sublabel && <p className="mt-1">{sublabel}</p>}
+        <p>{label}</p>
       </div>
 
-      <FlameGraphCanvas
-        segmentValues={segmentValues}
-        width={width}
-        height={height}
-        leftColor={leftColor}
-        rightColor={rightColor}
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={handleChange}
-      />
+      <div className="group">
+        <div className="cursor-pointer rounded group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2 relative">
+          <FlameGraphCanvas
+            segmentValues={segmentValues}
+            height={height}
+            leftColor={leftColor}
+            rightColor={rightColor}
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            onChange={onChange}
+          />
+          <input
+            type="range"
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            onChange={(e) => onChange(Number(e.target.value))}
+            aria-label={label}
+            id={`${parameter}-input`}
+            className="absolute top-0 left-0 w-full h-full cursor-pointer appearance-none bg-transparent
+              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 
+              [&::-webkit-slider-thumb]:rounded-none [&::-webkit-slider-thumb]:bg-white/80 [&::-webkit-slider-thumb]:cursor-pointer
+              [&::-webkit-slider-thumb]:rotate-45 
+              [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-gray-800
+              [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 
+              [&::-moz-range-thumb]:rounded-none [&::-moz-range-thumb]:bg-white/80 [&::-moz-range-thumb]:cursor-pointer
+              [&::-moz-range-thumb]:rotate-45 
+              [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-gray-800
+              [&::-webkit-slider-runnable-track]:appearance-none [&::-webkit-slider-runnable-track]:bg-transparent
+              [&::-moz-range-track]:appearance-none [&::-moz-range-track]:bg-transparent"
+          />
+        </div>
+      </div>
     </div>
   );
 };

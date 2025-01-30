@@ -1,0 +1,100 @@
+{
+  "calculator": {
+    "title": "Rent vs Buy",
+    "propertyValue": "Property Value",
+    "downPayment": "Down Payment",
+    "calculate": "Calculate",
+    "monthlyPayment": "Monthly Payment",
+    "propertyTax": "Property Tax",
+    "insurance": "Insurance",
+    "maintenance": "Maintenance",
+    "utilities": "Utilities",
+    "hoa": "HOA",
+    "rent": "Rent",
+    "about": "This calculator is 100% inspired by the New York Times Rent vs Buy Calculator (<a href='https://www.nytimes.com/interactive/2016/06/29/upshot/should-you-rent-or-buy-calculator.html' target='_blank'>reference</a>). This is simply a free version to help you make an informed decision about renting vs buying. Future updates will include country-specific tax rules and regulations. Each input below will show you the threshold where renting is cheaper than buying.",
+    "results": {
+      "buy": "Buy",
+      "initialCosts": "Initial Costs",
+      "recurringCosts": "Recurring Costs",
+      "netProceeds": "Net Proceeds",
+      "total": "Total",
+      "opportunityCosts": "Opportunity Costs",
+      "title": "Results",
+      "monthlyPayment": "Monthly Payment",
+      "totalCost": "Total Cost",
+      "buyingCosts": "Buying Costs",
+      "closingCosts": "Closing Costs",
+      "downPayment": "Down Payment",
+      "loanAmount": "Loan Amount",
+      "propertyTax": "Property Tax",
+      "insurance": "Insurance",
+      "maintenance": "Maintenance",
+      "utilities": "Utilities",
+      "hoa": "HOA",
+      "costs": "Costs",
+      "overYears": "over {{years}} years",
+      "savesYou": "saves you",
+      "renting": "Renting",
+      "buying": "Buying",
+      "show": "▲ Show Results",
+      "hide": "▼ Hide Results"
+    },
+    "sections": {
+      "basics": {
+        "homePrice": "Home price",
+        "monthlyRent": "Monthly rent"
+      },
+      "mortgage": {
+        "title": "Mortgage",
+        "rate": "Mortgage rate",
+        "downPayment": "Down payment",
+        "yearsToStay": "Years to stay",
+        "mortgageLength": "Length of mortgage",
+        "pmi": "Private mortgage insurance"
+      },
+      "future": {
+        "title": "Future",
+        "homePriceGrowth": "Home price growth rate",
+        "rentGrowth": "Rent growth rate",
+        "investmentReturn": "Investment return rate",
+        "inflationRate": "Inflation rate"
+      },
+      "taxes": {
+        "title": "Taxes",
+        "filingType": "How you file your taxes:",
+        "individual": "Individual Return",
+        "joint": "Joint Return",
+        "propertyTaxRate": "Property tax rate",
+        "marginalTaxRate": "Marginal tax rate",
+        "otherDeductions": "Other itemized deductions",
+        "taxCutsQuestion": "Assume the 2017 Tax Cuts and Jobs Act will:",
+        "expire": "Expire",
+        "renew": "Be renewed"
+      },
+      "closingCosts": {
+        "title": "Closing Costs",
+        "buyingCosts": "Costs of buying home",
+        "sellingCosts": "Costs of selling home"
+      },
+      "maintenance": {
+        "title": "Maintenance and Fees",
+        "maintenanceRate": "Maintenance/renovation",
+        "insurance": "Homeowner's insurance",
+        "extraPayments": "Extra monthly payments (i.e HOA)"
+      },
+      "rentingCosts": {
+        "title": "Additional Renting Costs",
+        "securityDeposit": "Security deposit",
+        "brokerFee": "Broker's fee",
+        "monthlyRentersInsurance": "Monthly Renter's insurance"
+      }
+    },
+    "reset": "Reset"
+  },
+  "currency": {
+    "USD": "USD",
+    "EUR": "EUR"
+  },
+  "month": "month",
+  "months": "months"
+} 

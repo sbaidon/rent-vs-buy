@@ -12,12 +12,10 @@ export type AmortizationData = {
 };
 
 export class BuyingCostsCalculator implements Calculator {
-  // More accurate naming
   private readonly CAPITAL_GAINS_TAX_RATE = 0.15;
   private readonly CAPITAL_GAINS_EXCLUSION = 500_000;
   private readonly taxParameters = new TaxesCalculator();
 
-  // We memoize recurring costs in a private field to avoid repeated loops
   private _recurringCosts: {
     buyYearlyOpportunityCost: number;
     yearlyCurrentPrice: number;
@@ -39,18 +37,7 @@ export class BuyingCostsCalculator implements Calculator {
     return new Date().getFullYear();
   }
 
-  /**
-   * If you want to ensure negative or nonsensical inputs are handled,
-   * you can add short-circuit checks (e.g., if yearsToStay < 1) to return 0.
-   */
-
-  /**
-   * A note about naming: if something is truly constant, you could define it
-   * at the top of the file or outside the class. That might improve performance
-   * slightly (though probably negligible).
-   */
   private get effectiveReturnRate(): number {
-    // Net after capital gains
     return this.values.investmentReturn * (1 - this.CAPITAL_GAINS_TAX_RATE);
   }
 
@@ -58,7 +45,6 @@ export class BuyingCostsCalculator implements Calculator {
     return 1 + this.values.inflationRate;
   }
 
-  // This was used to get the initial opportunity cost (like the foregone return).
   private get initialOpportunityAdjustment(): number {
     return Math.pow(1 + this.effectiveReturnRate, this.values.yearsToStay) - 1;
   }
@@ -87,8 +73,8 @@ export class BuyingCostsCalculator implements Calculator {
     return this.values.downPayment * this.values.homePrice;
   }
 
-  private get utilitiesCostFirstYear(): number {
-    return this.values.extraUtilities * 12;
+  private get extraPaymentsYear(): number {
+    return this.values.extraPayments * 12;
   }
 
   private get initialLoanPrincipal(): number {
@@ -96,7 +82,6 @@ export class BuyingCostsCalculator implements Calculator {
   }
 
   private get buyLoanPaymentPerMonth(): number {
-    // If buyMonthlyLoanRate is 0, we do a simple division fallback
     const r = this.buyMonthlyLoanRate;
     const n = this.initialBuyLoanMonths;
     if (r === 0) {
@@ -106,7 +91,6 @@ export class BuyingCostsCalculator implements Calculator {
     return this.initialLoanPrincipal * (r / (1 - Math.pow(1 + r, -n)));
   }
 
-  // The effective monthly common charge AFTER tax deduction on it
   private get commonChargeFirstYear(): number {
     // Multiplying by 12 up front to get annual cost
     // Then applying (1 - marginalTax * deductionRate)
@@ -118,19 +102,13 @@ export class BuyingCostsCalculator implements Calculator {
   }
 
   private get closingCost(): number {
-    // Combined buyer closing costs
     return this.values.homePrice * this.values.buyingCosts;
   }
 
   private get totalPurchaseCost(): number {
-    // Down payment + buyer closing costs
     return this.downPayment + this.closingCost;
   }
 
-  /**
-   * We unify the logic for all “recurring cost” tallies into one method that
-   * gets called once. We store the result in `_recurringCosts`.
-   */
   private calculateRecurringCosts() {
     if (this._recurringCosts) {
       return this._recurringCosts; // Already computed; skip the loop
@@ -233,7 +211,7 @@ export class BuyingCostsCalculator implements Calculator {
       // Annual common charges, property taxes, etc.
       buyCommonCharges += this.commonChargeFirstYear * inflationAdjustment;
       buyPropertyTaxes += yearlyCurrentPrice * this.actualPropertyTaxRate;
-      buyUtilitiesCost += this.utilitiesCostFirstYear * inflationAdjustment;
+      buyUtilitiesCost += this.extraPaymentsYear * inflationAdjustment;
       buyMaintenanceCost += this.maintenanceCostFirstYear * inflationAdjustment;
       buyInsuranceCost += yearlyCurrentPrice * homeInsuranceRate;
 
@@ -389,7 +367,7 @@ export class BuyingCostsCalculator implements Calculator {
   getTotalCost(values?: CalculatorValues): number {
     if (values) {
       this.values = values;
-      this._recurringCosts = null; // reset memo so we recalc with new values
+      this._recurringCosts = null;
     }
     const { buyLoanPrincipal } = this.calculateRecurringCosts();
     return this.totalCost(buyLoanPrincipal);
@@ -398,7 +376,7 @@ export class BuyingCostsCalculator implements Calculator {
   calculate(values?: CalculatorValues) {
     if (values) {
       this.values = values;
-      this._recurringCosts = null; // reset memo
+      this._recurringCosts = null;
     }
     const rc = this.calculateRecurringCosts();
     return {

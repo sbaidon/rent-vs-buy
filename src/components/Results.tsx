@@ -3,9 +3,13 @@ import { useCalculator } from "../context/calculator-context";
 import { BuyingCostsCalculator } from "../utils/buy-costs-calculator";
 import { RentingCostsCalculator } from "../utils/rent-costs-calculator";
 import { formatCurrency } from "../utils/format-currency";
+import { useTranslation } from "react-i18next";
+import { useCurrency } from "../context/currency-context";
 
 const Results = React.memo(() => {
-  const { values } = useCalculator();
+  const { t } = useTranslation();
+  const { values, reset } = useCalculator();
+  const { currency } = useCurrency();
 
   const results = React.useMemo(() => {
     const buyingCalculator = new BuyingCostsCalculator(values);
@@ -26,77 +30,111 @@ const Results = React.memo(() => {
     );
   }, [results]);
 
-  const rentIsBetter = results.renting.totalCost < results.buying.totalCost;
-  const color = rentIsBetter ? `bg-blue-500` : `bg-purple-500`;
+  const isRentingBetter = results.renting.totalCost < results.buying.totalCost;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md">
-      <div className={`${color} text-white p-4 rounded-lg mb-6 text-center`}>
-        <h2 className="text-2xl font-bold">
-          {results.buying.totalCost > results.renting.totalCost
-            ? "Renting saves you"
-            : "Buying saves you"}
-        </h2>
-        <div className="text-4xl font-bold">
-          {formatCurrency(Math.abs(savings))}
-        </div>
-        <div className="text-xl">over {values.yearsToStay} years</div>
+    <div
+      className={`rounded-lg p-6 w-full shadow ${
+        isRentingBetter ? "bg-acadia-200" : "bg-acadia-500"
+      } text-acadia-950`}
+    >
+      <div className={`p-4 mb-6 text-center`}>
+        <h3 className="text-acadia-950">
+          <span className="text-2xl underline decoration-wavy font-bold">
+            {results.buying.totalCost > results.renting.totalCost
+              ? t("calculator.results.renting")
+              : t("calculator.results.buying")}
+            &nbsp;
+          </span>
+          {t("calculator.results.savesYou")}
+        </h3>
+        <p className="text-4xl text-acadia-950">
+          <span className="text-4xl font-bold">
+            {formatCurrency(Math.abs(savings), currency)}&nbsp;
+          </span>
+          {t("calculator.results.overYears", { years: values.yearsToStay })}
+        </p>
       </div>
 
-      <table className="w-full">
+      <table className="w-full text-left text-acadia-950 border-collapse">
         <thead>
           <tr>
-            <th className="text-left pb-2">
-              Costs after {values.yearsToStay} years
-            </th>
-            <th className="text-right pb-2">Rent</th>
-            <th className="text-right pb-2">Buy</th>
+            <th className="pb-2">{t("calculator.results.costs")}</th>
+            <th className="pb-2">{t("calculator.rent")}</th>
+            <th className="pb-2">{t("calculator.results.buy")}</th>
           </tr>
         </thead>
         <tbody>
           {[
             [
-              "Initial costs",
+              t("calculator.results.initialCosts"),
               results.renting.initialCost,
               results.buying.initialCost,
             ],
             [
-              "Recurring costs",
+              t("calculator.results.recurringCosts"),
               results.renting.recurringCost,
               results.buying.recurringCost,
             ],
             [
-              "Opportunity costs",
+              t("calculator.results.opportunityCosts"),
               results.renting.opportunityCost,
               results.buying.opportunityCost,
             ],
             [
-              "Net proceeds",
+              t("calculator.results.netProceeds"),
               results.renting.netProceeds,
               results.buying.netProceeds,
             ],
           ].map(([label, rent, buy]) => (
-            <tr key={label} className="border-t border-gray-200">
-              <td className="py-2 text-gray-600">{label}</td>
-              <td className="py-2 text-right">
-                {formatCurrency(rent as number)}
+            <tr key={label} className="border-t border-acadia-900">
+              <td className="py-2">{label}</td>
+              <td
+                className={`py-2 slashed-zero tabular-nums ${
+                  (rent as number) > 0 ? "text-red-800" : "text-green-800"
+                }`}
+              >
+                {formatCurrency(rent as number, currency)}
               </td>
-              <td className="py-2 text-right">
-                {formatCurrency(buy as number)}
+              <td
+                className={`py-2 slashed-zero tabular-nums ${
+                  (buy as number) > 0 ? "text-red-800" : "text-green-800"
+                }`}
+              >
+                {formatCurrency(buy as number, currency)}
               </td>
             </tr>
           ))}
-          <tr className="border-t border-gray-200 font-bold">
-            <td className="py-2">Total</td>
-            <td className="py-2 text-right">
-              {formatCurrency(results.renting.totalCost)}
+          <tr className="border-t border-acadia-900">
+            <td className="py-2">{t("calculator.results.total")}</td>
+            <td
+              className={`py-2 slashed-zero tabular-nums ${
+                results.renting.totalCost > 0
+                  ? "text-red-800"
+                  : "text-green-800"
+              }`}
+            >
+              {formatCurrency(results.renting.totalCost, currency)}
             </td>
-            <td className="py-2 text-right">
-              {formatCurrency(results.buying.totalCost)}
+            <td
+              className={`py-2 slashed-zero tabular-nums ${
+                results.buying.totalCost > 0 ? "text-red-800" : "text-green-800"
+              }`}
+            >
+              {formatCurrency(results.buying.totalCost, currency)}
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={reset}
+          className="px-4 py-2 text-sm font-medium text-acadia-950 rounded hover:bg-acadia-100 transition-colors cursor-pointer"
+        >
+          {t("calculator.reset")}
+        </button>
+      </div>
     </div>
   );
 });

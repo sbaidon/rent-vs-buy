@@ -10,6 +10,12 @@ export type CalculatorResults = {
   totalCost: number;
 };
 
+export type PriceOutcome =
+  | "rent"
+  | "buy"
+  | "start-rent-end-buy"
+  | "start-buy-end-rent";
+
 export interface Calculator {
   getTotalCost(values?: CalculatorValues): number;
   calculate(values?: CalculatorValues): CalculatorResults;

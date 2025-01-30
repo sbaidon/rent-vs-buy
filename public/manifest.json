@@ -1,0 +1,21 @@
+{
+  "name": "Rent vs Buy Calculator",
+  "short_name": "Rent vs Buy",
+  "description": "Compare the costs of renting versus buying a home",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#78350f",
+  "theme_color": "#78350f",
+  "icons": [
+    {
+      "src": "/social-share.webp",
+      "sizes": "1024x1024",
+      "type": "image/webp"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "orientation": "any",
+  "categories": ["finance", "utilities"],
+  "screenshots": []
+} 

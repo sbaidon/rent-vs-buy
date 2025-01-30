@@ -2,12 +2,12 @@ import { Calculator } from "./calculator";
 import { CalculatorValues } from "../context/calculator-context";
 
 export class RentingCostsCalculator implements Calculator {
-  private readonly CAPITAL_GAINST_RATE = 0.15;
+  private readonly CAPITAL_GAINS_RATE = 0.15;
 
   constructor(private values: CalculatorValues) {}
 
   private get effectiveReturnRate(): number {
-    return this.values.investmentReturn * (1 - this.CAPITAL_GAINST_RATE);
+    return this.values.investmentReturn * (1 - this.CAPITAL_GAINS_RATE);
   }
 
   private get initialOpportunityAdjustment(): number {
@@ -52,7 +52,7 @@ export class RentingCostsCalculator implements Calculator {
 
       // accumulate yearly costs
       rentCost += rentYearCost;
-      rentInsuranceCost += rentYearCost * this.values.rentersInsuranceRate;
+      rentInsuranceCost += this.values.monthlyRentersInsurance * 12;
 
       // recompute yearly totals
       rentTotalYearCost = rentCost + rentInsuranceCost;
