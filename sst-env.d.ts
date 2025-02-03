@@ -5,8 +5,17 @@
 
 declare module "sst" {
   export interface Resource {
+    "MyRouter": {
+      "type": "sst.aws.Router"
+      "url": string
+    }
     "RentVsBuy": {
       "type": "sst.aws.StaticSite"
+      "url": string
+    }
+    "ServerApp": {
+      "name": string
+      "type": "sst.aws.Function"
       "url": string
     }
   }

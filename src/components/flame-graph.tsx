@@ -1,4 +1,11 @@
-import React, { useMemo, memo, useCallback, useState, useRef } from "react";
+import React, {
+  useMemo,
+  memo,
+  useCallback,
+  useState,
+  useRef,
+  startTransition,
+} from "react";
 import { CalculatorValues, useCalculator } from "../context/calculator-context";
 import { RentingCostsCalculator } from "../utils/rent-costs-calculator";
 import { BuyingCostsCalculator } from "../utils/buy-costs-calculator";
@@ -40,7 +47,9 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
 
   const handleChange = useCallback(
     (newValue: number) => {
-      onChange(newValue);
+      startTransition(() => {
+        onChange(newValue);
+      });
     },
     [onChange]
   );
@@ -48,7 +57,6 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
   const segments = Math.ceil(
     Math.min(Math.max(Math.abs(max - min) / step, 100), 100000)
   );
-  console.log(segments);
   const minValues = useMemo(
     () => ({
       ...values,
@@ -104,6 +112,11 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     [segments]
   );
 
+  const flameGraphStep = useMemo(
+    () => (max - min) / (segments - 1),
+    [max, min, segments]
+  );
+
   const segmentValues = useMemo(() => {
     const length = segments;
     const arr = new Array<{
@@ -111,7 +124,6 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
       rentingIsBetter: boolean;
       opacity: number;
     }>(length);
-    const flameGraphStep = (max - min) / (segments - 1);
 
     switch (priceOutcome) {
       case "rent":
@@ -165,7 +177,16 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     }
 
     return arr;
-  }, [min, max, segments, parameter, values, priceOutcome, getOpacity]);
+  }, [
+    min,
+    max,
+    segments,
+    parameter,
+    values,
+    priceOutcome,
+    getOpacity,
+    flameGraphStep,
+  ]);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -199,7 +220,6 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
         setIsEditing(false);
         onChange(result);
       } else {
-        // Reset to the current valid value if input was invalid
         setTempValue(value);
       }
     } else if (e.key === "Escape") {
@@ -213,6 +233,13 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     commitValue(tempValue);
     setIsEditing(false);
   };
+
+  const handleRangeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      handleChange(Number(e.target.value));
+    },
+    [handleChange]
+  );
 
   return (
     <div className="space-y-2 min-h-full h-auto w-full" ref={containerRef}>
@@ -266,7 +293,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
             min={min}
             max={max}
             step={step}
-            onChange={(e) => onChange(Number(e.target.value))}
+            onChange={handleRangeChange}
             aria-label={label}
             id={`${parameter}-input`}
             className="absolute top-0 left-0 w-full h-full cursor-pointer appearance-none bg-transparent

@@ -92,13 +92,19 @@
         "monthlyRentersInsurance": "Seguro de inquilino mensual"
       }
     },
-  "about": "Está basado en la excelente calculadora de Renta vs Compra del New York Times, que puedes encontrar <a href='https://www.nytimes.com/interactive/2016/06/29/upshot/should-you-rent-or-buy-calculator.html' target='_blank'>aquí</a>. Esta simplemente es una versión gratis. Próximamente se añadirá soporte para países con reglas fiscales específicas.",
+  "about": "Está basado en la excelente calculadora de Renta vs Compra del New York Times, que puedes encontrar <a href='https://www.nytimes.com/interactive/2024/upshot/buy-rent-calculator.html' target='_blank'>aquí</a>. Esta simplemente es una versión gratis. Próximamente se añadirá soporte para países con reglas fiscales específicas.",
   "reset": "Reiniciar"
   },
-  "currency": {
-    "USD": "USD",
-    "EUR": "EUR"
-  },
+  "currency": "Moneda",
+  "currency_usd": "Dólar estadounidense",
+  "currency_eur": "Euro",
+  "currency_mxn": "Peso mexicano",
+  "language": "Idioma",
+  "language_english": "Inglés",
+  "language_spanish": "Español",
+  "country": "País",
+  "country_united_states": "Estados Unidos",
+  "more_countries_soon": "Más países próximamente",
   "month": "mes",
   "months": "meses"
 } 

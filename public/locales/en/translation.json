@@ -11,7 +11,7 @@
     "utilities": "Utilities",
     "hoa": "HOA",
     "rent": "Rent",
-    "about": "This calculator is 100% inspired by the New York Times Rent vs Buy Calculator (<a href='https://www.nytimes.com/interactive/2016/06/29/upshot/should-you-rent-or-buy-calculator.html' target='_blank'>reference</a>). This is simply a free version to help you make an informed decision about renting vs buying. Future updates will include country-specific tax rules and regulations. Each input below will show you the threshold where renting is cheaper than buying.",
+    "about": "This calculator is 100% inspired by the New York Times <a href='https://www.nytimes.com/interactive/2024/upshot/buy-rent-calculator.html' target='_blank'>Rent vs Buy Calculator</a>. This is simply a free version to help you make an informed decision about renting vs buying. Future updates will include country-specific tax rules and regulations. Each input below will show you the threshold where renting is cheaper than buying.",
     "results": {
       "buy": "Buy",
       "initialCosts": "Initial Costs",
@@ -91,10 +91,16 @@
     },
     "reset": "Reset"
   },
-  "currency": {
-    "USD": "USD",
-    "EUR": "EUR"
-  },
+  "currency": "Currency",
+  "currency_usd": "US Dollar",
+  "currency_eur": "Euro",
+  "currency_mxn": "Mexican Peso",
+  "language": "Language",
+  "language_english": "English",
+  "language_spanish": "Spanish",
+  "country": "Country",
+  "country_united_states": "United States",
+  "more_countries_soon": "More countries soon",
   "month": "month",
   "months": "months"
 } 

@@ -4,6 +4,7 @@ import React, {
   useRef,
   useEffect,
   useState,
+  startTransition,
 } from "react";
 
 type SegmentValue = {
@@ -110,7 +111,9 @@ export const FlameGraphCanvas = React.memo(
         const snappedValue = Math.round(newValue / step) * step;
 
         if (snappedValue >= min && snappedValue <= max) {
-          onChange(snappedValue);
+          startTransition(() => {
+            onChange(snappedValue);
+          });
         }
       },
       [min, max, containerWidth, step, onChange]

@@ -1,4 +1,5 @@
-/// <reference path="./.sst/platform/config.d.ts" />
+import type {} from "./.sst/platform/config";
+
 export default $config({
   app(input) {
     return {
@@ -9,17 +10,46 @@ export default $config({
       providers: { "@pulumiverse/vercel": "1.14.3" },
     };
   },
+
   async run() {
-    new sst.aws.StaticSite("RentVsBuy", {
+    // Upload the image to the `public` folder
+
+    const site = new sst.aws.StaticSite("RentVsBuy", {
+      build: {
+        command: "npm run build",
+        output: "dist/client",
+      },
+    });
+
+    const server = new sst.aws.Function("ServerApp", {
+      architecture: "arm64",
+      handler: "entry_aws_lambda.handler",
+      url: true,
+      copyFiles: [
+        {
+          from: "public/locales",
+          to: "public/locales",
+        },
+      ],
+      runtime: "nodejs22.x",
+      environment: {
+        NODE_ENV: "production",
+      },
+    });
+
+    new sst.aws.Router("MyRouter", {
       domain: {
         name: "rentvsbuy.io",
         dns: sst.vercel.dns({
           domain: "rentvsbuy.io",
         }),
       },
-      build: {
-        command: "npm run build",
-        output: "dist",
+      routes: {
+        "/assets/*": site.url,
+        "/locales/*": site.url,
+        "/robots.txt": site.url,
+        "/sitemap.xml": site.url,
+        "/": server.url,
       },
     });
   },
