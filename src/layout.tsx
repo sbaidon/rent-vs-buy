@@ -2,16 +2,22 @@ import "./i18n";
 
 import { CalculatorProvider } from "./context/calculator-context";
 import { Monitoring } from "react-scan/monitoring";
-import { CurrencyProvider, useCurrency } from "./context/currency-context";
 import { PostHogProvider } from "posthog-js/react";
 import { Head } from "vike-react/Head"; // or vike-vue / vike-solid
-
+import {
+  AppProvider,
+  Country,
+  Currency,
+  useAppContext,
+} from "./context/app-context";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import posthog from "posthog-js";
 
 function Navbar() {
-  const { setCurrency } = useCurrency();
+  const { setCurrency, setSelectedCountry, country, currency } =
+    useAppContext();
+  useAppContext();
   const { t, i18n } = useTranslation();
 
   return (
@@ -22,10 +28,11 @@ function Navbar() {
         </label>
         <select
           id="currency-select"
-          onChange={(e) => setCurrency(e.target.value)}
+          onChange={(e) => setCurrency(e.target.value as Currency)}
           className="mb-4 px-3 py-1 rounded bg-transparent text-white cursor-pointer"
           defaultValue="USD"
           aria-label={t("currency")}
+          value={currency}
         >
           <option value="USD">{t("currency_usd")}</option>
           <option value="EUR">{t("currency_eur")}</option>
@@ -59,8 +66,12 @@ function Navbar() {
             className="mb-4 px-3 py-1 rounded bg-transparent text-white cursor-pointer"
             defaultValue="US"
             aria-label={t("country")}
+            onChange={(e) => setSelectedCountry(e.target.value as Country)}
+            value={country}
           >
             <option value="US">{t("country_united_states")}</option>
+            <option value="CA">{t("country_canada")}</option>
+            <option value="MX">{t("country_mexico")}</option>
           </select>
           <span className="absolute -top-2 -right-2 bg-amber-700/50 text-amber-200 text-xs px-2 py-1 rounded-full">
             {t("more_countries_soon")}
@@ -95,7 +106,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           rel="stylesheet"
         />
       </Head>
-      <CurrencyProvider>
+      <AppProvider>
         <CalculatorProvider>
           <div className="min-h-screen bg-linear-to-br/oklab from-amber-950 to-amber-600">
             <Navbar />
@@ -109,7 +120,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             />
           </div>
         </CalculatorProvider>
-      </CurrencyProvider>
+      </AppProvider>
     </PostHogProvider>
   );
 }

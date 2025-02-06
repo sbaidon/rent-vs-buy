@@ -2,13 +2,14 @@ import React, { useCallback } from "react";
 import { CalculatorValues, useCalculator } from "../context/calculator-context";
 import FlameGraph from "./flame-graph";
 import { useTranslation } from "react-i18next";
-import { useCurrency } from "../context/currency-context";
 import { formatCurrency } from "../utils/format-currency";
+import { useAppContext } from "../context/app-context";
+import { INPUT_CONFIG_PER_COUNTRY } from "../config/calculator-config";
 
 const Calculator: React.FC = () => {
   const { values, updateValue } = useCalculator();
   const { t } = useTranslation();
-  const { currency } = useCurrency();
+  const { currency, country } = useAppContext();
 
   const formatPercentage = useCallback(
     (value: number) => `${(value * 100).toFixed(2)}%`,
@@ -27,6 +28,9 @@ const Calculator: React.FC = () => {
     [updateValue]
   );
 
+  // Get the ranges for the current country
+  const ranges = INPUT_CONFIG_PER_COUNTRY[country];
+
   return (
     <>
       <section className="pt-12">
@@ -35,9 +39,9 @@ const Calculator: React.FC = () => {
             <FlameGraph
               value={values.homePrice}
               parameter="homePrice"
-              min={100000}
-              max={2000000}
-              step={10000}
+              min={ranges.homePrice.min}
+              max={ranges.homePrice.max}
+              step={ranges.homePrice.step}
               onChange={createChangeHandler("homePrice")}
               format={formatCurrencyValue}
               label={t("calculator.sections.basics.homePrice")}
@@ -48,9 +52,9 @@ const Calculator: React.FC = () => {
             <FlameGraph
               value={values.monthlyRent}
               parameter="monthlyRent"
-              min={500}
-              max={10000}
-              step={100}
+              min={ranges.monthlyRent.min}
+              max={ranges.monthlyRent.max}
+              step={ranges.monthlyRent.step}
               onChange={createChangeHandler("monthlyRent")}
               format={formatCurrencyValue}
               label={t("calculator.sections.basics.monthlyRent")}
@@ -66,9 +70,9 @@ const Calculator: React.FC = () => {
             <FlameGraph
               value={values.mortgageRate}
               parameter="mortgageRate"
-              min={0}
-              max={0.15}
-              step={0.001}
+              min={ranges.mortgageRate.min}
+              max={ranges.mortgageRate.max}
+              step={ranges.mortgageRate.step}
               onChange={createChangeHandler("mortgageRate")}
               format={formatPercentage}
               label={t("calculator.sections.mortgage.rate")}
@@ -79,9 +83,9 @@ const Calculator: React.FC = () => {
             <FlameGraph
               value={values.downPayment}
               parameter="downPayment"
-              min={0}
-              max={1}
-              step={0.01}
+              min={ranges.downPayment.min}
+              max={ranges.downPayment.max}
+              step={ranges.downPayment.step}
               onChange={createChangeHandler("downPayment")}
               format={formatPercentage}
               label={t("calculator.sections.mortgage.downPayment")}
@@ -92,9 +96,9 @@ const Calculator: React.FC = () => {
             <FlameGraph
               value={values.yearsToStay}
               parameter="yearsToStay"
-              min={1}
-              max={40}
-              step={1}
+              min={ranges.yearsToStay.min}
+              max={ranges.yearsToStay.max}
+              step={ranges.yearsToStay.step}
               onChange={createChangeHandler("yearsToStay")}
               format={(v) => `${v} ${t("years")}`}
               label={t("calculator.sections.mortgage.yearsToStay")}
@@ -105,9 +109,9 @@ const Calculator: React.FC = () => {
             <FlameGraph
               value={values.mortgageTerm}
               parameter="mortgageTerm"
-              min={1}
-              max={30}
-              step={1}
+              min={ranges.mortgageTerm.min}
+              max={ranges.mortgageTerm.max}
+              step={ranges.mortgageTerm.step}
               onChange={createChangeHandler("mortgageTerm")}
               format={(v) => `${v} ${t("years")}`}
               label={t("calculator.sections.mortgage.mortgageLength")}
@@ -118,9 +122,9 @@ const Calculator: React.FC = () => {
             <FlameGraph
               value={values.pmi}
               parameter="pmi"
-              min={0}
-              max={0.1}
-              step={0.01}
+              min={ranges.pmi.min}
+              max={ranges.pmi.max}
+              step={ranges.pmi.step}
               onChange={createChangeHandler("pmi")}
               format={formatPercentage}
               label={t("calculator.sections.mortgage.pmi")}
@@ -138,9 +142,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 value={values.homePriceGrowth}
                 parameter="homePriceGrowth"
-                min={-0.05}
-                max={0.15}
-                step={0.001}
+                min={ranges.homePriceGrowth.min}
+                max={ranges.homePriceGrowth.max}
+                step={ranges.homePriceGrowth.step}
                 onChange={createChangeHandler("homePriceGrowth")}
                 format={formatPercentage}
                 label={t("calculator.sections.future.homePriceGrowth")}
@@ -149,9 +153,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 value={values.rentGrowth}
                 parameter="rentGrowth"
-                min={-0.05}
-                max={0.9}
-                step={0.01}
+                min={ranges.rentGrowth.min}
+                max={ranges.rentGrowth.max}
+                step={ranges.rentGrowth.step}
                 onChange={createChangeHandler("rentGrowth")}
                 format={formatPercentage}
                 label={t("calculator.sections.future.rentGrowth")}
@@ -160,9 +164,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 value={values.investmentReturn}
                 parameter="investmentReturn"
-                min={-0.9}
-                max={0.9}
-                step={0.01}
+                min={ranges.investmentReturn.min}
+                max={ranges.investmentReturn.max}
+                step={ranges.investmentReturn.step}
                 onChange={createChangeHandler("investmentReturn")}
                 format={formatPercentage}
                 label={t("calculator.sections.future.investmentReturn")}
@@ -171,9 +175,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 value={values.inflationRate}
                 parameter="inflationRate"
-                min={-0.05}
-                max={0.1}
-                step={0.001}
+                min={ranges.inflationRate.min}
+                max={ranges.inflationRate.max}
+                step={ranges.inflationRate.step}
                 onChange={createChangeHandler("inflationRate")}
                 format={formatPercentage}
                 label={t("calculator.sections.future.inflationRate")}
@@ -214,9 +218,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 value={values.propertyTaxRate}
                 parameter="propertyTaxRate"
-                min={0}
-                max={0.1}
-                step={0.001}
+                min={ranges.propertyTaxRate.min}
+                max={ranges.propertyTaxRate.max}
+                step={ranges.propertyTaxRate.step}
                 onChange={createChangeHandler("propertyTaxRate")}
                 format={formatPercentage}
                 label={t("calculator.sections.taxes.propertyTaxRate")}
@@ -225,9 +229,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 value={values.marginalTaxRate}
                 parameter="marginalTaxRate"
-                min={0}
-                max={0.5}
-                step={0.01}
+                min={ranges.marginalTaxRate.min}
+                max={ranges.marginalTaxRate.max}
+                step={ranges.marginalTaxRate.step}
                 onChange={createChangeHandler("marginalTaxRate")}
                 format={formatPercentage}
                 label={t("calculator.sections.taxes.marginalTaxRate")}
@@ -236,9 +240,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 value={values.otherDeductions}
                 parameter="otherDeductions"
-                min={0}
-                max={100000}
-                step={1000}
+                min={ranges.otherDeductions.min}
+                max={ranges.otherDeductions.max}
+                step={ranges.otherDeductions.step}
                 onChange={createChangeHandler("otherDeductions")}
                 format={formatCurrencyValue}
                 label={t("calculator.sections.taxes.otherDeductions")}
@@ -281,9 +285,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 parameter="buyingCosts"
                 value={values.buyingCosts}
-                min={0}
-                max={0.1}
-                step={0.001}
+                min={ranges.buyingCosts.min}
+                max={ranges.buyingCosts.max}
+                step={ranges.buyingCosts.step}
                 onChange={createChangeHandler("buyingCosts")}
                 format={formatPercentage}
                 label={t("calculator.sections.closingCosts.buyingCosts")}
@@ -292,9 +296,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 parameter="sellingCosts"
                 value={values.sellingCosts}
-                min={0}
-                max={0.1}
-                step={0.001}
+                min={ranges.sellingCosts.min}
+                max={ranges.sellingCosts.max}
+                step={ranges.sellingCosts.step}
                 onChange={createChangeHandler("sellingCosts")}
                 format={formatPercentage}
                 label={t("calculator.sections.closingCosts.sellingCosts")}
@@ -310,9 +314,9 @@ const Calculator: React.FC = () => {
             <div className="space-y-8">
               <FlameGraph
                 value={values.maintenanceRate}
-                min={0}
-                max={0.1}
-                step={0.001}
+                min={ranges.maintenanceRate.min}
+                max={ranges.maintenanceRate.max}
+                step={ranges.maintenanceRate.step}
                 onChange={createChangeHandler("maintenanceRate")}
                 format={formatPercentage}
                 label={t("calculator.sections.maintenance.maintenanceRate")}
@@ -321,9 +325,9 @@ const Calculator: React.FC = () => {
 
               <FlameGraph
                 value={values.homeInsuranceRate}
-                min={0}
-                max={0.1}
-                step={0.001}
+                min={ranges.homeInsuranceRate.min}
+                max={ranges.homeInsuranceRate.max}
+                step={ranges.homeInsuranceRate.step}
                 onChange={createChangeHandler("homeInsuranceRate")}
                 format={formatPercentage}
                 label={t("calculator.sections.maintenance.insurance")}
@@ -332,9 +336,9 @@ const Calculator: React.FC = () => {
 
               <FlameGraph
                 value={values.extraPayments}
-                min={0}
-                max={2000}
-                step={50}
+                min={ranges.extraPayments.min}
+                max={ranges.extraPayments.max}
+                step={ranges.extraPayments.step}
                 onChange={createChangeHandler("extraPayments")}
                 format={formatCurrencyValue}
                 label={t("calculator.sections.maintenance.extraPayments")}
@@ -353,9 +357,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 parameter="securityDeposit"
                 value={values.securityDeposit}
-                min={0}
-                max={12}
-                step={1}
+                min={ranges.securityDeposit.min}
+                max={ranges.securityDeposit.max}
+                step={ranges.securityDeposit.step}
                 onChange={createChangeHandler("securityDeposit")}
                 format={(v) => `${v} ${v === 1 ? t("month") : t("months")}`}
                 label={t("calculator.sections.rentingCosts.securityDeposit")}
@@ -364,9 +368,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 parameter="brokerFee"
                 value={values.brokerFee}
-                min={0}
-                max={0.5}
-                step={0.01}
+                min={ranges.brokerFee.min}
+                max={ranges.brokerFee.max}
+                step={ranges.brokerFee.step}
                 onChange={createChangeHandler("brokerFee")}
                 format={formatPercentage}
                 label={t("calculator.sections.rentingCosts.brokerFee")}
@@ -375,9 +379,9 @@ const Calculator: React.FC = () => {
               <FlameGraph
                 parameter="monthlyRentersInsurance"
                 value={values.monthlyRentersInsurance}
-                min={0}
-                max={1000}
-                step={10}
+                min={ranges.monthlyRentersInsurance.min}
+                max={ranges.monthlyRentersInsurance.max}
+                step={ranges.monthlyRentersInsurance.step}
                 onChange={createChangeHandler("monthlyRentersInsurance")}
                 format={formatCurrencyValue}
                 label={t(

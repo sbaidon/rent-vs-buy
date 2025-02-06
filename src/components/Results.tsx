@@ -4,12 +4,12 @@ import { BuyingCostsCalculator } from "../utils/buy-costs-calculator";
 import { RentingCostsCalculator } from "../utils/rent-costs-calculator";
 import { formatCurrency } from "../utils/format-currency";
 import { useTranslation } from "react-i18next";
-import { useCurrency } from "../context/currency-context";
+import { useAppContext } from "../context/app-context";
 
 const Results = React.memo(() => {
   const { t } = useTranslation();
   const { values, reset } = useCalculator();
-  const { currency } = useCurrency();
+  const { currency } = useAppContext();
 
   const results = React.useMemo(() => {
     const buyingCalculator = new BuyingCostsCalculator(values);
