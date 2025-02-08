@@ -11,29 +11,32 @@ export type AmortizationData = {
   totalInterest: number;
 };
 
+interface RecurringCosts {
+  opportunityCost: number;
+  currentYearPrice: number;
+  totalYearCost: number;
+  remainingLoanPrincipal: number;
+  totalPrincipalPaid: number;
+  totalInterestPaid: number;
+  totalPMIPaid: number;
+  totalCommonCharges: number;
+  totalPropertyTaxes: number;
+  totalUtilitiesCost: number;
+  totalMaintenanceCost: number;
+  totalInsuranceCost: number;
+  yearlyBreakdown: number[];
+}
+
 export class BuyingCostsCalculator implements Calculator {
   private readonly CAPITAL_GAINS_TAX_RATE = 0.15;
   private readonly CAPITAL_GAINS_EXCLUSION = 500_000;
   private readonly taxParameters = new TaxesCalculator();
 
-  private _recurringCosts: {
-    buyYearlyOpportunityCost: number;
-    yearlyCurrentPrice: number;
-    buyTotalYearCost: number;
-    buyLoanPrincipal: number;
-    buyLoanPaymentToPrincipal: number;
-    buyLoanPaymentToInterest: number;
-    buyPaymentToPMI: number;
-    buyCommonCharges: number;
-    buyPropertyTaxes: number;
-    buyUtilitiesCost: number;
-    buyMaintenanceCost: number;
-    buyInsuranceCost: number;
-    yearlyBreakdown: number[];
-  } | null = null;
+  private _recurringCosts: RecurringCosts | null = null;
 
   constructor(private values: CalculatorValues) {}
 
+  // --- Getters for Derived Values ---
   private get startYear(): number {
     return new Date().getFullYear();
   }
@@ -50,51 +53,49 @@ export class BuyingCostsCalculator implements Calculator {
     return Math.pow(1 + this.effectiveReturnRate, this.values.yearsToStay) - 1;
   }
 
-  private get buyYearPriceRate(): number {
+  private get priceGrowthFactor(): number {
     return 1 + this.values.homePriceGrowth;
   }
 
-  private get initialBuyLoanMonths(): number {
+  private get totalLoanMonths(): number {
     return this.values.mortgageTerm * 12;
   }
 
-  private get buyMonthlyLoanRate(): number {
+  private get monthlyLoanRate(): number {
     return this.values.mortgageRate / 12;
   }
 
-  private get actualPropertyTaxRate(): number {
+  private get propertyTaxRate(): number {
     return this.values.propertyTaxRate;
   }
 
-  private get maintenanceCostFirstYear(): number {
+  private get firstYearMaintenanceCost(): number {
     return this.values.homePrice * this.values.maintenanceRate;
   }
 
-  private get downPayment(): number {
+  private get downPaymentAmount(): number {
     return this.values.downPayment * this.values.homePrice;
   }
 
-  private get extraPaymentsYear(): number {
+  private get extraPaymentsAnnual(): number {
     return this.values.extraPayments * 12;
   }
 
   private get initialLoanPrincipal(): number {
-    return this.values.homePrice - this.downPayment;
+    return this.values.homePrice - this.downPaymentAmount;
   }
 
-  private get buyLoanPaymentPerMonth(): number {
-    const r = this.buyMonthlyLoanRate;
-    const n = this.initialBuyLoanMonths;
+  private get monthlyLoanPayment(): number {
+    const principal = this.initialLoanPrincipal;
+    const months = this.totalLoanMonths;
+    const r = this.monthlyLoanRate;
     if (r === 0) {
-      return this.initialLoanPrincipal / n;
+      return principal / months;
     }
-    // Standard annuity formula
-    return this.initialLoanPrincipal * (r / (1 - Math.pow(1 + r, -n)));
+    return principal * (r / (1 - Math.pow(1 + r, -months)));
   }
 
-  private get commonChargeFirstYear(): number {
-    // Multiplying by 12 up front to get annual cost
-    // Then applying (1 - marginalTax * deductionRate)
+  private get firstYearCommonCharge(): number {
     return (
       this.values.commonChargePerMonth *
       12 *
@@ -106,169 +107,169 @@ export class BuyingCostsCalculator implements Calculator {
     return this.values.homePrice * this.values.buyingCosts;
   }
 
-  private calculateRecurringCosts() {
+  private get initialCosts(): number {
+    return this.downPaymentAmount + this.closingCost;
+  }
+
+  // --- Helper Methods ---
+  /**
+   * Calculate the amortization details for a given year.
+   */
+  private calculateLoanYear(
+    principal: number,
+    remainingMonths: number,
+    loanCap: number
+  ): {
+    newPrincipal: number;
+    principalPaid: number;
+    interestPaid: number;
+    deductibleInterest: number;
+    monthsUsed: number;
+  } {
+    const monthsThisYear = Math.min(remainingMonths, 12);
+    const factor = Math.pow(1 + this.monthlyLoanRate, monthsThisYear);
+    const totalPayment = this.monthlyLoanPayment * monthsThisYear;
+    const newPrincipal = principal * factor - totalPayment;
+    const principalPaid = principal - newPrincipal;
+    const interestPaid = totalPayment - principalPaid;
+    const deductibleFraction = loanCap / principal;
+    const deductibleInterest =
+      deductibleFraction < 1 ? interestPaid * deductibleFraction : interestPaid;
+    return {
+      newPrincipal,
+      principalPaid,
+      interestPaid,
+      deductibleInterest,
+      monthsUsed: monthsThisYear,
+    };
+  }
+
+  /**
+   * Compute and cache all recurring yearly costs.
+   */
+  private calculateRecurringCosts(): RecurringCosts {
     if (this._recurringCosts) {
-      return this._recurringCosts; // Already computed; skip the loop
+      return this._recurringCosts;
     }
 
     const { homePrice, pmi, homeInsuranceRate, yearsToStay } = this.values;
+    let cumulativeOpportunityCost = 0;
+    let totalPrincipalPaid = 0;
+    let totalInterestPaid = 0;
+    let totalPMIPaid = 0;
+    let totalCommonCharges = 0;
+    let totalPropertyTaxes = 0;
+    let totalUtilitiesCost = 0;
+    let totalMaintenanceCost = 0;
+    let totalInsuranceCost = 0;
+    let totalSavingsFromDeductions = 0;
+    let currentYearCost = this.initialCosts;
 
-    let buyYearlyOpportunityCost = 0;
-    let buyLoanPaymentToPrincipal = 0;
-    let buyLoanPaymentToInterest = 0;
-    let buyPaymentToPMI = 0;
-    let buyPropertyTaxes = 0;
-    let buyCommonCharges = 0;
-    let buyUtilitiesCost = 0;
-    let buyMaintenanceCost = 0;
-    let buyInsuranceCost = 0;
-    let yearlyCurrentPrice = 0;
-    let buyTotalYearCost = 0;
-    let buyTotalSavingsFromDeductions = 0;
-    let cumulativeCost = this.initialCosts;
+    let remainingLoanMonths = this.totalLoanMonths;
+    let currentLoanPrincipal = this.initialLoanPrincipal;
+    let currentYearPrice = 0;
+    const yearlyBreakdown: number[] = [];
 
-    let buyLoanMonths = this.initialBuyLoanMonths;
-    let buyLoanPrincipal = this.initialLoanPrincipal;
-    const yearlyBreakdown = [];
-
-    for (let year = 1; year <= yearsToStay; ++year) {
+    for (let year = 1; year <= yearsToStay; year++) {
       const actualYear = this.startYear + year - 1;
+      const inflationFactor = Math.pow(this.inflationAdjustmentRate, year - 1);
+      currentYearPrice = homePrice * Math.pow(this.priceGrowthFactor, year);
 
-      // For inflation
-      const inflationAdjustment = Math.pow(
-        this.inflationAdjustmentRate,
-        year - 1
-      );
-
-      // For amortization limits
-      const loanCap = this.taxParameters.getLoanCap(
-        actualYear,
-        this.values.taxCutsExpire,
-        this.values.isJointReturn
-      );
-
-      // The property price for this year
-      yearlyCurrentPrice = homePrice * Math.pow(this.buyYearPriceRate, year);
-
-      // Opportunity cost from the capital you’re sinking into the property
-      // This logic is somewhat subjective, but we'll keep your approach:
-      // add returns to the "accumulated" opportunity cost + cost so far
-      buyYearlyOpportunityCost +=
-        (buyYearlyOpportunityCost + buyTotalYearCost) *
+      // Update opportunity cost based on cumulative cost so far.
+      cumulativeOpportunityCost +=
+        (cumulativeOpportunityCost + currentYearCost) *
         this.effectiveReturnRate;
 
-      // Amortization for this year
-      if (buyLoanMonths > 0) {
-        const buyYearLoanMonths = Math.min(buyLoanMonths, 12);
-        const yearRateFactor = Math.pow(
-          1 + this.buyMonthlyLoanRate,
-          buyYearLoanMonths
+      if (remainingLoanMonths > 0) {
+        const loanCap = this.taxParameters.getLoanCap(
+          actualYear,
+          this.values.taxCutsExpire,
+          this.values.isJointReturn
         );
 
-        // How much interest is actually deductible depends on the loanCap
-        const buyPrincipalFractionDeductible = loanCap / buyLoanPrincipal;
+        const {
+          newPrincipal,
+          principalPaid,
+          interestPaid,
+          deductibleInterest,
+          monthsUsed,
+        } = this.calculateLoanYear(
+          currentLoanPrincipal,
+          remainingLoanMonths,
+          loanCap
+        );
 
-        const totalYearlyPayments =
-          this.buyLoanPaymentPerMonth * buyYearLoanMonths;
-        const newLoanBalance =
-          buyLoanPrincipal * yearRateFactor - totalYearlyPayments;
+        currentLoanPrincipal = newPrincipal;
+        totalPrincipalPaid += principalPaid;
+        totalInterestPaid += interestPaid;
+        remainingLoanMonths -= monthsUsed;
 
-        // Principal paid is the difference between old and new
-        const buyYearLoanPaymentToPrincipal = buyLoanPrincipal - newLoanBalance;
-        buyLoanPrincipal = newLoanBalance;
-
-        const buyYearLoanPaymentToInterest =
-          totalYearlyPayments - buyYearLoanPaymentToPrincipal;
-
-        // Accumulate interest part
-        buyLoanPaymentToInterest += buyYearLoanPaymentToInterest;
-
-        // Deductible portion is limited by the fraction that’s under the loanCap
-        const buyAnnualDeductiblePaymentToInterest =
-          buyPrincipalFractionDeductible < 1
-            ? buyYearLoanPaymentToInterest * buyPrincipalFractionDeductible
-            : buyYearLoanPaymentToInterest;
-
-        // Accumulate principal part
-        buyLoanPaymentToPrincipal += buyYearLoanPaymentToPrincipal;
-        buyLoanMonths -= buyYearLoanMonths;
-
-        // PMI if principal is above 80% LTV
-        if (pmi !== 0 && buyLoanPrincipal / homePrice > 0.8) {
-          buyPaymentToPMI += buyLoanPrincipal * pmi;
+        // PMI cost if loan-to-value is above 80%
+        if (pmi !== 0 && currentLoanPrincipal / homePrice > 0.8) {
+          totalPMIPaid += currentLoanPrincipal * pmi;
         }
 
-        // Sum up the tax deduction savings for the year
-        buyTotalSavingsFromDeductions += this.taxDeductions(
-          yearlyCurrentPrice,
+        totalSavingsFromDeductions += this.taxDeductions(
+          currentYearPrice,
           actualYear,
-          inflationAdjustment,
-          buyAnnualDeductiblePaymentToInterest
+          inflationFactor,
+          deductibleInterest
         );
       }
 
-      // Annual common charges, property taxes, etc.
-      buyCommonCharges += this.commonChargeFirstYear * inflationAdjustment;
-      buyPropertyTaxes += yearlyCurrentPrice * this.actualPropertyTaxRate;
-      buyUtilitiesCost += this.extraPaymentsYear * inflationAdjustment;
-      buyMaintenanceCost += this.maintenanceCostFirstYear * inflationAdjustment;
-      buyInsuranceCost += yearlyCurrentPrice * homeInsuranceRate;
+      totalCommonCharges += this.firstYearCommonCharge * inflationFactor;
+      totalPropertyTaxes += currentYearPrice * this.propertyTaxRate;
+      totalUtilitiesCost += this.extraPaymentsAnnual * inflationFactor;
+      totalMaintenanceCost += this.firstYearMaintenanceCost * inflationFactor;
+      totalInsuranceCost += currentYearPrice * homeInsuranceRate;
 
-      // For each year, the total cost so far (excluding sale, which is separate)
-      buyTotalYearCost =
-        buyLoanPaymentToPrincipal +
-        buyLoanPaymentToInterest +
-        buyCommonCharges +
-        buyPropertyTaxes +
-        buyUtilitiesCost +
-        buyMaintenanceCost +
-        buyInsuranceCost +
-        buyPaymentToPMI -
-        buyTotalSavingsFromDeductions;
+      currentYearCost =
+        totalPrincipalPaid +
+        totalInterestPaid +
+        totalCommonCharges +
+        totalPropertyTaxes +
+        totalUtilitiesCost +
+        totalMaintenanceCost +
+        totalInsuranceCost +
+        totalPMIPaid -
+        totalSavingsFromDeductions;
 
-      cumulativeCost = buyTotalYearCost + this.initialCosts;
+      let cumulativeCost = this.initialCosts + currentYearCost;
       if (year === yearsToStay) {
-        const totalCost = this.totalCost(
-          buyTotalYearCost,
-          buyYearlyOpportunityCost,
-          buyLoanPrincipal,
-          yearlyCurrentPrice
+        cumulativeCost = this.totalCost(
+          currentYearCost,
+          cumulativeOpportunityCost,
+          currentLoanPrincipal,
+          currentYearPrice
         );
-        cumulativeCost = totalCost;
       }
-
       yearlyBreakdown.push(cumulativeCost);
     }
 
-    // Store results so subsequent accesses don’t recompute the entire loop
     this._recurringCosts = {
-      buyYearlyOpportunityCost,
-      yearlyCurrentPrice,
-      buyTotalYearCost,
-      buyLoanPrincipal,
-      buyLoanPaymentToPrincipal,
-      buyLoanPaymentToInterest,
-      buyPaymentToPMI,
-      buyCommonCharges,
-      buyPropertyTaxes,
-      buyUtilitiesCost,
-      buyMaintenanceCost,
-      buyInsuranceCost,
+      opportunityCost: cumulativeOpportunityCost,
+      currentYearPrice,
+      totalYearCost: currentYearCost,
+      remainingLoanPrincipal: currentLoanPrincipal,
+      totalPrincipalPaid,
+      totalInterestPaid,
+      totalPMIPaid,
+      totalCommonCharges,
+      totalPropertyTaxes,
+      totalUtilitiesCost,
+      totalMaintenanceCost,
+      totalInsuranceCost,
       yearlyBreakdown,
     };
 
     return this._recurringCosts;
   }
 
-  /**
-   * Helper that calculates how much you save from itemized deductions
-   * above the standard deduction, only if it surpasses the standard deduction.
-   */
   private taxDeductions(
-    yearlyCurrentPrice: number,
+    currentYearPrice: number,
     actualYear: number,
-    inflationAdjustment: number,
-    annualDeductiblePaymentToInterest: number
+    inflationFactor: number,
+    annualDeductibleInterest: number
   ): number {
     const {
       isJointReturn,
@@ -278,7 +279,6 @@ export class BuyingCostsCalculator implements Calculator {
       taxCutsExpire,
     } = this.values;
 
-    // Standard deduction, inflation adjusted
     const standardDeduction =
       this.taxParameters.getStandardDeduction(
         actualYear,
@@ -286,116 +286,86 @@ export class BuyingCostsCalculator implements Calculator {
         isJointReturn
       ) * Math.pow(this.inflationAdjustmentRate, actualYear - this.startYear);
 
-    // Common charges for the year, scaled
-    const buyCommonChargeThisYear =
-      this.commonChargeFirstYear * inflationAdjustment;
-    const buyAnnualCommonChargeDeduction =
-      buyCommonChargeThisYear * commonChargeDeductionRate;
-
-    // Cap on SALT
+    const annualCommonCharge = this.firstYearCommonCharge * inflationFactor;
+    const annualCommonChargeDeduction =
+      annualCommonCharge * commonChargeDeductionRate;
     const SALTcap = this.taxParameters.getSALTcap(actualYear, taxCutsExpire);
-
-    // Property tax + deducible portion of common charges
-    const buyAnnualPropertyTaxDeduction =
-      yearlyCurrentPrice * this.actualPropertyTaxRate;
-    const buyAnnualPropTaxAndCommon =
-      buyAnnualPropertyTaxDeduction + buyAnnualCommonChargeDeduction;
-
-    const cappedPropTaxAndCommon = Math.min(buyAnnualPropTaxAndCommon, SALTcap);
-    const buyOtherItemizationsAdjusted = otherDeductions * inflationAdjustment;
-
-    // If you itemize, you get the larger of standard deduction or your “other” itemizations
+    const annualPropertyTax = currentYearPrice * this.propertyTaxRate;
+    const combinedDeductions = annualPropertyTax + annualCommonChargeDeduction;
+    const cappedDeductions = Math.min(combinedDeductions, SALTcap);
+    const adjustedOtherDeductions = otherDeductions * inflationFactor;
     const nonHouseDeductions = Math.max(
-      buyOtherItemizationsAdjusted,
+      adjustedOtherDeductions,
       standardDeduction
     );
+    const totalHouseDeductions =
+      annualDeductibleInterest + cappedDeductions + adjustedOtherDeductions;
+    const deductionBenefit =
+      Math.max(0, totalHouseDeductions - nonHouseDeductions) * marginalTaxRate;
 
-    // Combined total house-related itemized expenses
-    const buyTotalAnnualHouseDeductible =
-      annualDeductiblePaymentToInterest +
-      cappedPropTaxAndCommon +
-      buyOtherItemizationsAdjusted;
-
-    // The marginal benefit from itemizing house deductions vs. not
-    const buyRelativeAnnualSavingsFromDeductions =
-      Math.max(0, buyTotalAnnualHouseDeductible - nonHouseDeductions) *
-      marginalTaxRate;
-
-    return buyRelativeAnnualSavingsFromDeductions;
+    return deductionBenefit;
   }
 
-  // Opportunity cost is the forgone return on your total initial outlay plus
-  // the incremental cost each year, which you treat as if it could've earned returns.
-  private opportunityCost(buyYearlyOpportunityCost: number): number {
+  private opportunityCost(cumulativeOpportunityCost: number): number {
     return (
       this.initialCosts * this.initialOpportunityAdjustment +
-      buyYearlyOpportunityCost
+      cumulativeOpportunityCost
     );
   }
 
-  private closingCosts(yearlyCurrentPrice: number): number {
-    // Selling costs based on final property price
-    return yearlyCurrentPrice * this.values.sellingCosts;
+  private closingCosts(currentYearPrice: number): number {
+    return currentYearPrice * this.values.sellingCosts;
   }
 
-  private sellTaxes(yearlyCurrentPrice: number): number {
+  private sellTaxes(currentYearPrice: number): number {
     const gain =
-      yearlyCurrentPrice - this.values.homePrice - this.CAPITAL_GAINS_EXCLUSION;
+      currentYearPrice - this.values.homePrice - this.CAPITAL_GAINS_EXCLUSION;
     return Math.max(0, gain) * this.CAPITAL_GAINS_TAX_RATE;
   }
 
   private totalSaleCosts(
-    buyLoanPrincipal: number,
-    yearlyCurrentPrice: number
+    remainingLoanPrincipal: number,
+    currentYearPrice: number
   ): number {
     return (
-      this.closingCosts(yearlyCurrentPrice) +
-      this.sellTaxes(yearlyCurrentPrice) +
-      buyLoanPrincipal -
-      yearlyCurrentPrice
+      this.closingCosts(currentYearPrice) +
+      this.sellTaxes(currentYearPrice) +
+      remainingLoanPrincipal -
+      currentYearPrice
     );
-  }
-
-  // Down payment + buyer closing costs
-  private get initialCosts(): number {
-    return this.downPayment + this.closingCost;
   }
 
   private totalCost(
-    buyTotalYearCost: number,
-    buyYearlyOpportunityCost: number,
-    buyLoanPrincipal: number,
-    yearlyCurrentPrice: number
+    totalYearCost: number,
+    cumulativeOpportunityCost: number,
+    remainingLoanPrincipal: number,
+    currentYearPrice: number
   ): number {
     return (
       this.initialCosts +
-      buyTotalYearCost +
-      this.opportunityCost(buyYearlyOpportunityCost) +
-      this.totalSaleCosts(buyLoanPrincipal, yearlyCurrentPrice)
+      totalYearCost +
+      this.opportunityCost(cumulativeOpportunityCost) +
+      this.totalSaleCosts(remainingLoanPrincipal, currentYearPrice)
     );
   }
 
-  /**
-   * Public API:
-   * 1. getTotalCost()
-   * 2. calculate() returns a breakdown of all major cost components
-   */
+  // --- Public API ---
   getTotalCost(values?: CalculatorValues): number {
     if (values) {
       this.values = values;
       this._recurringCosts = null;
     }
     const {
-      buyTotalYearCost,
-      buyYearlyOpportunityCost,
-      buyLoanPrincipal,
-      yearlyCurrentPrice,
+      totalYearCost,
+      opportunityCost: oppCost,
+      remainingLoanPrincipal,
+      currentYearPrice,
     } = this.calculateRecurringCosts();
     return this.totalCost(
-      buyTotalYearCost,
-      buyYearlyOpportunityCost,
-      buyLoanPrincipal,
-      yearlyCurrentPrice
+      totalYearCost,
+      oppCost,
+      remainingLoanPrincipal,
+      currentYearPrice
     );
   }
 
@@ -404,27 +374,25 @@ export class BuyingCostsCalculator implements Calculator {
       this.values = values;
       this._recurringCosts = null;
     }
-    const recurringCosts = this.calculateRecurringCosts();
+    const recurring = this.calculateRecurringCosts();
 
     return {
-      downPayment: this.downPayment,
+      downPayment: this.downPaymentAmount,
       closingCost: this.closingCost,
       initialCost: this.initialCosts,
       totalCost: this.totalCost(
-        recurringCosts.buyTotalYearCost,
-        recurringCosts.buyYearlyOpportunityCost,
-        recurringCosts.buyLoanPrincipal,
-        recurringCosts.yearlyCurrentPrice
+        recurring.totalYearCost,
+        recurring.opportunityCost,
+        recurring.remainingLoanPrincipal,
+        recurring.currentYearPrice
       ),
-      opportunityCost: this.opportunityCost(
-        recurringCosts.buyYearlyOpportunityCost
-      ),
-      recurringCost: recurringCosts.buyTotalYearCost,
+      opportunityCost: this.opportunityCost(recurring.opportunityCost),
+      recurringCost: recurring.totalYearCost,
       netProceeds: this.totalSaleCosts(
-        recurringCosts.buyLoanPrincipal,
-        recurringCosts.yearlyCurrentPrice
+        recurring.remainingLoanPrincipal,
+        recurring.currentYearPrice
       ),
-      yearlyBreakdown: recurringCosts.yearlyBreakdown,
+      yearlyBreakdown: recurring.yearlyBreakdown,
     };
   }
 }

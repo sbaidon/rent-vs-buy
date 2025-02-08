@@ -6,6 +6,7 @@ import { formatCurrency } from "../utils/format-currency";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "../context/app-context";
 import { AreaChart } from "./area-chart";
+import Tooltip from "./Tooltip";
 
 const Results = React.memo(() => {
   const { t } = useTranslation();
@@ -39,10 +40,10 @@ const Results = React.memo(() => {
 
     return new Array(values.yearsToStay).fill(0).map((_, index) => ({
       date: `Year ${index + 1}`,
-      rent: Math.abs(rentBreakdown[index]),
-      buy: Math.abs(buyBreakdown[index]),
+      [t("calculator.rent")]: Math.abs(rentBreakdown[index]),
+      [t("calculator.results.buy")]: Math.abs(buyBreakdown[index]),
     }));
-  }, [results, values.yearsToStay]);
+  }, [results, values.yearsToStay, t]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -143,22 +144,22 @@ const Results = React.memo(() => {
         </table>
 
         <div className="mt-6">
-          <h4 className="text-lg font-semibold mb-3 text-acadia-950">
+          <h4 className="text-lg font-semibold mb-3 text-acadia-950 flex items-center">
             {t("calculator.results.monthlyBreakdown")}
+            <Tooltip
+              content={t("calculator.tooltips.monthlyPayment")}
+              iconClassName="text-acadia-800"
+            />
           </h4>
           <table className="w-full text-left text-acadia-950 border-collapse">
             <thead>
               <tr>
-                <th className="pb-2">{t("calculator.results.costs")}</th>
                 <th className="pb-2">{t("calculator.rent")}</th>
                 <th className="pb-2">{t("calculator.results.buy")}</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-t border-acadia-900">
-                <td className="py-2">
-                  {t("calculator.results.monthlyPayment")}
-                </td>
                 <td className="py-2 slashed-zero tabular-nums text-red-800">
                   {formatCurrency(
                     results.renting.totalCost / (values.yearsToStay * 12),
@@ -186,15 +187,17 @@ const Results = React.memo(() => {
         </div>
       </div>
       <div className="rounded-lg p-6 bg-acadia-950 shadow text-acadia-100">
-        <h4 className="lg font-semibold mb-3">Comparison</h4>
+        <h4 className="lg font-semibold mb-3">
+          {t("calculator.results.comparison")}
+        </h4>
         <AreaChart
           className="p-4 w-full"
           data={yearlyData}
           index="date"
           allowDecimals
-          categories={["rent", "buy"]}
+          categories={[t("calculator.rent"), t("calculator.results.buy")]}
           yAxisWidth={100}
-          colors={["rent", "buy"]}
+          colors={["light", "dark"]}
           fill="solid"
           valueFormatter={(value) => formatCurrency(value, currency)}
         />

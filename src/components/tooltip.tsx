@@ -2,9 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 
 interface TooltipProps {
   content: string;
+  iconClassName?: string;
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ content }) => {
+const Tooltip: React.FC<TooltipProps> = ({
+  content,
+  iconClassName = "text-acadia-200",
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +39,7 @@ const Tooltip: React.FC<TooltipProps> = ({ content }) => {
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="currentColor"
-          className="w-4 h-4 text-acadia-200"
+          className={`w-4 h-4 ${iconClassName}`}
         >
           <path
             fillRule="evenodd"

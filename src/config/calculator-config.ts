@@ -56,7 +56,7 @@ export const INPUT_CONFIG_PER_COUNTRY: Record<
     otherDeductions: { min: 0, max: 50000, step: 1000 },
     buyingCosts: { min: 0, max: 0.06, step: 0.001 },
     sellingCosts: { min: 0, max: 0.1, step: 0.001 },
-    maintenanceRate: { min: 0, max: 0.02, step: 0.001 },
+    maintenanceRate: { min: 0, max: 0.05, step: 0.001 },
     homeInsuranceRate: { min: 0, max: 0.015, step: 0.001 },
     extraPayments: { min: 0, max: 2000, step: 50 },
     securityDeposit: { min: 0, max: 3, step: 1 },

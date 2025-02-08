@@ -21,7 +21,7 @@
       "opportunityCosts": "Costos de Oportunidad",
       "title": "Resultados",
       "monthlyBreakdown": "Desglose Mensual",
-      "monthlyPayment": "Pago Mensual",
+      "monthlyPayment": "Pago Mensual Real",
       "totalCost": "Costo Total",
       "buyingCosts": "Costos de Compra",
       "closingCosts": "Costos de Cierre",
@@ -38,7 +38,8 @@
       "renting": "Rentar",
       "buying": "Comprar",
       "show": "▲ Mostrar Resultados",
-      "hide": "▼ Ocultar Resultados"
+      "hide": "▼ Ocultar Resultados",
+      "comparison": "Comparación"
     },
     "sections": {
       "basics": {
@@ -116,7 +117,8 @@
       "extraPayments": "Costos mensuales adicionales como cuotas de mantenimiento o pagos extra de hipoteca.",
       "securityDeposit": "Depósito inicial requerido por el arrendador, típicamente 1-2 meses de renta.",
       "brokerFee": "Tarifa única pagada al corredor de rentas, común en algunas ciudades.",
-      "monthlyRentersInsurance": "Costo mensual para asegurar tus pertenencias como inquilino."
+      "monthlyRentersInsurance": "Costo mensual para asegurar tus pertenencias como inquilino.",
+      "monthlyPayment": "El pago mensual promedio necesario para alcanzar el costo total durante todo el período"
     }
   },
   "reset": "Reiniciar",

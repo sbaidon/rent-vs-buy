@@ -3,13 +3,13 @@
 export type ColorUtility = "bg" | "stroke" | "fill" | "text";
 
 export const chartColors = {
-  rent: {
+  light: {
     bg: "bg-acadia-200",
     stroke: "stroke-acadia-200",
     fill: "fill-acadia-200",
     text: "text-acadia-200",
   },
-  buy: {
+  dark: {
     bg: "bg-acadia-500",
     stroke: "stroke-acadia-500",
     fill: "fill-acadia-500",
