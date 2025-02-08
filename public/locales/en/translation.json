@@ -11,7 +11,7 @@
     "utilities": "Utilities",
     "hoa": "HOA",
     "rent": "Rent",
-    "about": "This calculator is 100% inspired by the New York Times <a href='https://www.nytimes.com/interactive/2024/upshot/buy-rent-calculator.html' target='_blank'>Rent vs Buy Calculator</a>. This is simply a free version to help you make an informed decision about renting vs buying. Future updates will include country-specific tax rules and regulations. Each input below will show you the threshold where renting is cheaper than buying.",
+    "about": "Free version of the <a href='https://www.nytimes.com/interactive/2024/upshot/buy-rent-calculator.html' target='_blank'>New York Times</a> calculator.",
     "results": {
       "buy": "Buy",
       "initialCosts": "Initial Costs",
@@ -20,7 +20,7 @@
       "total": "Total",
       "opportunityCosts": "Opportunity Costs",
       "title": "Results",
-      "monthlyPayment": "Monthly Payment",
+      "monthlyPayment": "Monthly",
       "totalCost": "Total Cost",
       "buyingCosts": "Buying Costs",
       "closingCosts": "Closing Costs",
@@ -37,7 +37,8 @@
       "renting": "Renting",
       "buying": "Buying",
       "show": "▲ Show Results",
-      "hide": "▼ Hide Results"
+      "hide": "▼ Hide Results",
+      "monthlyBreakdown": "Monthly"
     },
     "sections": {
       "basics": {
@@ -89,7 +90,31 @@
         "monthlyRentersInsurance": "Monthly Renter's insurance"
       }
     },
-    "reset": "Reset"
+    "reset": "Reset",
+    "tooltips": {
+      "homePrice": "The current market price of the home you want to buy. This is the listing price or expected purchase price.",
+      "monthlyRent": "The monthly rent you would pay for a similar property in the same area.",
+      "mortgageRate": "The annual interest rate on your mortgage. This rate determines your monthly payments.",
+      "downPayment": "The percentage of the home price you'll pay upfront. A larger down payment means lower monthly payments and possibly no PMI.",
+      "yearsToStay": "How long you plan to live in the home. This affects whether buying makes financial sense compared to renting.",
+      "mortgageLength": "The total length of your mortgage, typically 15 or 30 years. Longer terms mean lower monthly payments but more interest paid.",
+      "pmi": "Private Mortgage Insurance rate, required if your down payment is less than 20%. This protects the lender if you default.",
+      "homePriceGrowth": "Expected annual increase in home values in your area. Historical average is around 3-4%.",
+      "rentGrowth": "Expected annual increase in rental prices. This varies by location but typically follows inflation.",
+      "investmentReturn": "Expected annual return on investments. This is used to calculate opportunity costs of your down payment.",
+      "inflationRate": "Expected annual rate of inflation. This affects the real value of your costs and gains over time.",
+      "propertyTaxRate": "Annual property tax as a percentage of your home's value. This varies significantly by location.",
+      "marginalTaxRate": "Your highest tax bracket percentage. This affects the tax benefits of homeownership.",
+      "otherDeductions": "Other tax deductions you plan to claim, such as charitable contributions or state taxes.",
+      "buyingCosts": "One-time costs when buying, including inspection, appraisal, and other closing costs.",
+      "sellingCosts": "Future costs of selling, including real estate agent commission (typically 5-6%) and other fees.",
+      "maintenanceRate": "Annual cost of maintaining your home, typically 1-4% of home value per year.",
+      "insurance": "Annual cost of homeowner's insurance as a percentage of home value.",
+      "extraPayments": "Additional monthly costs like HOA fees or extra mortgage payments.",
+      "securityDeposit": "Initial deposit required by landlord, typically 1-2 months' rent.",
+      "brokerFee": "One-time fee paid to rental broker, common in some cities.",
+      "monthlyRentersInsurance": "Monthly cost to insure your belongings as a renter."
+    }
   },
   "currency": "Currency",
   "currency_usd": "US Dollar",

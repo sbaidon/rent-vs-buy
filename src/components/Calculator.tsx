@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { formatCurrency } from "../utils/format-currency";
 import { useAppContext } from "../context/app-context";
 import { INPUT_CONFIG_PER_COUNTRY } from "../config/calculator-config";
+import Tooltip from "./tooltip";
 
 const Calculator: React.FC = () => {
   const { values, updateValue } = useCalculator();
@@ -31,6 +32,16 @@ const Calculator: React.FC = () => {
   // Get the ranges for the current country
   const ranges = INPUT_CONFIG_PER_COUNTRY[country];
 
+  const renderLabel = useCallback(
+    (labelKey: string, tooltipKey: string) => (
+      <div className="flex items-center">
+        <span className="text-acadia-100">{t(labelKey)}</span>
+        <Tooltip content={t(tooltipKey)} />
+      </div>
+    ),
+    [t]
+  );
+
   return (
     <>
       <section className="pt-12">
@@ -44,7 +55,10 @@ const Calculator: React.FC = () => {
               step={ranges.homePrice.step}
               onChange={createChangeHandler("homePrice")}
               format={formatCurrencyValue}
-              label={t("calculator.sections.basics.homePrice")}
+              label={renderLabel(
+                "calculator.sections.basics.homePrice",
+                "calculator.tooltips.homePrice"
+              )}
             />
           </div>
 
@@ -57,7 +71,10 @@ const Calculator: React.FC = () => {
               step={ranges.monthlyRent.step}
               onChange={createChangeHandler("monthlyRent")}
               format={formatCurrencyValue}
-              label={t("calculator.sections.basics.monthlyRent")}
+              label={renderLabel(
+                "calculator.sections.basics.monthlyRent",
+                "calculator.tooltips.monthlyRent"
+              )}
             />
           </div>
         </div>
@@ -75,7 +92,10 @@ const Calculator: React.FC = () => {
               step={ranges.mortgageRate.step}
               onChange={createChangeHandler("mortgageRate")}
               format={formatPercentage}
-              label={t("calculator.sections.mortgage.rate")}
+              label={renderLabel(
+                "calculator.sections.mortgage.rate",
+                "calculator.tooltips.mortgageRate"
+              )}
             />
           </div>
 
@@ -88,7 +108,10 @@ const Calculator: React.FC = () => {
               step={ranges.downPayment.step}
               onChange={createChangeHandler("downPayment")}
               format={formatPercentage}
-              label={t("calculator.sections.mortgage.downPayment")}
+              label={renderLabel(
+                "calculator.sections.mortgage.downPayment",
+                "calculator.tooltips.downPayment"
+              )}
             />
           </div>
 
@@ -101,7 +124,10 @@ const Calculator: React.FC = () => {
               step={ranges.yearsToStay.step}
               onChange={createChangeHandler("yearsToStay")}
               format={(v) => `${v} ${t("years")}`}
-              label={t("calculator.sections.mortgage.yearsToStay")}
+              label={renderLabel(
+                "calculator.sections.mortgage.yearsToStay",
+                "calculator.tooltips.yearsToStay"
+              )}
             />
           </div>
 
@@ -114,7 +140,10 @@ const Calculator: React.FC = () => {
               step={ranges.mortgageTerm.step}
               onChange={createChangeHandler("mortgageTerm")}
               format={(v) => `${v} ${t("years")}`}
-              label={t("calculator.sections.mortgage.mortgageLength")}
+              label={renderLabel(
+                "calculator.sections.mortgage.mortgageLength",
+                "calculator.tooltips.mortgageLength"
+              )}
             />
           </div>
 
@@ -127,7 +156,10 @@ const Calculator: React.FC = () => {
               step={ranges.pmi.step}
               onChange={createChangeHandler("pmi")}
               format={formatPercentage}
-              label={t("calculator.sections.mortgage.pmi")}
+              label={renderLabel(
+                "calculator.sections.mortgage.pmi",
+                "calculator.tooltips.pmi"
+              )}
             />
           </div>
         </div>
@@ -147,7 +179,10 @@ const Calculator: React.FC = () => {
                 step={ranges.homePriceGrowth.step}
                 onChange={createChangeHandler("homePriceGrowth")}
                 format={formatPercentage}
-                label={t("calculator.sections.future.homePriceGrowth")}
+                label={renderLabel(
+                  "calculator.sections.future.homePriceGrowth",
+                  "calculator.tooltips.homePriceGrowth"
+                )}
               />
 
               <FlameGraph
@@ -158,7 +193,10 @@ const Calculator: React.FC = () => {
                 step={ranges.rentGrowth.step}
                 onChange={createChangeHandler("rentGrowth")}
                 format={formatPercentage}
-                label={t("calculator.sections.future.rentGrowth")}
+                label={renderLabel(
+                  "calculator.sections.future.rentGrowth",
+                  "calculator.tooltips.rentGrowth"
+                )}
               />
 
               <FlameGraph
@@ -169,7 +207,10 @@ const Calculator: React.FC = () => {
                 step={ranges.investmentReturn.step}
                 onChange={createChangeHandler("investmentReturn")}
                 format={formatPercentage}
-                label={t("calculator.sections.future.investmentReturn")}
+                label={renderLabel(
+                  "calculator.sections.future.investmentReturn",
+                  "calculator.tooltips.investmentReturn"
+                )}
               />
 
               <FlameGraph
@@ -180,7 +221,10 @@ const Calculator: React.FC = () => {
                 step={ranges.inflationRate.step}
                 onChange={createChangeHandler("inflationRate")}
                 format={formatPercentage}
-                label={t("calculator.sections.future.inflationRate")}
+                label={renderLabel(
+                  "calculator.sections.future.inflationRate",
+                  "calculator.tooltips.inflationRate"
+                )}
               />
             </div>
           </div>
@@ -223,7 +267,10 @@ const Calculator: React.FC = () => {
                 step={ranges.propertyTaxRate.step}
                 onChange={createChangeHandler("propertyTaxRate")}
                 format={formatPercentage}
-                label={t("calculator.sections.taxes.propertyTaxRate")}
+                label={renderLabel(
+                  "calculator.sections.taxes.propertyTaxRate",
+                  "calculator.tooltips.propertyTaxRate"
+                )}
               />
 
               <FlameGraph
@@ -234,7 +281,10 @@ const Calculator: React.FC = () => {
                 step={ranges.marginalTaxRate.step}
                 onChange={createChangeHandler("marginalTaxRate")}
                 format={formatPercentage}
-                label={t("calculator.sections.taxes.marginalTaxRate")}
+                label={renderLabel(
+                  "calculator.sections.taxes.marginalTaxRate",
+                  "calculator.tooltips.marginalTaxRate"
+                )}
               />
 
               <FlameGraph
@@ -245,7 +295,10 @@ const Calculator: React.FC = () => {
                 step={ranges.otherDeductions.step}
                 onChange={createChangeHandler("otherDeductions")}
                 format={formatCurrencyValue}
-                label={t("calculator.sections.taxes.otherDeductions")}
+                label={renderLabel(
+                  "calculator.sections.taxes.otherDeductions",
+                  "calculator.tooltips.otherDeductions"
+                )}
               />
 
               <div className="flex items-center space-x-4">
@@ -290,7 +343,10 @@ const Calculator: React.FC = () => {
                 step={ranges.buyingCosts.step}
                 onChange={createChangeHandler("buyingCosts")}
                 format={formatPercentage}
-                label={t("calculator.sections.closingCosts.buyingCosts")}
+                label={renderLabel(
+                  "calculator.sections.closingCosts.buyingCosts",
+                  "calculator.tooltips.buyingCosts"
+                )}
               />
 
               <FlameGraph
@@ -301,7 +357,10 @@ const Calculator: React.FC = () => {
                 step={ranges.sellingCosts.step}
                 onChange={createChangeHandler("sellingCosts")}
                 format={formatPercentage}
-                label={t("calculator.sections.closingCosts.sellingCosts")}
+                label={renderLabel(
+                  "calculator.sections.closingCosts.sellingCosts",
+                  "calculator.tooltips.sellingCosts"
+                )}
               />
             </div>
           </div>
@@ -319,7 +378,10 @@ const Calculator: React.FC = () => {
                 step={ranges.maintenanceRate.step}
                 onChange={createChangeHandler("maintenanceRate")}
                 format={formatPercentage}
-                label={t("calculator.sections.maintenance.maintenanceRate")}
+                label={renderLabel(
+                  "calculator.sections.maintenance.maintenanceRate",
+                  "calculator.tooltips.maintenanceRate"
+                )}
                 parameter="maintenanceRate"
               />
 
@@ -330,7 +392,10 @@ const Calculator: React.FC = () => {
                 step={ranges.homeInsuranceRate.step}
                 onChange={createChangeHandler("homeInsuranceRate")}
                 format={formatPercentage}
-                label={t("calculator.sections.maintenance.insurance")}
+                label={renderLabel(
+                  "calculator.sections.maintenance.insurance",
+                  "calculator.tooltips.homeInsuranceRate"
+                )}
                 parameter="homeInsuranceRate"
               />
 
@@ -341,7 +406,10 @@ const Calculator: React.FC = () => {
                 step={ranges.extraPayments.step}
                 onChange={createChangeHandler("extraPayments")}
                 format={formatCurrencyValue}
-                label={t("calculator.sections.maintenance.extraPayments")}
+                label={renderLabel(
+                  "calculator.sections.maintenance.extraPayments",
+                  "calculator.tooltips.extraPayments"
+                )}
                 parameter="extraPayments"
               />
             </div>
@@ -362,7 +430,10 @@ const Calculator: React.FC = () => {
                 step={ranges.securityDeposit.step}
                 onChange={createChangeHandler("securityDeposit")}
                 format={(v) => `${v} ${v === 1 ? t("month") : t("months")}`}
-                label={t("calculator.sections.rentingCosts.securityDeposit")}
+                label={renderLabel(
+                  "calculator.sections.rentingCosts.securityDeposit",
+                  "calculator.tooltips.securityDeposit"
+                )}
               />
 
               <FlameGraph
@@ -373,7 +444,10 @@ const Calculator: React.FC = () => {
                 step={ranges.brokerFee.step}
                 onChange={createChangeHandler("brokerFee")}
                 format={formatPercentage}
-                label={t("calculator.sections.rentingCosts.brokerFee")}
+                label={renderLabel(
+                  "calculator.sections.rentingCosts.brokerFee",
+                  "calculator.tooltips.brokerFee"
+                )}
               />
 
               <FlameGraph
@@ -384,8 +458,9 @@ const Calculator: React.FC = () => {
                 step={ranges.monthlyRentersInsurance.step}
                 onChange={createChangeHandler("monthlyRentersInsurance")}
                 format={formatCurrencyValue}
-                label={t(
-                  "calculator.sections.rentingCosts.monthlyRentersInsurance"
+                label={renderLabel(
+                  "calculator.sections.rentingCosts.monthlyRentersInsurance",
+                  "calculator.tooltips.monthlyRentersInsurance"
                 )}
               />
             </div>

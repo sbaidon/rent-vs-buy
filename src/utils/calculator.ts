@@ -8,6 +8,7 @@ export type CalculatorResults = {
   recurringCost: number;
   netProceeds: number;
   totalCost: number;
+  yearlyBreakdown: number[];
 };
 
 export type PriceOutcome =
@@ -72,10 +73,10 @@ export function findIntersectionPoint(
     const value = min + mid * step;
 
     const testValues = { ...values, [parameter]: value };
+    const rentingCost = rentingCalculator.getTotalCost(testValues);
+    const buyingCost = buyingCalculator.getTotalCost(testValues);
 
-    difference =
-      rentingCalculator.getTotalCost(testValues) -
-      buyingCalculator.getTotalCost(testValues);
+    difference = rentingCost - buyingCost;
 
     if (Math.abs(difference) < Math.abs(smallestDifference)) {
       smallestDifference = difference;
@@ -95,6 +96,10 @@ export function findIntersectionPoint(
         left = mid + 1;
       }
     }
+  }
+
+  if (parameter === "yearsToStay") {
+    console.log({ right, left, smallestDifference, closestMid });
   }
 
   return closestMid;

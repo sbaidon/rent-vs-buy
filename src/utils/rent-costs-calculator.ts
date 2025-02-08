@@ -37,45 +37,49 @@ export class RentingCostsCalculator implements Calculator {
       rentInitialCosts * this.initialOpportunityAdjustment;
     const rentFirstYear = this.values.monthlyRent * 12;
 
-    let rentYearlyOpportunityCost = 0;
+    let yearlyOpportunityCost = 0;
     let rentTotalYearCost = 0;
     let rentCost = 0;
     let rentInsuranceCost = 0;
+    let cumulativeCost = 0; // Start with security deposit + broker fee
+
+    const yearlyBreakdown = [];
 
     for (let year = 1; year <= this.values.yearsToStay; ++year) {
       const rentYearCost = rentFirstYear * Math.pow(rentYearCostRate, year - 1);
+      const yearInsurance = this.values.monthlyRentersInsurance * 12;
 
-      // accumulate opportunity costs; this year’s costs counts towards next year’s lost opportunity
-      rentYearlyOpportunityCost +=
-        (rentYearlyOpportunityCost + rentTotalYearCost) *
-        this.effectiveReturnRate;
+      // Calculate opportunity cost on the previous cumulative amount
+      yearlyOpportunityCost +=
+        (yearlyOpportunityCost + rentTotalYearCost) * this.effectiveReturnRate;
 
-      // accumulate yearly costs
       rentCost += rentYearCost;
-      rentInsuranceCost += this.values.monthlyRentersInsurance * 12;
-
-      // recompute yearly totals
+      rentInsuranceCost += yearInsurance;
       rentTotalYearCost = rentCost + rentInsuranceCost;
+
+      cumulativeCost =
+        rentInitialCosts +
+        rentInitialOpportunityCost +
+        rentTotalYearCost +
+        yearlyOpportunityCost;
+
+      if (year === this.values.yearsToStay) {
+        cumulativeCost -= this.securityDeposit;
+      }
+
+      yearlyBreakdown.push(cumulativeCost);
     }
 
-    // termination costs
-    const rentTotalTerminationCost = -this.securityDeposit;
-
-    // totals
     const rentTotalOpportunityCost =
-      rentInitialOpportunityCost + rentYearlyOpportunityCost;
-    const rentTotalCost =
-      rentInitialCosts +
-      rentTotalYearCost +
-      rentTotalOpportunityCost +
-      rentTotalTerminationCost;
+      rentInitialOpportunityCost + yearlyOpportunityCost;
 
     return {
       initialCost: rentInitialCosts,
-      totalCost: rentTotalCost,
+      totalCost: yearlyBreakdown[this.values.yearsToStay - 1],
       recurringCost: rentTotalYearCost,
       opportunityCost: rentTotalOpportunityCost,
       netProceeds: -this.securityDeposit,
+      yearlyBreakdown,
     };
   }
 }

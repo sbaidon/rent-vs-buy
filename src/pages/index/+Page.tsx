@@ -22,7 +22,7 @@ function ResponsiveResults() {
   };
 
   return (
-    <div className="w-full lg:w-1/3 sticky lg:top-4 bottom-0 lg:self-start bg-amber-900/50 rounded-t-lg lg:rounded-lg">
+    <div className="w-full">
       <button
         className="w-full p-2 text-amber-200 hover:text-amber-100 flex items-center justify-center lg:hidden"
         onClick={toggleMinimized}
@@ -47,15 +47,19 @@ function Page() {
 
   return (
     <StrictMode>
-      <div className="pr-6 w-full lg:w-2/3">
-        <h1>{t("calculator.title")}</h1>
-        <p
-          className="pt-4 text-justify"
-          dangerouslySetInnerHTML={{ __html: t("calculator.about") }}
-        />
-        <Calculator />
+      <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+        <div className="w-full lg:w-2/3 px-6 overflow-hidden">
+          <h1>{t("calculator.title")}</h1>
+          <p
+            className="pt-4 text-justify"
+            dangerouslySetInnerHTML={{ __html: t("calculator.about") }}
+          />
+          <Calculator />
+        </div>
+        <div className="w-full lg:w-1/3 sticky lg:top-4 bottom-0 lg:self-start rounded-t-lg lg:rounded-lg lg:mr-6">
+          <ResponsiveResults />
+        </div>
       </div>
-      <ResponsiveResults />
     </StrictMode>
   );
 }

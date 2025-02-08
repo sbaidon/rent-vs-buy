@@ -23,7 +23,7 @@ type FlameGraphProps = {
   format?: (value: number) => string;
   leftColor?: string;
   rightColor?: string;
-  label: string;
+  label: string | React.ReactNode;
   sublabel?: string;
   parameter: keyof CalculatorValues;
 };
@@ -54,9 +54,8 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     [onChange]
   );
 
-  const segments = Math.ceil(
-    Math.min(Math.max(Math.abs(max - min) / step, 100), 100000)
-  );
+  const segments = Math.ceil(Math.min(Math.abs(max - min) / step, 100000));
+
   const minValues = useMemo(
     () => ({
       ...values,
@@ -100,20 +99,8 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     return outcome;
   }, [maxValues, minValues]);
 
-  const getOpacity = useCallback(
-    (index: number, intersectionIndex: number | null) => {
-      if (intersectionIndex === null) return 1; // Full opacity when no intersection
-
-      // Calculate distance from intersection point (0 to 1 scale)
-      const distance = Math.abs(index - intersectionIndex) / (segments / 2);
-      // Convert distance to opacity (0.4 to 1 range)
-      return 0.6 + distance * 0.7;
-    },
-    [segments]
-  );
-
   const flameGraphStep = useMemo(
-    () => (max - min) / (segments - 1),
+    () => (max - min) / segments,
     [max, min, segments]
   );
 
@@ -122,20 +109,19 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     const arr = new Array<{
       value: number;
       rentingIsBetter: boolean;
-      opacity: number;
     }>(length);
 
     switch (priceOutcome) {
       case "rent":
         for (let i = 0; i < length; i++) {
           const x = min + i * flameGraphStep;
-          arr[i] = { value: x, rentingIsBetter: true, opacity: 1 };
+          arr[i] = { value: x, rentingIsBetter: true };
         }
         break;
       case "buy":
         for (let i = 0; i < length; i++) {
           const x = min + i * flameGraphStep;
-          arr[i] = { value: x, rentingIsBetter: false, opacity: 1 };
+          arr[i] = { value: x, rentingIsBetter: false };
         }
         break;
       case "start-buy-end-rent": {
@@ -151,7 +137,6 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
           arr[i] = {
             value: min + i * flameGraphStep,
             rentingIsBetter: i > intersectionIndex,
-            opacity: getOpacity(i, intersectionIndex),
           };
         }
         break;
@@ -169,7 +154,6 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
           arr[i] = {
             value: min + i * flameGraphStep,
             rentingIsBetter: i < intersectionIndex,
-            opacity: getOpacity(i, intersectionIndex),
           };
         }
         break;
@@ -177,16 +161,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
     }
 
     return arr;
-  }, [
-    min,
-    max,
-    segments,
-    parameter,
-    values,
-    priceOutcome,
-    getOpacity,
-    flameGraphStep,
-  ]);
+  }, [min, max, segments, parameter, values, priceOutcome, flameGraphStep]);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -271,7 +246,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
           </p>
         </div>
         {sublabel && <p className="mt-1">{sublabel}</p>}
-        <p>{label}</p>
+        {label}
       </div>
 
       <div className="group">
@@ -294,7 +269,6 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
             max={max}
             step={step}
             onChange={handleRangeChange}
-            aria-label={label}
             id={`${parameter}-input`}
             className="absolute top-0 left-0 w-full h-full cursor-pointer appearance-none bg-transparent
               [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 

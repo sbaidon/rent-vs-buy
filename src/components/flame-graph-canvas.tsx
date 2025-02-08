@@ -10,7 +10,6 @@ import React, {
 type SegmentValue = {
   value: number;
   rentingIsBetter: boolean;
-  opacity: number;
 };
 
 type FlameGraphCanvasProps = {
@@ -87,7 +86,6 @@ export const FlameGraphCanvas = React.memo(
         const seg = segmentValues[i];
         const x = scaleValue(seg.value);
 
-        ctx.globalAlpha = seg.opacity;
         ctx.fillStyle = seg.rentingIsBetter ? leftColor : rightColor;
         ctx.fillRect(x, 0, segmentWidth, height);
       }

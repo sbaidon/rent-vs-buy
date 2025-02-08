@@ -29,6 +29,7 @@ export class BuyingCostsCalculator implements Calculator {
     buyUtilitiesCost: number;
     buyMaintenanceCost: number;
     buyInsuranceCost: number;
+    yearlyBreakdown: number[];
   } | null = null;
 
   constructor(private values: CalculatorValues) {}
@@ -105,10 +106,6 @@ export class BuyingCostsCalculator implements Calculator {
     return this.values.homePrice * this.values.buyingCosts;
   }
 
-  private get totalPurchaseCost(): number {
-    return this.downPayment + this.closingCost;
-  }
-
   private calculateRecurringCosts() {
     if (this._recurringCosts) {
       return this._recurringCosts; // Already computed; skip the loop
@@ -128,9 +125,11 @@ export class BuyingCostsCalculator implements Calculator {
     let yearlyCurrentPrice = 0;
     let buyTotalYearCost = 0;
     let buyTotalSavingsFromDeductions = 0;
+    let cumulativeCost = this.initialCosts;
 
     let buyLoanMonths = this.initialBuyLoanMonths;
     let buyLoanPrincipal = this.initialLoanPrincipal;
+    const yearlyBreakdown = [];
 
     for (let year = 1; year <= yearsToStay; ++year) {
       const actualYear = this.startYear + year - 1;
@@ -226,6 +225,19 @@ export class BuyingCostsCalculator implements Calculator {
         buyInsuranceCost +
         buyPaymentToPMI -
         buyTotalSavingsFromDeductions;
+
+      cumulativeCost = buyTotalYearCost + this.initialCosts;
+      if (year === yearsToStay) {
+        const totalCost = this.totalCost(
+          buyTotalYearCost,
+          buyYearlyOpportunityCost,
+          buyLoanPrincipal,
+          yearlyCurrentPrice
+        );
+        cumulativeCost = totalCost;
+      }
+
+      yearlyBreakdown.push(cumulativeCost);
     }
 
     // Store results so subsequent accesses don’t recompute the entire loop
@@ -242,6 +254,7 @@ export class BuyingCostsCalculator implements Calculator {
       buyUtilitiesCost,
       buyMaintenanceCost,
       buyInsuranceCost,
+      yearlyBreakdown,
     };
 
     return this._recurringCosts;
@@ -313,32 +326,33 @@ export class BuyingCostsCalculator implements Calculator {
 
   // Opportunity cost is the forgone return on your total initial outlay plus
   // the incremental cost each year, which you treat as if it could've earned returns.
-  private get opportunityCost(): number {
-    const { buyYearlyOpportunityCost } = this.calculateRecurringCosts();
+  private opportunityCost(buyYearlyOpportunityCost: number): number {
     return (
-      this.totalPurchaseCost * this.initialOpportunityAdjustment +
+      this.initialCosts * this.initialOpportunityAdjustment +
       buyYearlyOpportunityCost
     );
   }
 
-  private get closingCosts(): number {
+  private closingCosts(yearlyCurrentPrice: number): number {
     // Selling costs based on final property price
-    const { yearlyCurrentPrice } = this.calculateRecurringCosts();
     return yearlyCurrentPrice * this.values.sellingCosts;
   }
 
-  private get sellTaxes(): number {
-    // Capital gains tax if sale price - purchase price > exclusion
-    const { yearlyCurrentPrice } = this.calculateRecurringCosts();
+  private sellTaxes(yearlyCurrentPrice: number): number {
     const gain =
       yearlyCurrentPrice - this.values.homePrice - this.CAPITAL_GAINS_EXCLUSION;
     return Math.max(0, gain) * this.CAPITAL_GAINS_TAX_RATE;
   }
 
-  private totalSaleCosts(buyLoanPrincipal: number): number {
-    const { yearlyCurrentPrice } = this.calculateRecurringCosts();
+  private totalSaleCosts(
+    buyLoanPrincipal: number,
+    yearlyCurrentPrice: number
+  ): number {
     return (
-      this.closingCosts + this.sellTaxes + buyLoanPrincipal - yearlyCurrentPrice
+      this.closingCosts(yearlyCurrentPrice) +
+      this.sellTaxes(yearlyCurrentPrice) +
+      buyLoanPrincipal -
+      yearlyCurrentPrice
     );
   }
 
@@ -347,15 +361,17 @@ export class BuyingCostsCalculator implements Calculator {
     return this.downPayment + this.closingCost;
   }
 
-  private totalCost(buyLoanPrincipal: number): number {
-    const {
-      buyTotalYearCost, // all years' total cost
-    } = this.calculateRecurringCosts();
+  private totalCost(
+    buyTotalYearCost: number,
+    buyYearlyOpportunityCost: number,
+    buyLoanPrincipal: number,
+    yearlyCurrentPrice: number
+  ): number {
     return (
-      this.totalPurchaseCost +
+      this.initialCosts +
       buyTotalYearCost +
-      this.opportunityCost +
-      this.totalSaleCosts(buyLoanPrincipal)
+      this.opportunityCost(buyYearlyOpportunityCost) +
+      this.totalSaleCosts(buyLoanPrincipal, yearlyCurrentPrice)
     );
   }
 
@@ -369,8 +385,18 @@ export class BuyingCostsCalculator implements Calculator {
       this.values = values;
       this._recurringCosts = null;
     }
-    const { buyLoanPrincipal } = this.calculateRecurringCosts();
-    return this.totalCost(buyLoanPrincipal);
+    const {
+      buyTotalYearCost,
+      buyYearlyOpportunityCost,
+      buyLoanPrincipal,
+      yearlyCurrentPrice,
+    } = this.calculateRecurringCosts();
+    return this.totalCost(
+      buyTotalYearCost,
+      buyYearlyOpportunityCost,
+      buyLoanPrincipal,
+      yearlyCurrentPrice
+    );
   }
 
   calculate(values?: CalculatorValues) {
@@ -378,15 +404,27 @@ export class BuyingCostsCalculator implements Calculator {
       this.values = values;
       this._recurringCosts = null;
     }
-    const rc = this.calculateRecurringCosts();
+    const recurringCosts = this.calculateRecurringCosts();
+
     return {
       downPayment: this.downPayment,
       closingCost: this.closingCost,
       initialCost: this.initialCosts,
-      totalCost: this.totalCost(rc.buyLoanPrincipal),
-      opportunityCost: this.opportunityCost,
-      recurringCost: rc.buyTotalYearCost,
-      netProceeds: this.totalSaleCosts(rc.buyLoanPrincipal), // how much is left after all sale costs & mortgage payoff
+      totalCost: this.totalCost(
+        recurringCosts.buyTotalYearCost,
+        recurringCosts.buyYearlyOpportunityCost,
+        recurringCosts.buyLoanPrincipal,
+        recurringCosts.yearlyCurrentPrice
+      ),
+      opportunityCost: this.opportunityCost(
+        recurringCosts.buyYearlyOpportunityCost
+      ),
+      recurringCost: recurringCosts.buyTotalYearCost,
+      netProceeds: this.totalSaleCosts(
+        recurringCosts.buyLoanPrincipal,
+        recurringCosts.yearlyCurrentPrice
+      ),
+      yearlyBreakdown: recurringCosts.yearlyBreakdown,
     };
   }
 }

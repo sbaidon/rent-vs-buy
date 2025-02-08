@@ -11,6 +11,7 @@
     "utilities": "Servicios",
     "hoa": "Cuota de Mantenimiento",
     "rent": "Renta",
+    "about": "Version gratis de la calculadora del <a href='https://www.nytimes.com/interactive/2024/upshot/buy-rent-calculator.html' target='_blank'>New York Times</a>.",
     "results": {
       "buy": "Comprar",
       "initialCosts": "Costos Iniciales",
@@ -19,6 +20,7 @@
       "total": "Total",
       "opportunityCosts": "Costos de Oportunidad",
       "title": "Resultados",
+      "monthlyBreakdown": "Desglose Mensual",
       "monthlyPayment": "Pago Mensual",
       "totalCost": "Costo Total",
       "buyingCosts": "Costos de Compra",
@@ -92,9 +94,32 @@
         "monthlyRentersInsurance": "Seguro de inquilino mensual"
       }
     },
-  "about": "Está basado en la excelente calculadora de Renta vs Compra del New York Times, que puedes encontrar <a href='https://www.nytimes.com/interactive/2024/upshot/buy-rent-calculator.html' target='_blank'>aquí</a>. Esta simplemente es una versión gratis. Próximamente se añadirá soporte para países con reglas fiscales específicas.",
-  "reset": "Reiniciar"
+    "tooltips": {
+      "homePrice": "El precio actual de mercado de la casa que deseas comprar. Este es el precio de lista o el precio esperado de compra.",
+      "monthlyRent": "La renta mensual que pagarías por una propiedad similar en la misma área.",
+      "mortgageRate": "La tasa de interés anual de tu hipoteca. Esta tasa determina tus pagos mensuales.",
+      "downPayment": "El porcentaje del precio de la casa que pagarás por adelantado. Un pago inicial mayor significa pagos mensuales más bajos y posiblemente sin seguro hipotecario.",
+      "yearsToStay": "Cuánto tiempo planeas vivir en la casa. Esto afecta si comprar tiene sentido financiero en comparación con rentar.",
+      "mortgageLength": "La duración total de tu hipoteca, típicamente 15 o 30 años. Plazos más largos significan pagos mensuales más bajos pero más intereses pagados.",
+      "pmi": "Tasa del seguro hipotecario privado, requerido si tu pago inicial es menor al 20%. Esto protege al prestamista en caso de incumplimiento.",
+      "homePriceGrowth": "Aumento anual esperado en el valor de las casas en tu área. El promedio histórico es alrededor del 3-4%.",
+      "rentGrowth": "Aumento anual esperado en los precios de renta. Varía según la ubicación pero típicamente sigue la inflación.",
+      "investmentReturn": "Retorno anual esperado de inversiones. Se usa para calcular los costos de oportunidad de tu pago inicial.",
+      "inflationRate": "Tasa anual esperada de inflación. Esto afecta el valor real de tus costos y ganancias con el tiempo.",
+      "propertyTaxRate": "Impuesto predial anual como porcentaje del valor de tu casa. Varía significativamente según la ubicación.",
+      "marginalTaxRate": "Tu porcentaje de impuestos más alto. Esto afecta los beneficios fiscales de ser propietario.",
+      "otherDeductions": "Otras deducciones fiscales que planeas reclamar, como contribuciones caritativas o impuestos estatales.",
+      "buyingCosts": "Costos únicos al comprar, incluyendo inspección, avalúo y otros costos de cierre.",
+      "sellingCosts": "Costos futuros de venta, incluyendo comisión del agente inmobiliario (típicamente 5-6%) y otras tarifas.",
+      "maintenanceRate": "Costo anual de mantener tu casa, típicamente 1-4% del valor de la casa por año.",
+      "insurance": "Costo anual del seguro de propietario como porcentaje del valor de la casa.",
+      "extraPayments": "Costos mensuales adicionales como cuotas de mantenimiento o pagos extra de hipoteca.",
+      "securityDeposit": "Depósito inicial requerido por el arrendador, típicamente 1-2 meses de renta.",
+      "brokerFee": "Tarifa única pagada al corredor de rentas, común en algunas ciudades.",
+      "monthlyRentersInsurance": "Costo mensual para asegurar tus pertenencias como inquilino."
+    }
   },
+  "reset": "Reiniciar",
   "currency": "Moneda",
   "currency_usd": "Dólar estadounidense",
   "currency_eur": "Euro",
