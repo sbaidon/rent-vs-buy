@@ -1,6 +1,6 @@
 import vikeReact from "vike-react/config";
 import type { Config } from "vike/types";
-import favicon from "../favicon.ico";
+import favicon from "../image_fx_.jpg";
 import Layout from "../layout";
 import image from "../logo.webp";
 
