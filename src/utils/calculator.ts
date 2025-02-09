@@ -98,9 +98,5 @@ export function findIntersectionPoint(
     }
   }
 
-  if (parameter === "yearsToStay") {
-    console.log({ right, left, smallestDifference, closestMid });
-  }
-
   return closestMid;
 }

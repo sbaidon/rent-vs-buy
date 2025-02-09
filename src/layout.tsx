@@ -35,9 +35,12 @@ function Navbar() {
   }, []);
 
   return (
-    <div className="flex justify-end p-6 relative" ref={menuRef}>
+    <div
+      className="flex justify-end p-6 sticky lg:relative top-0 isolate z-1"
+      ref={menuRef}
+    >
       <button
-        className="lg:hidden text-white p-2"
+        className="lg:hidden text-white p-2 sticky top-0"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
         aria-label={t("toggle_menu")}
       >
@@ -58,7 +61,7 @@ function Navbar() {
 
       {/* Desktop menu */}
       <div
-        className={`
+        className={`isolate 
         flex-col gap-4 absolute right-6 top-[72px] p-4 lg:p-0 w-48 rounded-lg shadow-lg
         lg:w-auto lg:static lg:flex-row lg:bg-transparent lg:shadow-none
         lg:flex ${isMenuOpen ? "flex bg-amber-950" : "hidden"}
@@ -109,7 +112,7 @@ function Navbar() {
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  capture_pageview: false,
+  capture_pageview: true,
 };
 
 function Layout({ children }: { children: React.ReactNode }) {

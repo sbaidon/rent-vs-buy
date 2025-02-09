@@ -6,7 +6,7 @@ import { formatCurrency } from "../utils/format-currency";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "../context/app-context";
 import { AreaChart } from "./area-chart";
-import Tooltip from "./Tooltip";
+import Tooltip from "./tooltip";
 
 const Results = React.memo(() => {
   const { t } = useTranslation();
@@ -46,9 +46,9 @@ const Results = React.memo(() => {
   }, [results, values.yearsToStay, t]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="bg-t p-8 lg:p-0 max-w-[480px] mx-auto lg:max-w-full flex flex-col gap-6 items-center">
       <div
-        className={`rounded-lg p-6 w-full shadow ${
+        className={`max-h-[900px] rounded-lg p-6 w-full shadow ${
           isRentingBetter ? "bg-acadia-200" : "bg-acadia-400"
         } text-acadia-950`}
       >
@@ -186,7 +186,7 @@ const Results = React.memo(() => {
           </button>
         </div>
       </div>
-      <div className="rounded-lg p-6 bg-acadia-950 shadow text-acadia-100">
+      <div className="max-h-[500px] w-full rounded-lg p-6 bg-acadia-950 shadow text-acadia-100">
         <h4 className="lg font-semibold mb-3">
           {t("calculator.results.comparison")}
         </h4>

@@ -5,14 +5,15 @@ import { useTranslation } from "react-i18next";
 import Calculator from "../../components/calculator";
 import Results from "../../components/results";
 
-function ResponsiveResults() {
-  const [isMinimized, setIsMinimized] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("resultsMinimized");
-      return stored !== null ? JSON.parse(stored) : true;
-    }
-    return true;
-  });
+type ResponsiveResultsProps = {
+  isMinimized: boolean;
+  setIsMinimized: (isMinimized: boolean) => void;
+};
+
+function ResponsiveResults({
+  isMinimized,
+  setIsMinimized,
+}: ResponsiveResultsProps) {
   const { t } = useTranslation();
 
   const toggleMinimized = () => {
@@ -24,7 +25,7 @@ function ResponsiveResults() {
   return (
     <div className="w-full">
       <button
-        className="w-full p-2 text-amber-200 hover:text-amber-100 flex items-center justify-center lg:hidden"
+        className="rounded-lg bg-acadia-950 w-full p-2 text-white hover:text-amber-100 flex items-center justify-center lg:hidden"
         onClick={toggleMinimized}
       >
         {isMinimized
@@ -44,6 +45,13 @@ function ResponsiveResults() {
 
 function Page() {
   const { t } = useTranslation();
+  const [isMinimized, setIsMinimized] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("resultsMinimized");
+      return stored !== null ? JSON.parse(stored) : true;
+    }
+    return true;
+  });
 
   return (
     <StrictMode>
@@ -54,10 +62,15 @@ function Page() {
             className="pt-4 text-justify"
             dangerouslySetInnerHTML={{ __html: t("calculator.about") }}
           />
-          <Calculator />
+          <div className={`${!isMinimized ? "blur-sm lg:blur-none" : ""}`}>
+            <Calculator />
+          </div>
         </div>
         <div className="w-full lg:w-1/3 sticky lg:top-4 bottom-0 lg:self-start rounded-t-lg lg:rounded-lg lg:mr-6">
-          <ResponsiveResults />
+          <ResponsiveResults
+            setIsMinimized={setIsMinimized}
+            isMinimized={isMinimized}
+          />
         </div>
       </div>
     </StrictMode>

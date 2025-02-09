@@ -394,7 +394,7 @@ const Calculator: React.FC = () => {
                 format={formatPercentage}
                 label={renderLabel(
                   "calculator.sections.maintenance.insurance",
-                  "calculator.tooltips.homeInsuranceRate"
+                  "calculator.tooltips.insurance"
                 )}
                 parameter="homeInsuranceRate"
               />
