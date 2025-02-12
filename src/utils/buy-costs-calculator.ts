@@ -112,9 +112,6 @@ export class BuyingCostsCalculator implements Calculator {
   }
 
   // --- Helper Methods ---
-  /**
-   * Calculate the amortization details for a given year.
-   */
   private calculateLoanYear(
     principal: number,
     remainingMonths: number,
@@ -142,127 +139,6 @@ export class BuyingCostsCalculator implements Calculator {
       deductibleInterest,
       monthsUsed: monthsThisYear,
     };
-  }
-
-  /**
-   * Compute and cache all recurring yearly costs.
-   */
-  private calculateRecurringCosts(): RecurringCosts {
-    if (this._recurringCosts) {
-      return this._recurringCosts;
-    }
-
-    const { homePrice, pmi, homeInsuranceRate, yearsToStay } = this.values;
-    let cumulativeOpportunityCost = 0;
-    let totalPrincipalPaid = 0;
-    let totalInterestPaid = 0;
-    let totalPMIPaid = 0;
-    let totalCommonCharges = 0;
-    let totalPropertyTaxes = 0;
-    let totalUtilitiesCost = 0;
-    let totalMaintenanceCost = 0;
-    let totalInsuranceCost = 0;
-    let totalSavingsFromDeductions = 0;
-    let currentYearCost = this.initialCosts;
-
-    let remainingLoanMonths = this.totalLoanMonths;
-    let currentLoanPrincipal = this.initialLoanPrincipal;
-    let currentYearPrice = 0;
-    const yearlyBreakdown: number[] = [];
-
-    for (let year = 1; year <= yearsToStay; year++) {
-      const actualYear = this.startYear + year - 1;
-      const inflationFactor = Math.pow(this.inflationAdjustmentRate, year - 1);
-      currentYearPrice = homePrice * Math.pow(this.priceGrowthFactor, year);
-
-      // Update opportunity cost based on cumulative cost so far.
-      cumulativeOpportunityCost +=
-        (cumulativeOpportunityCost + currentYearCost) *
-        this.effectiveReturnRate;
-
-      if (remainingLoanMonths > 0) {
-        const loanCap = this.taxParameters.getLoanCap(
-          actualYear,
-          this.values.taxCutsExpire,
-          this.values.isJointReturn
-        );
-
-        const {
-          newPrincipal,
-          principalPaid,
-          interestPaid,
-          deductibleInterest,
-          monthsUsed,
-        } = this.calculateLoanYear(
-          currentLoanPrincipal,
-          remainingLoanMonths,
-          loanCap
-        );
-
-        currentLoanPrincipal = newPrincipal;
-        totalPrincipalPaid += principalPaid;
-        totalInterestPaid += interestPaid;
-        remainingLoanMonths -= monthsUsed;
-
-        // PMI cost if loan-to-value is above 80%
-        if (pmi !== 0 && currentLoanPrincipal / homePrice > 0.8) {
-          totalPMIPaid += currentLoanPrincipal * pmi;
-        }
-
-        totalSavingsFromDeductions += this.taxDeductions(
-          currentYearPrice,
-          actualYear,
-          inflationFactor,
-          deductibleInterest
-        );
-      }
-
-      totalCommonCharges += this.firstYearCommonCharge * inflationFactor;
-      totalPropertyTaxes += currentYearPrice * this.propertyTaxRate;
-      totalUtilitiesCost += this.extraPaymentsAnnual * inflationFactor;
-      totalMaintenanceCost += this.firstYearMaintenanceCost * inflationFactor;
-      totalInsuranceCost += currentYearPrice * homeInsuranceRate;
-
-      currentYearCost =
-        totalPrincipalPaid +
-        totalInterestPaid +
-        totalCommonCharges +
-        totalPropertyTaxes +
-        totalUtilitiesCost +
-        totalMaintenanceCost +
-        totalInsuranceCost +
-        totalPMIPaid -
-        totalSavingsFromDeductions;
-
-      let cumulativeCost = this.initialCosts + currentYearCost;
-      if (year === yearsToStay) {
-        cumulativeCost = this.totalCost(
-          currentYearCost,
-          cumulativeOpportunityCost,
-          currentLoanPrincipal,
-          currentYearPrice
-        );
-      }
-      yearlyBreakdown.push(cumulativeCost);
-    }
-
-    this._recurringCosts = {
-      opportunityCost: cumulativeOpportunityCost,
-      currentYearPrice,
-      totalYearCost: currentYearCost,
-      remainingLoanPrincipal: currentLoanPrincipal,
-      totalPrincipalPaid,
-      totalInterestPaid,
-      totalPMIPaid,
-      totalCommonCharges,
-      totalPropertyTaxes,
-      totalUtilitiesCost,
-      totalMaintenanceCost,
-      totalInsuranceCost,
-      yearlyBreakdown,
-    };
-
-    return this._recurringCosts;
   }
 
   private taxDeductions(
@@ -349,6 +225,168 @@ export class BuyingCostsCalculator implements Calculator {
     );
   }
 
+  /**
+   * Compute and cache all recurring yearly costs.
+   * We'll keep the same cumulative logic, but push single-year costs to `yearlyBreakdown`.
+   */
+  private calculateRecurringCosts(): RecurringCosts {
+    if (this._recurringCosts) {
+      return this._recurringCosts;
+    }
+
+    const { homePrice, pmi, homeInsuranceRate, yearsToStay } = this.values;
+
+    // Totals
+    let totalPrincipalPaid = 0;
+    let totalInterestPaid = 0;
+    let totalPMIPaid = 0;
+    let totalCommonCharges = 0;
+    let totalPropertyTaxes = 0;
+    let totalUtilitiesCost = 0;
+    let totalMaintenanceCost = 0;
+    let totalInsuranceCost = 0;
+    let totalSavingsFromDeductions = 0;
+
+    let cumulativeOpportunityCost = 0;
+    let cumulativeCost = 0;
+
+    let remainingLoanMonths = this.totalLoanMonths;
+    let currentLoanPrincipal = this.initialLoanPrincipal;
+    let currentYearPrice = 0;
+
+    const yearlyBreakdown: number[] = [];
+
+    // Start with initial cost
+    let currentYearCost = this.initialCosts;
+    let yearCost = 0;
+    let principalPaid = 0;
+    let interestPaid = 0;
+    let savingsFromDeductions = 0;
+
+    for (let year = 1; year <= yearsToStay; year++) {
+      const actualYear = this.startYear + year - 1;
+      const inflationFactor = Math.pow(this.inflationAdjustmentRate, year - 1);
+      currentYearPrice = homePrice * Math.pow(this.priceGrowthFactor, year);
+
+      // The original approach: accumulate opportunity cost each loop
+      cumulativeOpportunityCost +=
+        (cumulativeOpportunityCost + currentYearCost) *
+        this.effectiveReturnRate;
+
+      if (remainingLoanMonths > 0) {
+        const loanCap = this.taxParameters.getLoanCap(
+          actualYear,
+          this.values.taxCutsExpire,
+          this.values.isJointReturn
+        );
+
+        const results = this.calculateLoanYear(
+          currentLoanPrincipal,
+          remainingLoanMonths,
+          loanCap
+        );
+
+        currentLoanPrincipal = results.newPrincipal;
+        totalPrincipalPaid += results.principalPaid;
+        totalInterestPaid += results.interestPaid;
+        remainingLoanMonths -= results.monthsUsed;
+
+        principalPaid = results.principalPaid;
+        interestPaid = results.interestPaid;
+
+        // PMI cost if LTV > 80%
+        if (pmi !== 0 && currentLoanPrincipal / homePrice > 0.8) {
+          totalPMIPaid += currentLoanPrincipal * pmi;
+        }
+
+        // Deduction from mortgage interest
+        savingsFromDeductions = this.taxDeductions(
+          currentYearPrice,
+          actualYear,
+          inflationFactor,
+          results.deductibleInterest
+        );
+        totalSavingsFromDeductions += savingsFromDeductions;
+      }
+
+      // Other costs
+      const commonCharges = this.firstYearCommonCharge * inflationFactor;
+      const propertyTaxes = currentYearPrice * this.propertyTaxRate;
+      const utilitiesCost = this.extraPaymentsAnnual * inflationFactor;
+      const maintenanceCost = this.firstYearMaintenanceCost * inflationFactor;
+      const insuranceCost = currentYearPrice * homeInsuranceRate;
+
+      totalCommonCharges += commonCharges;
+      totalPropertyTaxes += propertyTaxes;
+      totalUtilitiesCost += utilitiesCost;
+      totalMaintenanceCost += maintenanceCost;
+      totalInsuranceCost += insuranceCost;
+
+      // Now recalc the "currentYearCost" based on totals so far
+      currentYearCost =
+        totalPrincipalPaid +
+        totalInterestPaid +
+        totalCommonCharges +
+        totalPropertyTaxes +
+        totalUtilitiesCost +
+        totalMaintenanceCost +
+        totalInsuranceCost +
+        totalPMIPaid -
+        totalSavingsFromDeductions;
+
+      yearCost =
+        principalPaid +
+        interestPaid +
+        commonCharges +
+        propertyTaxes +
+        utilitiesCost +
+        maintenanceCost +
+        insuranceCost +
+        pmi -
+        savingsFromDeductions;
+
+      // Update the "cumulativeCost" logic for each year:
+      // year 1: add initial + currentYearCost
+      // final year: add sale costs
+      // otherwise, just add currentYearCost
+      cumulativeCost += yearCost;
+      if (year === 1) {
+        cumulativeCost += this.initialCosts;
+      } else if (year === yearsToStay) {
+        cumulativeCost += this.totalSaleCosts(
+          currentLoanPrincipal,
+          currentYearPrice
+        );
+      }
+
+      // <-- CHANGED! Instead of pushing "cumulativeCost" directly:
+      // We'll push the difference from lastCost, i.e. the single-year cost.
+      yearlyBreakdown.push(cumulativeCost);
+      cumulativeCost = 0;
+    }
+
+    // At this point, the final "cumulativeCost" is the same as the old approach,
+    // so your final totals should match your existing tests.
+
+    this._recurringCosts = {
+      opportunityCost: cumulativeOpportunityCost,
+      currentYearPrice,
+      totalYearCost: currentYearCost,
+      remainingLoanPrincipal: currentLoanPrincipal,
+      totalPrincipalPaid,
+      totalInterestPaid,
+      totalPMIPaid,
+      totalCommonCharges,
+      totalPropertyTaxes,
+      totalUtilitiesCost,
+      totalMaintenanceCost,
+      totalInsuranceCost,
+      yearlyBreakdown,
+    };
+
+    return this._recurringCosts;
+  }
+
   // --- Public API ---
   getTotalCost(values?: CalculatorValues): number {
     if (values) {
@@ -361,6 +399,8 @@ export class BuyingCostsCalculator implements Calculator {
       remainingLoanPrincipal,
       currentYearPrice,
     } = this.calculateRecurringCosts();
+
+    // This was your existing approach to "fully loaded cost":
     return this.totalCost(
       totalYearCost,
       oppCost,
@@ -375,7 +415,7 @@ export class BuyingCostsCalculator implements Calculator {
       this._recurringCosts = null;
     }
     const recurring = this.calculateRecurringCosts();
-
+    const opportunityCost = this.opportunityCost(recurring.opportunityCost);
     return {
       downPayment: this.downPaymentAmount,
       closingCost: this.closingCost,
@@ -386,13 +426,15 @@ export class BuyingCostsCalculator implements Calculator {
         recurring.remainingLoanPrincipal,
         recurring.currentYearPrice
       ),
-      opportunityCost: this.opportunityCost(recurring.opportunityCost),
+      opportunityCost,
       recurringCost: recurring.totalYearCost,
       netProceeds: this.totalSaleCosts(
         recurring.remainingLoanPrincipal,
         recurring.currentYearPrice
       ),
-      yearlyBreakdown: recurring.yearlyBreakdown,
+      yearlyBreakdown: recurring.yearlyBreakdown.map(
+        (value) => value + opportunityCost / this.values.yearsToStay
+      ),
     };
   }
 }

@@ -76,7 +76,7 @@ function Navbar() {
             value={currency}
           >
             <option value="USD">{t("currency_usd")} ($)</option>
-            <option value="EUR">{t("currency_eur")} (€)</option>
+            <option value="CAD">{t("currency_cad")} ($)</option>
             <option value="MXN">{t("currency_mxn")} ($)</option>
           </select>
 

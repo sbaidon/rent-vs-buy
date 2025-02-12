@@ -39,7 +39,8 @@
       "show": "▲ Show Results",
       "hide": "▼ Hide Results",
       "monthlyBreakdown": "Real Monthly Payment",
-      "comparison": "Comparison"
+      "yearBreakdown": "Yearly Breakdown",
+      "runningTotal": "Running Total"
     },
     "sections": {
       "basics": {
@@ -115,12 +116,13 @@
       "securityDeposit": "Initial deposit required by landlord, typically 1-2 months' rent.",
       "brokerFee": "One-time fee paid to rental broker, common in some cities.",
       "monthlyRentersInsurance": "Monthly cost to insure your belongings as a renter.",
-      "monthlyPayment": "The average monthly payment needed to reach the total cost over the entire period"
+      "monthlyPayment": "The average monthly payment needed to reach the total cost over the entire period",
+      "yearBreakdown": "Opportunity costs are prorated per year. Toggle the switch to view either a running total or the actual amount paid per year."
     }
   },
   "currency": "Currency",
   "currency_usd": "US Dollar",
-  "currency_eur": "Euro",
+  "currency_cad": "Canadian Dollar",
   "currency_mxn": "Mexican Peso",
   "language": "Language",
   "language_english": "English",

@@ -13,6 +13,9 @@ const Results = React.memo(() => {
   const { values, reset } = useCalculator();
   const { currency } = useAppContext();
 
+  // New state to allow toggling between cumulative & non-cumulative yearly values
+  const [cumulative, setCumulative] = React.useState(true);
+
   const results = React.useMemo(() => {
     const buyingCalculator = new BuyingCostsCalculator(values);
     const rentingCalculator = new RentingCostsCalculator(values);
@@ -38,12 +41,36 @@ const Results = React.memo(() => {
     const rentBreakdown = results.renting.yearlyBreakdown;
     const buyBreakdown = results.buying.yearlyBreakdown;
 
+    // Create an array with cumulative sums from buyBreakdown.
+    const aggregatedBuyBreakdown = buyBreakdown.reduce<number[]>(
+      (acc, current) => {
+        const lastSum = acc.length > 0 ? acc[acc.length - 1] : 0;
+        acc.push(lastSum + current);
+        return acc;
+      },
+      []
+    );
+
+    // Create an array with cumulative sums from rentBreakdown.
+    const aggregatedRentBreakdown = rentBreakdown.reduce<number[]>(
+      (acc, current) => {
+        const lastSum = acc.length > 0 ? acc[acc.length - 1] : 0;
+        acc.push(lastSum + current);
+        return acc;
+      },
+      []
+    );
+
     return new Array(values.yearsToStay).fill(0).map((_, index) => ({
       date: `Year ${index + 1}`,
-      [t("calculator.rent")]: Math.abs(rentBreakdown[index]),
-      [t("calculator.results.buy")]: Math.abs(buyBreakdown[index]),
+      [t("calculator.rent")]: cumulative
+        ? Math.abs(aggregatedRentBreakdown[index])
+        : Math.abs(rentBreakdown[index]),
+      [t("calculator.results.buy")]: cumulative
+        ? aggregatedBuyBreakdown[index]
+        : buyBreakdown[index],
     }));
-  }, [results, values.yearsToStay, t]);
+  }, [results, values.yearsToStay, t, cumulative]);
 
   return (
     <div className="bg-t p-8 lg:p-0 max-w-[480px] mx-auto lg:max-w-full flex flex-col gap-6 items-center">
@@ -187,9 +214,26 @@ const Results = React.memo(() => {
         </div>
       </div>
       <div className="max-h-[500px] w-full rounded-lg p-6 bg-acadia-950 shadow text-acadia-100">
-        <h4 className="lg font-semibold mb-3">
-          {t("calculator.results.comparison")}
-        </h4>
+        <div className="flex justify-between items-center mb-3">
+          <h4 className="lg font-semibold flex items-baseline">
+            {t("calculator.results.yearBreakdown")}
+            <Tooltip
+              content={t("calculator.tooltips.yearBreakdown")}
+              iconClassName="text-acadia-200"
+            />
+          </h4>
+          <div className="flex items-center space-x-2">
+            <label htmlFor="cumulative-toggle" className="text-sm">
+              {t("calculator.results.runningTotal")}
+            </label>
+            <input
+              id="cumulative-toggle"
+              type="checkbox"
+              checked={cumulative}
+              onChange={() => setCumulative((prev) => !prev)}
+            />
+          </div>
+        </div>
         <AreaChart
           className="p-4 w-full"
           data={yearlyData}

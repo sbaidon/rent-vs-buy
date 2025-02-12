@@ -111,20 +111,14 @@ export class RentingCostsCalculator implements Calculator {
       cumulativeInsuranceCost += annualInsurance;
       cumulativeRecurringCost = cumulativeRentCost + cumulativeInsuranceCost;
 
-      // Calculate the cumulative total cost for this year:
-      // initial costs + opportunity cost on initial outlay + recurring costs + cumulative opportunity cost.
-      let totalCostForYear =
-        initialCosts +
-        initialOpportunityCost +
-        cumulativeRecurringCost +
-        cumulativeOpportunityCost;
-
-      // At the end of the tenancy, the security deposit is assumed to be returned.
-      if (year === this.values.yearsToStay) {
-        totalCostForYear -= this.securityDeposit;
+      let yearCosts = annualRent + annualInsurance;
+      if (year === 1) {
+        yearCosts += initialCosts;
+      } else if (year === this.values.yearsToStay) {
+        yearCosts -= this.securityDeposit;
       }
 
-      yearlyBreakdown.push(totalCostForYear);
+      yearlyBreakdown.push(yearCosts);
     }
 
     const totalOpportunityCost =
@@ -132,11 +126,17 @@ export class RentingCostsCalculator implements Calculator {
 
     const result: RentingBreakdown = {
       initialCost: initialCosts,
-      totalCost: yearlyBreakdown[this.values.yearsToStay - 1],
+      totalCost:
+        initialCosts +
+        cumulativeRecurringCost +
+        totalOpportunityCost -
+        this.securityDeposit,
       recurringCost: cumulativeRecurringCost,
       opportunityCost: totalOpportunityCost,
       netProceeds: -this.securityDeposit,
-      yearlyBreakdown,
+      yearlyBreakdown: yearlyBreakdown.map(
+        (value) => value + totalOpportunityCost / this.values.yearsToStay
+      ),
     };
 
     this._calculationResult = result;
