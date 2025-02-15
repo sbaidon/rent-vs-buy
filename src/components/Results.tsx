@@ -73,7 +73,7 @@ const Results = React.memo(() => {
   }, [results, values.yearsToStay, t, cumulative]);
 
   return (
-    <div className="bg-t p-8 lg:p-0 max-w-[480px] mx-auto lg:max-w-full flex flex-col gap-6 items-center">
+    <div className="p-8 lg:p-0 mx-auto max-w-[600px] lg:max-w-full flex flex-col gap-6 items-center">
       <div
         className={`max-h-[900px] rounded-lg p-6 w-full shadow ${
           isRentingBetter ? "bg-acadia-200" : "bg-acadia-400"
@@ -97,15 +97,13 @@ const Results = React.memo(() => {
           </p>
         </div>
 
-        <table className="w-full text-left text-acadia-950 border-collapse">
-          <thead>
-            <tr>
-              <th className="pb-2">{t("calculator.results.costs")}</th>
-              <th className="pb-2">{t("calculator.rent")}</th>
-              <th className="pb-2">{t("calculator.results.buy")}</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="w-full text-acadia-950">
+          <div className="grid grid-cols-3 text-left mb-2">
+            <div className="font-semibold">{t("calculator.results.costs")}</div>
+            <div className="font-semibold">{t("calculator.rent")}</div>
+            <div className="font-semibold">{t("calculator.results.buy")}</div>
+          </div>
+          <div className="divide-y divide-acadia-900">
             {[
               [
                 t("calculator.results.initialCosts"),
@@ -128,47 +126,47 @@ const Results = React.memo(() => {
                 results.buying.netProceeds,
               ],
             ].map(([label, rent, buy]) => (
-              <tr key={label} className="border-t border-acadia-900">
-                <td className="py-2">{label}</td>
-                <td
-                  className={`py-2 slashed-zero tabular-nums ${
+              <div key={label} className="grid grid-cols-3 py-2">
+                <p className="text-acadia-950">{label}</p>
+                <div
+                  className={`truncate slashed-zero tabular-nums ${
                     (rent as number) > 0 ? "text-red-800" : "text-green-800"
                   }`}
                 >
                   {formatCurrency(rent as number, currency)}
-                </td>
-                <td
-                  className={`py-2 slashed-zero tabular-nums ${
+                </div>
+                <div
+                  className={`truncate slashed-zero tabular-nums ${
                     (buy as number) > 0 ? "text-red-800" : "text-green-800"
                   }`}
                 >
                   {formatCurrency(buy as number, currency)}
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
-            <tr className="border-t border-acadia-900">
-              <td className="py-2">{t("calculator.results.total")}</td>
-              <td
-                className={`py-2 slashed-zero tabular-nums ${
+            <div className="grid grid-cols-3 py-2">
+              <div>{t("calculator.results.total")}</div>
+              <div
+                className={`truncate slashed-zero tabular-nums ${
                   results.renting.totalCost > 0
                     ? "text-red-800"
                     : "text-green-800"
                 }`}
               >
                 {formatCurrency(results.renting.totalCost, currency)}
-              </td>
-              <td
-                className={`py-2 slashed-zero tabular-nums ${
+              </div>
+              <div
+                className={`truncate slashed-zero tabular-nums ${
                   results.buying.totalCost > 0
                     ? "text-red-800"
                     : "text-green-800"
                 }`}
               >
                 {formatCurrency(results.buying.totalCost, currency)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="mt-6">
           <h4 className="text-lg font-semibold mb-3 text-acadia-950 flex items-center">
@@ -178,30 +176,28 @@ const Results = React.memo(() => {
               iconClassName="text-acadia-800"
             />
           </h4>
-          <table className="w-full text-left text-acadia-950 border-collapse">
-            <thead>
-              <tr>
-                <th className="pb-2">{t("calculator.rent")}</th>
-                <th className="pb-2">{t("calculator.results.buy")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t border-acadia-900">
-                <td className="py-2 slashed-zero tabular-nums text-red-800">
+          <div className="w-full text-acadia-950">
+            <div className="grid grid-cols-2 text-left mb-2">
+              <div className="font-semibold">{t("calculator.rent")}</div>
+              <div className="font-semibold">{t("calculator.results.buy")}</div>
+            </div>
+            <div className="border-t border-acadia-900">
+              <div className="grid grid-cols-2 py-2">
+                <div className="truncate slashed-zero tabular-nums text-red-800">
                   {formatCurrency(
                     results.renting.totalCost / (values.yearsToStay * 12),
                     currency
                   )}
-                </td>
-                <td className="py-2 slashed-zero tabular-nums text-red-800">
+                </div>
+                <div className="truncate slashed-zero tabular-nums text-red-800">
                   {formatCurrency(
                     results.buying.totalCost / (values.yearsToStay * 12),
                     currency
                   )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end mt-4">
@@ -214,14 +210,16 @@ const Results = React.memo(() => {
         </div>
       </div>
       <div className="max-h-[500px] w-full rounded-lg p-6 bg-acadia-950 shadow text-acadia-100">
-        <div className="flex justify-between items-center mb-3">
-          <h4 className="lg font-semibold flex items-baseline">
-            {t("calculator.results.yearBreakdown")}
+        <div className="flex-col lg:flex-row gap-4 lg:gap-0 flex justify-between items-center mb-3">
+          <div className="flex items-baseline">
+            <h4 className="lg font-semibold flex items-baseline">
+              {t("calculator.results.yearBreakdown")}
+            </h4>
             <Tooltip
               content={t("calculator.tooltips.yearBreakdown")}
               iconClassName="text-acadia-200"
             />
-          </h4>
+          </div>
           <div className="flex items-center space-x-2">
             <label htmlFor="cumulative-toggle" className="text-sm">
               {t("calculator.results.runningTotal")}

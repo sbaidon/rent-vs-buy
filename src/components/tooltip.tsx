@@ -31,7 +31,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   return (
     <div
       ref={tooltipRef}
-      className="relative inline-block ml-2 group"
+      className="relative ml-2 group"
       onClick={() => setIsOpen(!isOpen)}
     >
       <div className="cursor-help">
@@ -49,7 +49,7 @@ const Tooltip: React.FC<TooltipProps> = ({
         </svg>
       </div>
       <div
-        className={`absolute z-10 w-64 p-2 text-sm text-white bg-gray-800 rounded-lg right-full mr-2 ${
+        className={`absolute z-10 max-w-[150px] w-64 p-2 text-sm text-white bg-gray-800 rounded-lg right-0 mr-2 ${
           isOpen ? "visible" : "invisible group-hover:visible"
         }`}
       >

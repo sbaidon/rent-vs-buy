@@ -1,5 +1,9 @@
 {
   "calculator": {
+    "methodology": {
+      "title": "How does it work?",
+      "content": "This calculator is inspired by the excellent <a href='https://www.nytimes.com/interactive/2024/upshot/buy-rent-calculator.html' target='_blank'>New York Times rent vs. buy calculator</a>.<br/><br/>We track all the typical costs of both owning and renting, including something called 'opportunity cost' - the potential returns you could have earned by investing your money instead of spending it on housing. All calculations are shown in today's dollars, and investment returns are adjusted for long-term capital gains taxes.<br/><br/>When Buying:<br/> Up-front costs include your down payment and closing costs. Monthly/yearly costs include mortgage payments, property taxes, insurance, maintenance, and any HOA fees, some of these may be tax deductible. We calculate what your money could have earned if invested instead of spent on housing. At the end, we estimate your net proceeds from selling, accounting for realtor fees, remaining mortgage, and potential capital gains taxes<br/><br/>When Renting:<br/> Up-front costs typically include your security deposit and any broker fees. Monthly costs are your rent payments plus renter's insurance. Like with buying, we calculate potential investment returns on money that goes to rent. At the end, you get your security deposit back (assuming no damages)"
+    },
     "title": "Rent vs Buy",
     "propertyValue": "Property Value",
     "downPayment": "Down Payment",

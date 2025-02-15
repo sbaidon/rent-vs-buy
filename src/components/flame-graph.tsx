@@ -175,8 +175,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
 
   const commitValue = (value: number) => {
     if (!isNaN(value)) {
-      const snappedValue = Math.round(value / step) * step;
-      const clampedValue = Math.min(Math.max(snappedValue, min), max);
+      const clampedValue = Math.min(Math.max(value, min), max);
       handleChange(clampedValue);
       return [true, clampedValue] as const;
     }
@@ -219,7 +218,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
   return (
     <div className="space-y-2 min-h-full h-auto w-full" ref={containerRef}>
       <div className="flex justify-between items-baseline">
-        <div className="relative">
+        <div className="relative border-b-2">
           <input
             ref={inputRef}
             type="number"

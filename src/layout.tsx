@@ -36,7 +36,7 @@ function Navbar() {
 
   return (
     <div
-      className="flex justify-end p-6 sticky lg:relative top-0 isolate z-1"
+      className="flex justify-end p-6 lg:relative top-0 isolate z-1"
       ref={menuRef}
     >
       <button
@@ -145,7 +145,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         <CalculatorProvider>
           <div className="min-h-screen bg-gradient-to-br from-amber-950 to-amber-600">
             <Navbar />
-            <main className="p-4">{children}</main>
+            <main className="pb-6">{children}</main>
             <Monitoring
               apiKey="fIbgVe71jICFv6C2_0GdDX8saszFAUMU"
               url="https://monitoring.react-scan.com/api/v1/ingest"

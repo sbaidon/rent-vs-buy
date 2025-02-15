@@ -1,6 +1,10 @@
 {
   "calculator": {
     "title": "Rentar vs Comprar",
+    "methodology": {
+      "title": "¿Cómo funciona?",
+      "content": "La calculadora utiliza las siguientes suposiciones:"
+    },
     "propertyValue": "Valor de la Propiedad",
     "downPayment": "Pago Inicial",
     "calculate": "Calcular",

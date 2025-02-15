@@ -108,7 +108,7 @@ export const FlameGraphCanvas = React.memo(
 
         const snappedValue = Math.round(newValue / step) * step;
 
-        if (snappedValue >= min && snappedValue <= max) {
+        if (newValue >= min && newValue <= max) {
           startTransition(() => {
             onChange(snappedValue);
           });

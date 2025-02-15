@@ -30,6 +30,7 @@
     "i18next-browser-languagedetector": "^8.0.2",
     "i18next-http-backend": "^3.0.2",
     "i18next-http-middleware": "^3.7.1",
+    "lucide-react": "^0.475.0",
     "posthog-js": "^1.214.0",
     "react": "^19.0.0",
     "react-compiler-runtime": "^19.0.0-beta-decd7b8-20250118",
