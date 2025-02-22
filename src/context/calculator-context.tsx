@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState } from "react";
+import { usePageContext } from "vike-react/usePageContext";
 import { CalculatorResults } from "../utils/calculator";
+import { encodeState, decodeState } from "../utils/state";
+import { initialValues } from "../constants/calculator";
 
 export interface CalculatorValues {
   commonChargeDeductionRate: number;
@@ -55,50 +58,57 @@ const CalculatorContext = createContext<CalculatorContextType | undefined>(
   undefined
 );
 
-const initialValues: CalculatorValues = {
-  // Basic inputs
-  pmi: 0,
-  homePrice: 500000,
-  monthlyRent: 2000,
-  mortgageRate: 0.0725,
-  mortgageTerm: 30,
-  downPayment: 0.2,
-  yearsToStay: 10,
-  commonChargeDeductionRate: 0,
-  commonChargePerMonth: 0,
+export const CalculatorProvider: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
+  const pageContext = usePageContext();
+  const initialState = pageContext.data.initialState;
 
-  // Future projections
-  homePriceGrowth: 0.03,
-  rentGrowth: 0.03,
-  investmentReturn: 0.045,
-  inflationRate: 0.03,
+  // Initialize state from URL or use default values
+  const [values, setValues] = useState<CalculatorValues>(() => {
+    if (initialState) {
+      return { ...initialValues, ...initialState };
+    }
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const state = params.get("q");
+      if (state) {
+        return decodeState(state, initialValues);
+      }
+    }
+    return initialValues;
+  });
 
-  // Tax details
-  isJointReturn: true,
-  propertyTaxRate: 0.0135,
-  marginalTaxRate: 0.2,
-  otherDeductions: 0,
-  taxCutsExpire: true,
+  // Add debounce utility at the component level
+  const debounceTimeout = React.useRef<ReturnType<typeof setTimeout>>();
 
-  // Closing costs
-  buyingCosts: 0.04,
-  sellingCosts: 0.06,
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Clear any existing timeout
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
 
-  // Maintenance and fees
-  maintenanceRate: 0.01,
-  homeInsuranceRate: 0.0055,
-  extraPayments: 100,
+      // Set new timeout for 500ms
+      debounceTimeout.current = setTimeout(() => {
+        const stateString = encodeState(values);
+        const params = new URLSearchParams(window.location.search);
+        params.set("q", stateString);
 
-  // Renting costs
-  securityDeposit: 1,
-  brokerFee: 0,
-  monthlyRentersInsurance: 100,
-};
+        const newUrl = `${window.location.pathname}?${params.toString()}${
+          window.location.hash
+        }`;
+        window.history.replaceState({}, "", newUrl);
+      }, 500);
+    }
 
-export const CalculatorProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [values, setValues] = useState<CalculatorValues>(initialValues);
+    // Cleanup timeout on unmount or when values change
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [values]);
 
   const updateValue = React.useCallback(
     (key: keyof CalculatorValues, value: number | boolean) => {
@@ -107,9 +117,9 @@ export const CalculatorProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  const reset = () => {
+  const reset = React.useCallback(() => {
     setValues(initialValues);
-  };
+  }, []);
 
   return (
     <CalculatorContext.Provider value={{ values, updateValue, reset }}>

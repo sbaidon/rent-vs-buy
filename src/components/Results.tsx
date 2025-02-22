@@ -12,6 +12,7 @@ const Results = React.memo(() => {
   const { t } = useTranslation();
   const { values, reset } = useCalculator();
   const { currency } = useAppContext();
+  const [showToast, setShowToast] = React.useState(false);
 
   // New state to allow toggling between cumulative & non-cumulative yearly values
   const [cumulative, setCumulative] = React.useState(true);
@@ -72,8 +73,19 @@ const Results = React.memo(() => {
     }));
   }, [results, values.yearsToStay, t, cumulative]);
 
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
+
   return (
     <div className="p-8 lg:p-0 mx-auto max-w-[600px] lg:max-w-full flex flex-col gap-6 items-center">
+      {showToast && (
+        <div className="fixed bottom-4 right-4 bg-acadia-950 text-acadia-100 px-4 py-2 rounded-lg shadow-lg transition-opacity z-0 isolate">
+          {t("calculator.linkCopied")}
+        </div>
+      )}
       <div
         className={`max-h-[900px] rounded-lg p-6 w-full shadow ${
           isRentingBetter ? "bg-acadia-200" : "bg-acadia-400"
@@ -200,7 +212,13 @@ const Results = React.memo(() => {
           </div>
         </div>
 
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-end mt-4 space-x-2">
+          <button
+            onClick={handleShare}
+            className="px-4 py-2 text-sm font-medium text-acadia-950 rounded hover:bg-acadia-100 transition-colors cursor-pointer"
+          >
+            {t("calculator.share")}
+          </button>
           <button
             onClick={reset}
             className="px-4 py-2 text-sm font-medium text-acadia-950 rounded hover:bg-acadia-100 transition-colors cursor-pointer"

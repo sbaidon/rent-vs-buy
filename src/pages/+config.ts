@@ -3,7 +3,6 @@ import type { Config } from "vike/types";
 import favicon from "../favicon.ico";
 import Layout from "../layout";
 import image from "../logo.webp";
-
 // Default config (can be overridden by pages)
 // https://vike.dev/config
 

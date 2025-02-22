@@ -5,6 +5,8 @@
       "title": "¿Cómo funciona?",
       "content": "La calculadora utiliza las siguientes suposiciones:"
     },
+    "share": "Compartir",
+    "linkCopied": "Enlace copiado",
     "propertyValue": "Valor de la Propiedad",
     "downPayment": "Pago Inicial",
     "calculate": "Calcular",

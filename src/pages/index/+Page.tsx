@@ -3,6 +3,7 @@ import "../../index.css";
 import { StrictMode, useState, memo } from "react";
 import { useTranslation } from "react-i18next";
 import Calculator from "../../components/calculator";
+import { CalculatorProvider } from "../../context/calculator-context";
 import Results from "../../components/results";
 import { ChevronDown, X } from "lucide-react";
 
@@ -78,40 +79,48 @@ function Page() {
 
   return (
     <StrictMode>
-      <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto lg:overflow">
-        <div className="w-full lg:w-3/5 px-6">
-          <h1>{t("calculator.title")}</h1>
-          <div className="w-full">
-            <details className="group">
-              <summary className="w-full flex justify-between items-center mt-2 text-acadia-100 hover:opacity-80 rounded-lg transition-colors cursor-pointer [&::-webkit-details-marker]:hidden">
-                <span className="font-medium text-lg">
-                  {t("calculator.methodology.title")}
-                </span>
-                <ChevronDown className="h-5 w-5 transform group-open:rotate-180 transition-transform" />
-              </summary>
-              <div className="mt-2 text-acadia-100 rounded-lg">
-                <div className="prose prose-invert max-w-none">
-                  <p
-                    className="text-sm/7 text-justify"
-                    dangerouslySetInnerHTML={{
-                      __html: t("calculator.methodology.content"),
-                    }}
-                  />
+      <CalculatorProvider>
+        <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto lg:overflow">
+          <div className="w-full lg:w-3/5 px-6">
+            <h1 className="mb-6">{t("calculator.title")}</h1>
+            <div className="w-full">
+              <details className="group relative [&_summary::-webkit-details-marker]:hidden">
+                <summary
+                  className="w-full flex justify-between items-center text-acadia-100 
+                    rounded-lg transition-colors cursor-pointer 
+                    [&::-webkit-details-marker]:hidden list-none"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-lg">
+                      {t("calculator.methodology.title")}
+                    </span>
+                  </div>
+                  <ChevronDown className="h-5 w-5 transform group-open:rotate-180 transition-transform" />
+                </summary>
+                <div className="mt-2 text-acadia-100 rounded-lg">
+                  <div className="prose prose-invert max-w-none">
+                    <p
+                      className="text-sm/7 text-justify"
+                      dangerouslySetInnerHTML={{
+                        __html: t("calculator.methodology.content"),
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </details>
+              </details>
+            </div>
+            <div className={`${!isMinimized ? "blur-sm lg:blur-none" : ""}`}>
+              <Calculator />
+            </div>
           </div>
-          <div className={`${!isMinimized ? "blur-sm lg:blur-none" : ""}`}>
-            <Calculator />
+          <div className="w-full lg:w-2/5 sticky lg:top-4 bottom-0 lg:self-start rounded-t-lg">
+            <ResponsiveResults
+              setIsMinimized={setIsMinimized}
+              isMinimized={isMinimized}
+            />
           </div>
         </div>
-        <div className="w-full lg:w-2/5 sticky lg:top-4 bottom-0 lg:self-start rounded-t-lg">
-          <ResponsiveResults
-            setIsMinimized={setIsMinimized}
-            isMinimized={isMinimized}
-          />
-        </div>
-      </div>
+      </CalculatorProvider>
     </StrictMode>
   );
 }

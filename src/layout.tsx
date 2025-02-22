@@ -1,6 +1,5 @@
 import "./i18n";
 
-import { CalculatorProvider } from "./context/calculator-context";
 import { Monitoring } from "react-scan/monitoring";
 import { PostHogProvider } from "posthog-js/react";
 import { Head } from "vike-react/Head"; // or vike-vue / vike-solid
@@ -35,10 +34,7 @@ function Navbar() {
   }, []);
 
   return (
-    <div
-      className="flex justify-end p-6 lg:relative top-0 isolate z-1"
-      ref={menuRef}
-    >
+    <div className="flex justify-end p-6 lg:relative top-0 z-50" ref={menuRef}>
       <button
         className="lg:hidden text-white p-2 sticky top-0"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -61,8 +57,7 @@ function Navbar() {
 
       {/* Desktop menu */}
       <div
-        className={`isolate 
-        flex-col gap-4 absolute right-6 top-[72px] p-4 lg:p-0 w-48 rounded-lg shadow-lg
+        className={`z-50 flex-col gap-4 absolute right-6 top-[72px] p-4 lg:p-0 w-48 rounded-lg shadow-lg
         lg:w-auto lg:static lg:flex-row lg:bg-transparent lg:shadow-none
         lg:flex ${isMenuOpen ? "flex bg-amber-950" : "hidden"}
       `}
@@ -71,19 +66,17 @@ function Navbar() {
           <select
             id="currency-select"
             onChange={(e) => setCurrency(e.target.value as Currency)}
-            className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer"
+            className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer appearance-none"
             aria-label={t("currency")}
             value={currency}
           >
             <option value="USD">{t("currency_usd")} ($)</option>
-            <option value="CAD">{t("currency_cad")} ($)</option>
-            <option value="MXN">{t("currency_mxn")} ($)</option>
           </select>
 
           <select
             id="language-select"
             onChange={(e) => i18n.changeLanguage(e.target.value)}
-            className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer"
+            className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer appearance-none"
             value={i18n.language}
             aria-label={t("language")}
           >
@@ -94,14 +87,12 @@ function Navbar() {
           <div className="relative">
             <select
               id="country-select"
-              className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer"
+              className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer appearance-none"
               aria-label={t("country")}
               onChange={(e) => setSelectedCountry(e.target.value as Country)}
               value={country}
             >
               <option value="US">🇺🇸 {t("country_united_states")}</option>
-              <option value="CA">🇨🇦 {t("country_canada")}</option>
-              <option value="MX">🇲🇽 {t("country_mexico")}</option>
             </select>
           </div>
         </div>
@@ -142,17 +133,15 @@ function Layout({ children }: { children: React.ReactNode }) {
         />
       </Head>
       <AppProvider>
-        <CalculatorProvider>
-          <div className="min-h-screen bg-gradient-to-br from-amber-950 to-amber-600">
-            <Navbar />
-            <main className="pb-6">{children}</main>
-            <Monitoring
-              apiKey="fIbgVe71jICFv6C2_0GdDX8saszFAUMU"
-              url="https://monitoring.react-scan.com/api/v1/ingest"
-              path={"/"}
-            />
-          </div>
-        </CalculatorProvider>
+        <div className="min-h-screen bg-gradient-to-br from-amber-950 to-amber-600">
+          <Navbar />
+          <main className="pb-6">{children}</main>
+          <Monitoring
+            apiKey="fIbgVe71jICFv6C2_0GdDX8saszFAUMU"
+            url="https://monitoring.react-scan.com/api/v1/ingest"
+            path={"/"}
+          />
+        </div>
       </AppProvider>
     </PostHogProvider>
   );
