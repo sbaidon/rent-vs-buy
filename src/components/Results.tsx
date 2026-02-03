@@ -8,14 +8,17 @@ import { useAppContext } from "../context/app-context";
 import { AreaChart } from "./area-chart";
 import Tooltip from "./tooltip";
 
+// Define view mode type for the chart
+type ViewMode = "regular" | "cumulative" | "difference";
+
 const Results = React.memo(() => {
   const { t } = useTranslation();
   const { values, reset } = useCalculator();
   const { currency } = useAppContext();
   const [showToast, setShowToast] = React.useState(false);
 
-  // New state to allow toggling between cumulative & non-cumulative yearly values
-  const [cumulative, setCumulative] = React.useState(true);
+  // Replace separate toggles with a single view mode state
+  const [viewMode, setViewMode] = React.useState<ViewMode>("cumulative");
 
   const results = React.useMemo(() => {
     const buyingCalculator = new BuyingCostsCalculator(values);
@@ -42,36 +45,65 @@ const Results = React.memo(() => {
     const rentBreakdown = results.renting.yearlyBreakdown;
     const buyBreakdown = results.buying.yearlyBreakdown;
 
-    // Create an array with cumulative sums from buyBreakdown.
-    const aggregatedBuyBreakdown = buyBreakdown.reduce<number[]>(
-      (acc, current) => {
-        const lastSum = acc.length > 0 ? acc[acc.length - 1] : 0;
-        acc.push(lastSum + current);
-        return acc;
-      },
-      []
-    );
+    // Create an array with cumulative sums from buyBreakdown and rentBreakdown
+    const aggregatedBuyBreakdown: number[] = [];
+    const aggregatedRentBreakdown: number[] = [];
 
-    // Create an array with cumulative sums from rentBreakdown.
-    const aggregatedRentBreakdown = rentBreakdown.reduce<number[]>(
-      (acc, current) => {
-        const lastSum = acc.length > 0 ? acc[acc.length - 1] : 0;
-        acc.push(lastSum + current);
-        return acc;
-      },
-      []
-    );
+    let buySum = 0;
+    let rentSum = 0;
 
-    return new Array(values.yearsToStay).fill(0).map((_, index) => ({
-      date: `Year ${index + 1}`,
-      [t("calculator.rent")]: cumulative
-        ? Math.abs(aggregatedRentBreakdown[index])
-        : Math.abs(rentBreakdown[index]),
-      [t("calculator.results.buy")]: cumulative
-        ? aggregatedBuyBreakdown[index]
-        : buyBreakdown[index],
-    }));
-  }, [results, values.yearsToStay, t, cumulative]);
+    for (let i = 0; i < buyBreakdown.length; i++) {
+      buySum += buyBreakdown[i];
+      rentSum += rentBreakdown[i];
+      aggregatedBuyBreakdown.push(buySum);
+      aggregatedRentBreakdown.push(rentSum);
+    }
+
+    return new Array(values.yearsToStay).fill(0).map((_, index) => {
+      let rentValue, buyValue;
+
+      switch (viewMode) {
+        case "regular":
+          // Regular yearly values
+          rentValue = Math.abs(rentBreakdown[index]);
+          buyValue = buyBreakdown[index];
+          break;
+
+        case "cumulative":
+          // Cumulative values
+          rentValue = Math.abs(aggregatedRentBreakdown[index]);
+          buyValue = aggregatedBuyBreakdown[index];
+          break;
+
+        case "difference":
+          // Year-over-year difference
+          if (index === 0) {
+            // First year is just the regular value
+            rentValue = Math.abs(rentBreakdown[0]);
+            buyValue = buyBreakdown[0];
+          } else {
+            // Subsequent years show the difference from previous year
+            rentValue =
+              Math.abs(rentBreakdown[index]) -
+              Math.abs(rentBreakdown[index - 1]);
+            buyValue =
+              Math.abs(buyBreakdown[index]) - Math.abs(buyBreakdown[index - 1]);
+          }
+          break;
+      }
+
+      return {
+        date: `Year ${index + 1}`,
+        [t("calculator.rent")]: rentValue,
+        [t("calculator.results.buy")]: buyValue,
+      };
+    });
+  }, [results, values.yearsToStay, t, viewMode]);
+
+  // Calculate chart categories based on view mode
+  const chartCategories = React.useMemo(() => {
+    return [t("calculator.rent"), t("calculator.results.buy")];
+  }, [t]);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -239,14 +271,23 @@ const Results = React.memo(() => {
             />
           </div>
           <div className="flex items-center space-x-2">
-            <label htmlFor="cumulative-toggle" className="text-sm">
-              {t("calculator.results.runningTotal")}
-            </label>
-            <input
-              id="cumulative-toggle"
-              type="checkbox"
-              checked={cumulative}
-              onChange={() => setCumulative((prev) => !prev)}
+            <select
+              id="view-mode-select"
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value as ViewMode)}
+              className="bg-acadia-800 text-acadia-100 rounded px-2 py-1 text-sm"
+            >
+              <option value="regular">{t("calculator.results.regular")}</option>
+              <option value="cumulative">
+                {t("calculator.results.runningTotal")}
+              </option>
+              <option value="difference">
+                {t("calculator.results.difference")}
+              </option>
+            </select>
+            <Tooltip
+              content={t("calculator.tooltips.viewMode")}
+              iconClassName="text-acadia-200"
             />
           </div>
         </div>
@@ -255,7 +296,7 @@ const Results = React.memo(() => {
           data={yearlyData}
           index="date"
           allowDecimals
-          categories={[t("calculator.rent"), t("calculator.results.buy")]}
+          categories={chartCategories}
           yAxisWidth={100}
           colors={["light", "dark"]}
           fill="solid"

@@ -126,18 +126,42 @@ export class BuyingCostsCalculator implements Calculator {
     const monthsThisYear = Math.min(remainingMonths, 12);
     const factor = Math.pow(1 + this.monthlyLoanRate, monthsThisYear);
     const totalPayment = this.monthlyLoanPayment * monthsThisYear;
-    const newPrincipal = principal * factor - totalPayment;
+
+    // Calculate new principal after payments
+    let newPrincipal = principal * factor - totalPayment;
+
+    // Check if loan is paid off earlier than expected
+    let actualMonthsUsed = monthsThisYear;
+    if (newPrincipal < 0) {
+      // Loan was fully paid off before end of year
+      // Recalculate with exact amount needed
+      newPrincipal = 0;
+      // Find how many months it took to pay off the loan
+      for (let month = 1; month <= monthsThisYear; month++) {
+        const monthlyFactor = Math.pow(1 + this.monthlyLoanRate, month);
+        const partialTotalPayment = this.monthlyLoanPayment * month;
+        if (principal * monthlyFactor - partialTotalPayment <= 0) {
+          actualMonthsUsed = month;
+          break;
+        }
+      }
+    }
+
+    // Adjust payments based on actual months used
+    const actualTotalPayment = this.monthlyLoanPayment * actualMonthsUsed;
     const principalPaid = principal - newPrincipal;
-    const interestPaid = totalPayment - principalPaid;
+    const interestPaid = actualTotalPayment - principalPaid;
+
     const deductibleFraction = loanCap / principal;
     const deductibleInterest =
       deductibleFraction < 1 ? interestPaid * deductibleFraction : interestPaid;
+
     return {
       newPrincipal,
       principalPaid,
       interestPaid,
       deductibleInterest,
-      monthsUsed: monthsThisYear,
+      monthsUsed: actualMonthsUsed,
     };
   }
 
@@ -268,7 +292,6 @@ export class BuyingCostsCalculator implements Calculator {
       const inflationFactor = Math.pow(this.inflationAdjustmentRate, year - 1);
       currentYearPrice = homePrice * Math.pow(this.priceGrowthFactor, year);
 
-      // The original approach: accumulate opportunity cost each loop
       cumulativeOpportunityCost +=
         (cumulativeOpportunityCost + currentYearCost) *
         this.effectiveReturnRate;

@@ -46,7 +46,7 @@ export const INPUT_CONFIG_PER_COUNTRY: Record<
     downPayment: { min: 0, max: 1, step: 0.01 },
     yearsToStay: { min: 1, max: 40, step: 1 },
     mortgageTerm: { min: 1, max: 30, step: 1 },
-    pmi: { min: 0, max: 0.1, step: 0.01 },
+    pmi: { min: 0, max: 0.1, step: 0.001 },
     homePriceGrowth: { min: -0.05, max: 0.15, step: 0.001 },
     rentGrowth: { min: -0.05, max: 0.15, step: 0.01 },
     investmentReturn: { min: -0.2, max: 0.2, step: 0.01 },

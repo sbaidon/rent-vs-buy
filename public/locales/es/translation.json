@@ -5,6 +5,26 @@
       "title": "¿Cómo funciona?",
       "content": "La calculadora utiliza las siguientes suposiciones:"
     },
+    "amortization": {
+      "title": "Tabla de Amortización",
+      "loanAmount": "Monto del Préstamo",
+      "term": "Plazo",
+      "rate": "Tasa de Interés",
+      "payment": "Pago #",
+      "payment_amount": "Monto del Pago",
+      "principal": "Principal",
+      "interest": "Interés",
+      "remaining": "Saldo Restante",
+      "showing": "Mostrando",
+      "of": "de",
+      "close": "Cerrar",
+      "view_schedule": "Ver Tabla de Amortización",
+      "loan_summary": "Resumen del Préstamo",
+      "original_loan": "Monto Original del Préstamo",
+      "total_interest": "Interés Total Pagado",
+      "total_paid": "MONTO TOTAL PAGADO",
+      "the_original_loan": "del monto original del préstamo"
+    },
     "share": "Compartir",
     "linkCopied": "Enlace copiado",
     "propertyValue": "Valor de la Propiedad",
@@ -46,7 +66,10 @@
       "show": "▲ Mostrar Resultados",
       "hide": "▼ Ocultar Resultados",
       "yearBreakdown": "Desglose Anual",
-      "runningTotal": "Total Acumulado"
+      "runningTotal": "Total Acumulado",
+      "difference": "Diferencia",
+      "viewMode": "Modo de Vista",
+      "regular": "Regular"
     },
     "sections": {
       "basics": {
@@ -126,7 +149,9 @@
       "brokerFee": "Tarifa única pagada al corredor de rentas, común en algunas ciudades.",
       "monthlyRentersInsurance": "Costo mensual para asegurar tus pertenencias como inquilino.",
       "monthlyPayment": "El pago mensual promedio necesario para alcanzar el costo total durante todo el período",
-      "yearBreakdown": "Los costos de oportunidad se prorratean anualmente. Cambia el interruptor para ver ya sea el total acumulado o el monto real pagado cada año."
+      "yearBreakdown": "Los costos de oportunidad se prorratean anualmente. Cambia el interruptor para ver ya sea el total acumulado o el monto real pagado cada año.",
+      "difference": "El cambio año tras año en los costos. Para el primer año, esto equivale al costo total. Para los años siguientes, muestra cuánto aumentaron o disminuyeron los costos en comparación con el año anterior.",
+      "viewMode": "Elige cómo ver los datos del gráfico: Regular muestra los costos reales por año, Total Acumulado muestra los costos acumulados a lo largo del tiempo y Diferencia muestra los cambios de un año a otro."
     }
   },
   "reset": "Reiniciar",

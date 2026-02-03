@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState } from "react";
-import { usePageContext } from "vike-react/usePageContext";
 import { CalculatorResults } from "../utils/calculator";
 import { encodeState, decodeState } from "../utils/state";
 import { initialValues } from "../constants/calculator";
@@ -58,17 +57,22 @@ const CalculatorContext = createContext<CalculatorContextType | undefined>(
   undefined
 );
 
-export const CalculatorProvider: React.FC<{
+interface CalculatorProviderProps {
   children: React.ReactNode;
-}> = ({ children }) => {
-  const pageContext = usePageContext();
-  const initialState = pageContext.data.initialState;
+  initialEncodedState?: string;
+}
 
-  // Initialize state from URL or use default values
+export const CalculatorProvider: React.FC<CalculatorProviderProps> = ({
+  children,
+  initialEncodedState,
+}) => {
+  // Initialize state from prop, URL, or use default values
   const [values, setValues] = useState<CalculatorValues>(() => {
-    if (initialState) {
-      return { ...initialValues, ...initialState };
+    // First priority: use the initial encoded state from props (comes from URL search param via route)
+    if (initialEncodedState) {
+      return decodeState(initialEncodedState, initialValues);
     }
+    // Second priority: check URL directly (client-side fallback)
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const state = params.get("q");

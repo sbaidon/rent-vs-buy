@@ -1,45 +1,36 @@
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import devServer from "@hono/vite-dev-server";
+import { nitro } from "nitro/vite";
+import tsConfigPaths from "vite-tsconfig-paths";
+import viteReact from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import webfontDownload from "vite-plugin-webfont-dl";
-import ReactComponentName from "react-scan/react-component-name/vite";
-import topLevelAwait from "vite-plugin-top-level-await";
-import vike from "vike/plugin";
 
-// https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
   build: {
     target: "esnext",
   },
   plugins: [
-    topLevelAwait({
-      // The export name of top-level await promise for each chunk module
-      promiseExportName: "__tla",
-      // The function to generate import names of top-level await promise in each chunk module
-      promiseImportName: (i) => `__tla_${i}`,
+    // Order matters! Follow official docs ordering
+    tsConfigPaths({
+      projects: ["./tsconfig.json"],
     }),
-    vike({
-      prerender: true,
+    tanstackStart({
+      srcDirectory: "src",
     }),
-    devServer({
-      entry: "hono-entry.ts",
-      exclude: [
-        /^\/@.+$/,
-        /.*\.(ts|tsx|vue)($|\?)/,
-        /.*\.(s?css|less)($|\?)/,
-        /^\/favicon\.ico$/,
-        /.*\.(svg|png)($|\?)/,
-        /^\/(public|assets|static)\/.+/,
-        /^\/node_modules\/.*/,
-      ],
-      injectClientScript: false,
+    nitro({
+      preset: "cloudflare-pages",
     }),
-    react({
+    viteReact({
       babel: {
         plugins: [["babel-plugin-react-compiler", { target: "19" }]],
       },
     }),
     webfontDownload(),
-    ReactComponentName({}),
+    tailwindcss(), // Must be last per TanStack docs
   ],
 });

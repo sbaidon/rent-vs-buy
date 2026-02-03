@@ -1,11 +1,15 @@
-import "../../index.css";
-
-import { StrictMode, useState, memo } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { StrictMode, useState } from "react";
 import { useTranslation } from "react-i18next";
-import Calculator from "../../components/calculator";
-import { CalculatorProvider } from "../../context/calculator-context";
-import Results from "../../components/results";
-import { ChevronDown, X } from "lucide-react";
+import Calculator from "../components/calculator";
+import { CalculatorProvider } from "../context/calculator-context";
+import Results from "../components/results";
+import { ChevronDown, X, Table } from "lucide-react";
+import AmortizationModal from "../components/amortization-modal";
+
+// ============================================================================
+// Responsive Results Component
+// ============================================================================
 
 type ResponsiveResultsProps = {
   isMinimized: boolean;
@@ -67,8 +71,14 @@ function ResponsiveResults({
   );
 }
 
-function Page() {
+// ============================================================================
+// Home Page Component
+// ============================================================================
+
+function HomePage() {
   const { t } = useTranslation();
+  const { q } = Route.useSearch();
+
   const [isMinimized, setIsMinimized] = useState(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("resultsMinimized");
@@ -76,13 +86,23 @@ function Page() {
     }
     return true;
   });
+  const [isAmortizationModalOpen, setIsAmortizationModalOpen] = useState(false);
 
   return (
     <StrictMode>
-      <CalculatorProvider>
+      <CalculatorProvider initialEncodedState={q}>
         <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto lg:overflow">
           <div className="w-full lg:w-3/5 px-6">
-            <h1 className="mb-6">{t("calculator.title")}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+              <h1 className="mb-2 sm:mb-0">{t("calculator.title")}</h1>
+              <button
+                onClick={() => setIsAmortizationModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-acadia-800 rounded hover:bg-acadia-700 text-acadia-100 hover:text-white transition-colors duration-200 self-start sm:self-center"
+              >
+                <Table className="h-5 w-5" />
+                <span>{t("calculator.amortization.view_schedule")}</span>
+              </button>
+            </div>
             <div className="w-full">
               <details className="group relative [&_summary::-webkit-details-marker]:hidden">
                 <summary
@@ -110,7 +130,9 @@ function Page() {
               </details>
             </div>
             <div className={`${!isMinimized ? "blur-sm lg:blur-none" : ""}`}>
-              <Calculator />
+              <Calculator
+                onOpenAmortizationModal={() => setIsAmortizationModalOpen(true)}
+              />
             </div>
           </div>
           <div className="w-full lg:w-2/5 sticky lg:top-4 bottom-0 lg:self-start rounded-t-lg">
@@ -120,9 +142,20 @@ function Page() {
             />
           </div>
         </div>
+        <AmortizationModal
+          isOpen={isAmortizationModalOpen}
+          onClose={() => setIsAmortizationModalOpen(false)}
+        />
       </CalculatorProvider>
     </StrictMode>
   );
 }
 
-export default memo(Page);
+// Route definition with search params validation for URL state
+// IMPORTANT: Must be after the component definition since we reference HomePage
+export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+    q: typeof search.q === "string" ? search.q : undefined,
+  }),
+  component: HomePage,
+});

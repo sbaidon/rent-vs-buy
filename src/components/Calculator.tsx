@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { CalculatorValues, useCalculator } from "../context/calculator-context";
 import FlameGraph from "./flame-graph";
 import { useTranslation } from "react-i18next";
@@ -6,11 +6,26 @@ import { formatCurrency } from "../utils/format-currency";
 import { useAppContext } from "../context/app-context";
 import { INPUT_CONFIG_PER_COUNTRY } from "../config/calculator-config";
 import Tooltip from "./tooltip";
+import AmortizationModal from "./amortization-modal";
+import { Table } from "lucide-react";
 
-const Calculator: React.FC = () => {
+interface CalculatorProps {
+  onOpenAmortizationModal?: () => void;
+}
+
+const Calculator: React.FC<CalculatorProps> = ({ onOpenAmortizationModal }) => {
   const { values, updateValue } = useCalculator();
   const { t } = useTranslation();
   const { currency, country } = useAppContext();
+  const [isAmortizationModalOpen, setIsAmortizationModalOpen] = useState(false);
+
+  const handleOpenAmortizationModal = () => {
+    if (onOpenAmortizationModal) {
+      onOpenAmortizationModal();
+    } else {
+      setIsAmortizationModalOpen(true);
+    }
+  };
 
   const formatPercentage = useCallback(
     (value: number) => `${(value * 100).toFixed(2)}%`,
@@ -161,6 +176,16 @@ const Calculator: React.FC = () => {
                 "calculator.tooltips.pmi"
               )}
             />
+          </div>
+
+          <div className="flex justify-center">
+            <button
+              onClick={handleOpenAmortizationModal}
+              className="flex items-center gap-2 px-4 py-2 bg-acadia-800 rounded hover:bg-acadia-700 text-acadia-100 hover:text-white transition-colors duration-200"
+            >
+              <Table className="h-5 w-5" />
+              <span>{t("calculator.amortization.view_schedule")}</span>
+            </button>
           </div>
         </div>
       </section>
@@ -467,6 +492,11 @@ const Calculator: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <AmortizationModal
+        isOpen={isAmortizationModalOpen}
+        onClose={() => setIsAmortizationModalOpen(false)}
+      />
     </>
   );
 };
