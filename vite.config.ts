@@ -23,7 +23,7 @@ export default defineConfig({
       srcDirectory: "src",
     }),
     nitro({
-      preset: "cloudflare-pages",
+      preset: "cloudflare_module",
     }),
     viteReact({
       babel: {
