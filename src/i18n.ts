@@ -1,69 +1,52 @@
-import i18n, { Resources } from "i18next";
+import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
-import Backend from "i18next-http-backend";
-import fs from "fs";
-import path from "path";
 
-// Helper function to load translations synchronously
-const loadTranslations = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resources: Record<string, Record<string, Resources>> = {};
-  const supportedLangs = ["en", "es"];
-  const namespaces = ["translation"];
+// Import translations directly - bundled at build time
+// This ensures translations are available immediately on both server and client
+import enTranslation from "../public/locales/en/translation.json";
+import esTranslation from "../public/locales/es/translation.json";
 
-  supportedLangs.forEach((lang) => {
-    resources[lang] = {};
-    namespaces.forEach((ns) => {
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "locales",
-        lang,
-        `${ns}.json`
-      );
-      try {
-        const fileContent = fs.readFileSync(filePath, "utf-8");
-        resources[lang][ns] = JSON.parse(fileContent);
-      } catch (error) {
-        console.error(`Failed to load translation file: ${filePath}`, error);
-        resources[lang][ns] = {};
-      }
-    });
-  });
-  return resources;
+// Bundled resources - no async loading needed
+const bundledResources = {
+  en: { translation: enTranslation },
+  es: { translation: esTranslation },
 };
 
-// Ensure i18n is only initialized once
-const i18nInstance = i18n.isInitialized
-  ? i18n
-  : await i18n
-      .use(LanguageDetector)
-      .use(Backend)
-      .use(initReactI18next)
-      .init({
-        fallbackLng: "en",
-        debug: false,
-        supportedLngs: ["en", "es"],
-        ns: ["translation"],
-        defaultNS: "translation",
-        detection: {
-          order: ["navigator", "htmlTag"],
-          caches: ["localStorage"],
-        },
-        interpolation: {
-          escapeValue: false,
-        },
-        react: {
-          useSuspense: false,
-        },
-        backend: {
-          loadPath: "/locales/{{lng}}/{{ns}}.json",
-          allowMultiLoading: false,
-        },
-        // Load resources synchronously during SSR
-        resources:
-          typeof window === "undefined" ? loadTranslations() : undefined,
-      });
+const isServer = typeof window === "undefined";
 
-export default i18nInstance;
+// Initialize i18n synchronously with bundled resources
+// This prevents the "blink" where translations load async on client
+if (!i18n.isInitialized) {
+  const plugins = [initReactI18next];
+
+  // Only use language detector on client
+  if (!isServer) {
+    plugins.unshift(LanguageDetector);
+  }
+
+  plugins.forEach((plugin) => i18n.use(plugin));
+
+  i18n.init({
+    fallbackLng: "en",
+    debug: false,
+    supportedLngs: ["en", "es"],
+    ns: ["translation"],
+    defaultNS: "translation",
+    interpolation: {
+      escapeValue: false,
+    },
+    react: {
+      useSuspense: false,
+    },
+    // Use bundled resources on both server and client for instant availability
+    resources: bundledResources,
+    // Language detection settings (only active on client)
+    detection: {
+      order: ["localStorage", "navigator", "htmlTag"],
+      caches: ["localStorage"],
+    },
+  });
+}
+
+export default i18n;

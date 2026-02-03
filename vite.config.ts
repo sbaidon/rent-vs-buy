@@ -1,6 +1,6 @@
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { defineConfig } from "vite";
-import { nitro } from "nitro/vite";
+import { cloudflare } from "@cloudflare/vite-plugin";
 import tsConfigPaths from "vite-tsconfig-paths";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -15,15 +15,14 @@ export default defineConfig({
     target: "esnext",
   },
   plugins: [
-    // Order matters! Follow official docs ordering
+    // Order from TanStack Start Cloudflare example
+    tailwindcss(),
     tsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
+    cloudflare({ viteEnvironment: { name: "ssr" } }),
     tanstackStart({
       srcDirectory: "src",
-    }),
-    nitro({
-      preset: "cloudflare_module",
     }),
     viteReact({
       babel: {
@@ -31,6 +30,5 @@ export default defineConfig({
       },
     }),
     webfontDownload(),
-    tailwindcss(), // Must be last per TanStack docs
   ],
 });

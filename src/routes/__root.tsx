@@ -295,11 +295,7 @@ function RootComponent() {
             <main className="pb-6">
               <Outlet />
             </main>
-            <Monitoring
-              apiKey="fIbgVe71jICFv6C2_0GdDX8saszFAUMU"
-              url="https://monitoring.react-scan.com/api/v1/ingest"
-              path={"/"}
-            />
+            {/* Monitoring disabled for now to debug SSR issues */}
           </div>
         </AppProvider>
       </ErrorBoundary>
@@ -308,12 +304,15 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
+  const [posthogReady, setPosthogReady] = useState(false);
+
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
       import.meta.env.VITE_PUBLIC_POSTHOG_KEY
     ) {
       posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, posthogOptions);
+      setPosthogReady(true);
     }
   }, []);
 
@@ -323,7 +322,12 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body className="min-h-screen antialiased">
-        <PostHogProvider client={posthog}>{children}</PostHogProvider>
+        {/* Only use PostHogProvider on client after init */}
+        {posthogReady ? (
+          <PostHogProvider client={posthog}>{children}</PostHogProvider>
+        ) : (
+          children
+        )}
         <Scripts />
       </body>
     </html>
