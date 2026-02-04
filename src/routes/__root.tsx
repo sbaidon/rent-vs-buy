@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import {
   HeadContent,
+  Link,
   Outlet,
   Scripts,
   createRootRoute,
@@ -10,6 +11,7 @@ import { PostHogProvider } from "posthog-js/react";
 import { Monitoring } from "react-scan/monitoring";
 import posthog from "posthog-js";
 import { useTranslation } from "react-i18next";
+import { Map, Calculator } from "lucide-react";
 import {
   AppProvider,
   Country,
@@ -99,73 +101,162 @@ function Navbar() {
   }, []);
 
   return (
-    <div
-      className="flex justify-end p-6 lg:relative top-0 z-50"
+    <header
+      className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100"
       ref={menuRef}
     >
-      <button
-        className="lg:hidden text-white p-2 sticky top-0"
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        aria-label={t("toggle_menu")}
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
-      </button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo and Nav Links */}
+          <div className="flex items-center gap-8">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">RB</span>
+              </div>
+              <span className="font-semibold text-slate-900 text-lg hidden sm:block">RentVsBuy</span>
+            </Link>
+            <nav className="hidden md:flex items-center gap-1">
+              <Link
+                to="/"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all text-sm font-medium"
+                activeProps={{ className: "!bg-sky-50 !text-sky-700" }}
+              >
+                <Calculator className="w-4 h-4" />
+                Calculator
+              </Link>
+              <Link
+                to="/explore"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all text-sm font-medium"
+                activeProps={{ className: "!bg-sky-50 !text-sky-700" }}
+              >
+                <Map className="w-4 h-4" />
+                Explore
+              </Link>
+            </nav>
+          </div>
 
-      {/* Desktop menu */}
-      <div
-        className={`z-50 flex-col gap-4 absolute right-6 top-[72px] p-4 lg:p-0 w-48 rounded-lg shadow-lg
-        lg:w-auto lg:static lg:flex-row lg:bg-transparent lg:shadow-none
-        lg:flex ${isMenuOpen ? "flex bg-amber-950" : "hidden"}
-      `}
-      >
-        <div className="flex flex-col lg:flex-row lg:gap-4">
-          <select
-            id="currency-select"
-            onChange={(e) => setCurrency(e.target.value as Currency)}
-            className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer appearance-none"
-            aria-label={t("currency")}
-            value={currency}
-          >
-            <option value="USD">{t("currency_usd")} ($)</option>
-          </select>
+          {/* Right side controls */}
+          <div className="flex items-center gap-3">
+            {/* Desktop selects */}
+            <div className="hidden lg:flex items-center gap-2">
+              <select
+                id="currency-select"
+                onChange={(e) => setCurrency(e.target.value as Currency)}
+                className="px-3 py-1.5 rounded-lg text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 cursor-pointer appearance-none border-0 focus:ring-2 focus:ring-sky-500 transition-colors"
+                aria-label={t("currency")}
+                value={currency}
+              >
+                <option value="USD">$ USD</option>
+              </select>
 
-          <select
-            id="language-select"
-            onChange={(e) => i18n.changeLanguage(e.target.value)}
-            className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer appearance-none"
-            value={i18n.language}
-            aria-label={t("language")}
-          >
-            <option value="en">{t("language_english")}</option>
-            <option value="es">{t("language_spanish")}</option>
-          </select>
+              <select
+                id="language-select"
+                onChange={(e) => i18n.changeLanguage(e.target.value)}
+                className="px-3 py-1.5 rounded-lg text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 cursor-pointer appearance-none border-0 focus:ring-2 focus:ring-sky-500 transition-colors"
+                value={i18n.language}
+                aria-label={t("language")}
+              >
+                <option value="en">EN</option>
+                <option value="es">ES</option>
+              </select>
 
-          <div className="relative">
-            <select
-              id="country-select"
-              className="mb-4 lg:mb-0 px-3 py-1 rounded text-white cursor-pointer appearance-none"
-              aria-label={t("country")}
-              onChange={(e) => setSelectedCountry(e.target.value as Country)}
-              value={country}
+              <select
+                id="country-select"
+                className="px-3 py-1.5 rounded-lg text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 cursor-pointer appearance-none border-0 focus:ring-2 focus:ring-sky-500 transition-colors"
+                aria-label={t("country")}
+                onChange={(e) => setSelectedCountry(e.target.value as Country)}
+                value={country}
+              >
+                <option value="US">🇺🇸 US</option>
+              </select>
+            </div>
+
+            {/* Mobile menu button */}
+            <button
+              className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={t("toggle_menu")}
             >
-              <option value="US">🇺🇸 {t("country_united_states")}</option>
-            </select>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {isMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="lg:hidden border-t border-slate-100 bg-white">
+          <div className="px-4 py-4 space-y-3">
+            {/* Mobile nav links */}
+            <div className="space-y-1">
+              <Link
+                to="/"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Calculator className="w-5 h-5" />
+                <span className="font-medium">Calculator</span>
+              </Link>
+              <Link
+                to="/explore"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Map className="w-5 h-5" />
+                <span className="font-medium">Explore</span>
+              </Link>
+            </div>
+
+            {/* Mobile selects */}
+            <div className="pt-3 border-t border-slate-100 grid grid-cols-3 gap-2">
+              <select
+                onChange={(e) => setCurrency(e.target.value as Currency)}
+                className="px-3 py-2 rounded-lg text-sm text-slate-600 bg-slate-100 cursor-pointer appearance-none border-0"
+                value={currency}
+              >
+                <option value="USD">$ USD</option>
+              </select>
+              <select
+                onChange={(e) => i18n.changeLanguage(e.target.value)}
+                className="px-3 py-2 rounded-lg text-sm text-slate-600 bg-slate-100 cursor-pointer appearance-none border-0"
+                value={i18n.language}
+              >
+                <option value="en">EN</option>
+                <option value="es">ES</option>
+              </select>
+              <select
+                onChange={(e) => setSelectedCountry(e.target.value as Country)}
+                className="px-3 py-2 rounded-lg text-sm text-slate-600 bg-slate-100 cursor-pointer appearance-none border-0"
+                value={country}
+              >
+                <option value="US">🇺🇸 US</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
   );
 }
 
@@ -207,7 +298,7 @@ export const Route = createRootRoute({
       },
       { name: "author", content: "sbaidon" },
       { name: "robots", content: "index, follow" },
-      { name: "theme-color", content: "#78350f" },
+      { name: "theme-color", content: "#0ea5e9" },
       // Open Graph / Facebook
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://rentvsbuy.io/" },
@@ -246,7 +337,7 @@ export const Route = createRootRoute({
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Texturina:ital,opsz,wght@0,12..72,100..900;1,12..72,100..900&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico" },
@@ -290,12 +381,11 @@ function RootComponent() {
     <RootDocument>
       <ErrorBoundary>
         <AppProvider>
-          <div className="min-h-screen bg-gradient-to-br from-amber-950 to-amber-600">
+          <div className="min-h-screen bg-slate-50">
             <Navbar />
-            <main className="pb-6">
+            <main>
               <Outlet />
             </main>
-            {/* Monitoring disabled for now to debug SSR issues */}
           </div>
         </AppProvider>
       </ErrorBoundary>
