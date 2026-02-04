@@ -12,6 +12,7 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { encodeState } from "../utils/state";
 import { initialValues } from "../constants/calculator";
+import { useTheme } from "../context/theme-context";
 
 // Mock data - will be replaced with API calls
 const MOCK_PROPERTIES: Property[] = [
@@ -105,13 +106,14 @@ const INITIAL_VIEW_STATE: ViewState = {
  */
 function ExplorePage() {
   const navigate = useNavigate();
+  const { resolvedTheme } = useTheme();
 
   // State management with lazy initialization where appropriate
   const [viewState, setViewState] = useState<ViewState>(INITIAL_VIEW_STATE);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("Austin, TX");
-  const [showInsights, setShowInsights] = useState(true);
+  const [showInsights, setShowInsights] = useState(false); // Default closed on mobile
 
   // Derive filtered properties during render (Vercel best practice: rerender-derived-state-no-effect)
   const filteredProperties = useMemo(() => {
@@ -162,18 +164,24 @@ function ExplorePage() {
   );
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col bg-slate-50">
+    <div className="h-[calc(100vh-64px)] flex flex-col" style={{ background: "var(--bg-base)" }}>
       {/* Search Header */}
-      <header className="bg-white border-b border-slate-100 px-4 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <header 
+        className="backdrop-blur-xl border-b px-4 py-3 sm:py-4 z-20"
+        style={{ 
+          background: "color-mix(in srgb, var(--bg-surface) 95%, transparent)",
+          borderColor: "var(--border-default)"
+        }}
+      >
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
             onSearch={handleSearch}
           />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
             <FilterPills activeFilter={filter} onFilterChange={setFilter} />
-            <Button variant="secondary">
+            <Button variant="secondary" size="sm" className="flex-shrink-0">
               <SlidersHorizontal className="w-4 h-4" />
               <span className="hidden sm:inline">Filters</span>
             </Button>
@@ -182,7 +190,7 @@ function ExplorePage() {
       </header>
 
       {/* Map Container */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         <PropertyMap
           viewState={viewState}
           onViewStateChange={setViewState}
@@ -190,12 +198,13 @@ function ExplorePage() {
           selectedProperty={selectedProperty}
           onPropertySelect={setSelectedProperty}
           renderPopup={renderPopup}
+          theme={resolvedTheme}
         />
 
         {/* Property Count Badge */}
-        <Card padding="sm" className="absolute top-4 left-4 flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-sky-500" />
-          <span className="text-sm font-medium text-slate-700">
+        <Card padding="sm" className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center gap-2 z-10">
+          <MapPin className="w-4 h-4 text-copper-400" />
+          <span className="text-xs sm:text-sm font-mono" style={{ color: "var(--text-secondary)" }}>
             {filteredProperties.length} properties in {searchQuery}
           </span>
         </Card>
@@ -211,18 +220,18 @@ function ExplorePage() {
         {!showInsights && (
           <button
             onClick={handleOpenInsights}
-            className="absolute top-4 right-4"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10"
           >
             <Card
               padding="sm"
               hover
               className="flex items-center gap-2 cursor-pointer"
             >
-              <TrendingUp className="w-4 h-4 text-sky-500" />
-              <span className="text-sm font-medium text-slate-700">
-                Market Insights
+              <TrendingUp className="w-4 h-4 text-copper-400" />
+              <span className="text-xs sm:text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                <span className="hidden sm:inline">Market </span>Insights
               </span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <ChevronRight className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
             </Card>
           </button>
         )}

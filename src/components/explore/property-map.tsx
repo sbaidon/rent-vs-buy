@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef, Suspense, lazy } from "react";
+import { memo, useCallback, useRef, Suspense, lazy, useMemo } from "react";
 import { clsx } from "clsx";
 import type { Property } from "./property-card";
 
@@ -29,6 +29,12 @@ if (typeof window !== "undefined") {
   import("maplibre-gl/dist/maplibre-gl.css");
 }
 
+// Map styles for different themes
+const MAP_STYLES = {
+  dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+} as const;
+
 export interface ViewState {
   longitude: number;
   latitude: number;
@@ -42,15 +48,22 @@ interface PropertyMapProps {
   selectedProperty: Property | null;
   onPropertySelect: (property: Property | null) => void;
   renderPopup: (property: Property) => React.ReactNode;
+  theme?: "light" | "dark";
 }
 
 // Map skeleton for loading state
 const MapSkeleton = memo(function MapSkeleton() {
   return (
-    <div className="w-full h-full bg-slate-100 animate-pulse flex items-center justify-center">
+    <div 
+      className="w-full h-full animate-pulse flex items-center justify-center"
+      style={{ background: "var(--bg-muted)" }}
+    >
       <div className="text-center">
-        <div className="w-12 h-12 rounded-full bg-slate-200 mx-auto mb-3" />
-        <p className="text-sm text-slate-500">Loading map...</p>
+        <div 
+          className="w-12 h-12 rounded-full mx-auto mb-3"
+          style={{ background: "var(--bg-elevated)" }}
+        />
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading map...</p>
       </div>
     </div>
   );
@@ -67,8 +80,12 @@ export const PropertyMap = memo(function PropertyMap({
   selectedProperty,
   onPropertySelect,
   renderPopup,
+  theme = "dark",
 }: PropertyMapProps) {
   const mapRef = useRef(null);
+  
+  // Memoize map style based on theme
+  const mapStyle = useMemo(() => MAP_STYLES[theme], [theme]);
 
   const handleMove = useCallback(
     (evt: { viewState: ViewState }) => {
@@ -89,14 +106,22 @@ export const PropertyMap = memo(function PropertyMap({
     onPropertySelect(null);
   }, [onPropertySelect]);
 
+  // Close popup when clicking on map
+  const handleMapClick = useCallback(() => {
+    if (selectedProperty) {
+      onPropertySelect(null);
+    }
+  }, [selectedProperty, onPropertySelect]);
+
   return (
     <Suspense fallback={<MapSkeleton />}>
       <Map
         ref={mapRef}
         {...viewState}
         onMove={handleMove}
+        onClick={handleMapClick}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+        mapStyle={mapStyle}
       >
         <NavigationControl position="bottom-right" showCompass={false} />
         <GeolocateControl position="bottom-right" />
@@ -121,6 +146,8 @@ export const PropertyMap = memo(function PropertyMap({
             closeButton={false}
             closeOnClick={false}
             offset={20}
+            maxWidth="none"
+            className="property-popup"
           >
             {renderPopup(selectedProperty)}
           </Popup>
@@ -157,13 +184,12 @@ const PropertyMarker = memo(function PropertyMarker({
       >
         <div
           className={clsx(
-            "px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg",
+            "marker font-mono",
             "transform group-hover:scale-110 transition-transform",
-            "border-2 border-white",
             property.propertyType === "sale"
-              ? "bg-emerald-500 text-white"
-              : "bg-sky-500 text-white",
-            isSelected && "scale-110 ring-4 ring-sky-200"
+              ? "marker-sale"
+              : "marker-rent",
+            isSelected && "scale-110 ring-2 ring-white/50"
           )}
         >
           $

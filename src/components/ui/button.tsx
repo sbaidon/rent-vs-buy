@@ -27,27 +27,44 @@ export const Button = memo(
     ref
   ) {
     const baseStyles =
-      "inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+      "inline-flex items-center justify-center gap-1.5 sm:gap-2 font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-copper-500/50 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide text-xs";
 
     const variants = {
       primary:
-        "bg-gradient-to-r from-sky-500 to-sky-600 text-white shadow-sm hover:from-sky-600 hover:to-sky-700 hover:shadow-md active:shadow-sm",
+        "bg-gradient-to-r from-copper-600 to-copper-700 text-white border border-copper-500 shadow-lg shadow-copper-500/20 hover:from-copper-500 hover:to-copper-600 hover:shadow-copper-500/30 active:shadow-sm",
       secondary:
-        "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100",
+        "bg-transparent border hover:opacity-80 active:opacity-70",
       ghost:
-        "text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200",
+        "hover:text-copper-400 hover:bg-copper-500/10 active:bg-copper-500/20",
+    };
+
+    // Dynamic styles for theme-aware variants
+    const getVariantStyle = () => {
+      if (variant === "secondary") {
+        return {
+          borderColor: "var(--border-default)",
+          color: "var(--text-secondary)",
+        };
+      }
+      if (variant === "ghost") {
+        return {
+          color: "var(--text-muted)",
+        };
+      }
+      return {};
     };
 
     const sizes = {
-      sm: "text-sm px-3 py-1.5",
-      md: "text-sm px-4 py-2.5",
-      lg: "text-base px-6 py-3",
+      sm: "px-3 py-1.5",
+      md: "px-4 py-2.5",
+      lg: "px-6 py-3",
     };
 
     return (
       <button
         ref={ref}
         className={clsx(baseStyles, variants[variant], sizes[size], className)}
+        style={getVariantStyle()}
         disabled={disabled || isLoading}
         {...props}
       >

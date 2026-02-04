@@ -11,13 +11,14 @@ import { PostHogProvider } from "posthog-js/react";
 import { Monitoring } from "react-scan/monitoring";
 import posthog from "posthog-js";
 import { useTranslation } from "react-i18next";
-import { Map, Calculator } from "lucide-react";
+import { Map, Calculator, Sun, Moon, Monitor } from "lucide-react";
 import {
   AppProvider,
   Country,
   Currency,
   useAppContext,
 } from "../context/app-context";
+import { ThemeProvider, useTheme } from "../context/theme-context";
 import "../i18n";
 import appCss from "../index.css?url";
 
@@ -50,20 +51,20 @@ class ErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-950 to-amber-600 text-white flex flex-col items-center justify-center p-4">
-          <div className="bg-acadia-900 rounded-lg p-8 max-w-md text-center">
-            <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-            <p className="text-acadia-100 mb-6">
+        <div className="min-h-screen bg-ink-950 text-ink-100 flex flex-col items-center justify-center p-4">
+          <div className="panel p-8 max-w-md text-center">
+            <h2 className="text-2xl font-display mb-4 text-ink-50">Something went wrong</h2>
+            <p className="text-ink-300 mb-6">
               An error occurred while loading the calculator.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-acadia-700 hover:bg-acadia-600 rounded transition-colors"
+              className="btn btn-primary"
             >
               Reload Page
             </button>
             {import.meta.env.DEV && this.state.error && (
-              <pre className="mt-6 p-4 bg-acadia-950 rounded text-red-400 text-xs text-left overflow-auto">
+              <pre className="mt-6 p-4 bg-ink-900 rounded text-red-400 text-xs text-left overflow-auto font-mono border border-ink-700">
                 {this.state.error.stack}
               </pre>
             )}
@@ -74,6 +75,52 @@ class ErrorBoundary extends Component<
 
     return this.props.children;
   }
+}
+
+// ============================================================================
+// Theme Toggle
+// ============================================================================
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <div className="flex items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] p-0.5">
+      <button
+        onClick={() => setTheme("light")}
+        className={`p-1.5 rounded transition-colors ${
+          theme === "light"
+            ? "bg-copper-500 text-white"
+            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+        }`}
+        aria-label="Light mode"
+      >
+        <Sun className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => setTheme("dark")}
+        className={`p-1.5 rounded transition-colors ${
+          theme === "dark"
+            ? "bg-copper-500 text-white"
+            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+        }`}
+        aria-label="Dark mode"
+      >
+        <Moon className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => setTheme("system")}
+        className={`p-1.5 rounded transition-colors ${
+          theme === "system"
+            ? "bg-copper-500 text-white"
+            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+        }`}
+        aria-label="System theme"
+      >
+        <Monitor className="w-4 h-4" />
+      </button>
+    </div>
+  );
 }
 
 // ============================================================================
@@ -102,32 +149,32 @@ function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100"
+      className="sticky top-0 z-50 bg-[var(--bg-surface)]/90 backdrop-blur-xl border-b border-[var(--border-default)]"
       ref={menuRef}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Nav Links */}
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">RB</span>
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-9 h-9 rounded bg-gradient-to-br from-copper-500 to-copper-700 flex items-center justify-center border border-copper-400/30 shadow-lg shadow-copper-500/20 group-hover:shadow-copper-500/40 transition-shadow">
+                <span className="text-white font-mono font-semibold text-sm tracking-tight">RB</span>
               </div>
-              <span className="font-semibold text-slate-900 text-lg hidden sm:block">RentVsBuy</span>
+              <span className="font-display text-[var(--text-primary)] text-lg hidden sm:block italic font-light tracking-tight">RentVsBuy</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1">
               <Link
                 to="/"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all text-sm font-medium"
-                activeProps={{ className: "!bg-sky-50 !text-sky-700" }}
+                className="flex items-center gap-2 px-4 py-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-all text-sm font-medium tracking-wide uppercase"
+                activeProps={{ className: "!bg-copper-500/10 !text-copper-500" }}
               >
                 <Calculator className="w-4 h-4" />
                 Calculator
               </Link>
               <Link
                 to="/explore"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all text-sm font-medium"
-                activeProps={{ className: "!bg-sky-50 !text-sky-700" }}
+                className="flex items-center gap-2 px-4 py-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-all text-sm font-medium tracking-wide uppercase"
+                activeProps={{ className: "!bg-copper-500/10 !text-copper-500" }}
               >
                 <Map className="w-4 h-4" />
                 Explore
@@ -137,12 +184,15 @@ function Navbar() {
 
           {/* Right side controls */}
           <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* Desktop selects */}
             <div className="hidden lg:flex items-center gap-2">
               <select
                 id="currency-select"
                 onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="px-3 py-1.5 rounded-lg text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 cursor-pointer appearance-none border-0 focus:ring-2 focus:ring-sky-500 transition-colors"
+                className="px-3 py-1.5 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-muted)] cursor-pointer appearance-none border border-[var(--border-default)] focus:ring-2 focus:ring-copper-500/50 focus:border-copper-500 transition-colors font-mono"
                 aria-label={t("currency")}
                 value={currency}
               >
@@ -152,7 +202,7 @@ function Navbar() {
               <select
                 id="language-select"
                 onChange={(e) => i18n.changeLanguage(e.target.value)}
-                className="px-3 py-1.5 rounded-lg text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 cursor-pointer appearance-none border-0 focus:ring-2 focus:ring-sky-500 transition-colors"
+                className="px-3 py-1.5 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-muted)] cursor-pointer appearance-none border border-[var(--border-default)] focus:ring-2 focus:ring-copper-500/50 focus:border-copper-500 transition-colors font-mono"
                 value={i18n.language}
                 aria-label={t("language")}
               >
@@ -162,18 +212,18 @@ function Navbar() {
 
               <select
                 id="country-select"
-                className="px-3 py-1.5 rounded-lg text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 cursor-pointer appearance-none border-0 focus:ring-2 focus:ring-sky-500 transition-colors"
+                className="px-3 py-1.5 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-muted)] cursor-pointer appearance-none border border-[var(--border-default)] focus:ring-2 focus:ring-copper-500/50 focus:border-copper-500 transition-colors"
                 aria-label={t("country")}
                 onChange={(e) => setSelectedCountry(e.target.value as Country)}
                 value={country}
               >
-                <option value="US">🇺🇸 US</option>
+                <option value="US">US</option>
               </select>
             </div>
 
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              className="lg:hidden p-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={t("toggle_menu")}
             >
@@ -206,40 +256,45 @@ function Navbar() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="lg:hidden border-t border-slate-100 bg-white">
+        <div className="lg:hidden border-t border-[var(--border-default)] bg-[var(--bg-surface)]">
           <div className="px-4 py-4 space-y-3">
             {/* Mobile nav links */}
             <div className="space-y-1">
               <Link
                 to="/"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                className="flex items-center gap-3 px-3 py-2.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Calculator className="w-5 h-5" />
-                <span className="font-medium">Calculator</span>
+                <span className="font-medium uppercase tracking-wide text-sm">Calculator</span>
               </Link>
               <Link
                 to="/explore"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                className="flex items-center gap-3 px-3 py-2.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Map className="w-5 h-5" />
-                <span className="font-medium">Explore</span>
+                <span className="font-medium uppercase tracking-wide text-sm">Explore</span>
               </Link>
             </div>
 
+            {/* Mobile theme toggle */}
+            <div className="pt-3 border-t border-[var(--border-default)] flex justify-center">
+              <ThemeToggle />
+            </div>
+
             {/* Mobile selects */}
-            <div className="pt-3 border-t border-slate-100 grid grid-cols-3 gap-2">
+            <div className="pt-3 border-t border-[var(--border-default)] grid grid-cols-3 gap-2">
               <select
                 onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="px-3 py-2 rounded-lg text-sm text-slate-600 bg-slate-100 cursor-pointer appearance-none border-0"
+                className="px-3 py-2 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] cursor-pointer appearance-none border border-[var(--border-default)] font-mono"
                 value={currency}
               >
                 <option value="USD">$ USD</option>
               </select>
               <select
                 onChange={(e) => i18n.changeLanguage(e.target.value)}
-                className="px-3 py-2 rounded-lg text-sm text-slate-600 bg-slate-100 cursor-pointer appearance-none border-0"
+                className="px-3 py-2 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] cursor-pointer appearance-none border border-[var(--border-default)] font-mono"
                 value={i18n.language}
               >
                 <option value="en">EN</option>
@@ -247,10 +302,10 @@ function Navbar() {
               </select>
               <select
                 onChange={(e) => setSelectedCountry(e.target.value as Country)}
-                className="px-3 py-2 rounded-lg text-sm text-slate-600 bg-slate-100 cursor-pointer appearance-none border-0"
+                className="px-3 py-2 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] cursor-pointer appearance-none border border-[var(--border-default)]"
                 value={country}
               >
-                <option value="US">🇺🇸 US</option>
+                <option value="US">US</option>
               </select>
             </div>
           </div>
@@ -298,7 +353,7 @@ export const Route = createRootRoute({
       },
       { name: "author", content: "sbaidon" },
       { name: "robots", content: "index, follow" },
-      { name: "theme-color", content: "#0ea5e9" },
+      { name: "theme-color", content: "#0a0f1a" },
       // Open Graph / Facebook
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://rentvsbuy.io/" },
@@ -337,7 +392,7 @@ export const Route = createRootRoute({
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico" },
@@ -379,16 +434,18 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <ErrorBoundary>
-        <AppProvider>
-          <div className="min-h-screen bg-slate-50">
-            <Navbar />
-            <main>
-              <Outlet />
-            </main>
-          </div>
-        </AppProvider>
-      </ErrorBoundary>
+      <ThemeProvider>
+        <ErrorBoundary>
+          <AppProvider>
+            <div className="min-h-screen">
+              <Navbar />
+              <main>
+                <Outlet />
+              </main>
+            </div>
+          </AppProvider>
+        </ErrorBoundary>
+      </ThemeProvider>
     </RootDocument>
   );
 }

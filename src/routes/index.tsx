@@ -3,9 +3,8 @@ import { StrictMode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Calculator from "../components/calculator";
 import { CalculatorProvider } from "../context/calculator-context";
-import Results from "../components/results";
-import { ChevronDown, X, Table } from "lucide-react";
-import AmortizationModal from "../components/amortization-modal";
+import TabbedResults from "../components/tabbed-results";
+import { ChevronDown, X } from "lucide-react";
 
 // ============================================================================
 // Responsive Results Component
@@ -36,7 +35,7 @@ function ResponsiveResults({
       p-2
       ${
         !isMinimized
-          ? "fixed inset-0 bg-acadia-900 z-50 lg:relative lg:inset-auto lg:bg-transparent isolate overflow-y-auto lg:overflow-visible no-scrollbar"
+          ? "fixed inset-0 bg-[var(--bg-base)] z-50 lg:relative lg:inset-auto lg:bg-transparent isolate overflow-y-auto lg:overflow-visible no-scrollbar"
           : ""
       }
     `}
@@ -44,12 +43,12 @@ function ResponsiveResults({
       <div className="flex items-center justify-between p-4 lg:hidden">
         {!isMinimized && (
           <>
-            <h2 className="text-lg font-medium">
+            <h2 className="text-lg font-display text-[var(--text-primary)]">
               {t("calculator.results.title")}
             </h2>
             <button
               onClick={toggleMinimized}
-              className="text-white hover:bg-amber-100 hover:text-acadia-900 rounded-full p-2 cursor-pointer"
+              className="text-[var(--text-muted)] hover:bg-copper-500/20 hover:text-copper-400 rounded p-2 cursor-pointer transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -58,14 +57,14 @@ function ResponsiveResults({
       </div>
       {isMinimized && (
         <button
-          className="cursor-pointer rounded-lg p-2 w-1/2 text-white bg-acadia-900 hover:text-amber-100 flex items-center justify-center lg:hidden mx-auto"
+          className="cursor-pointer rounded p-3 w-full sm:w-1/2 text-white bg-copper-600 hover:bg-copper-500 flex items-center justify-center lg:hidden mx-auto font-medium uppercase tracking-wide text-sm shadow-lg shadow-copper-500/20 transition-all"
           onClick={toggleMinimized}
         >
           {t("calculator.results.show")}
         </button>
       )}
-      <div className={`${isMinimized ? "hidden lg:block" : ""}`}>
-        <Results />
+      <div className={`${isMinimized ? "hidden lg:block" : ""} p-2 sm:p-4 lg:p-0`}>
+        <TabbedResults />
       </div>
     </div>
   );
@@ -86,38 +85,34 @@ function HomePage() {
     }
     return true;
   });
-  const [isAmortizationModalOpen, setIsAmortizationModalOpen] = useState(false);
 
   return (
     <StrictMode>
       <CalculatorProvider initialEncodedState={q}>
-        <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto lg:overflow">
-          <div className="w-full lg:w-3/5 px-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-              <h1 className="mb-2 sm:mb-0">{t("calculator.title")}</h1>
-              <button
-                onClick={() => setIsAmortizationModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-acadia-800 rounded hover:bg-acadia-700 text-acadia-100 hover:text-white transition-colors duration-200 self-start sm:self-center"
-              >
-                <Table className="h-5 w-5" />
-                <span>{t("calculator.amortization.view_schedule")}</span>
-              </button>
+        <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto py-4 sm:py-8">
+          <div className="w-full lg:w-3/5 px-4 sm:px-6">
+            {/* Header section */}
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-[var(--text-primary)] mb-2">{t("calculator.title")}</h1>
+              <div className="h-0.5 w-24 bg-gradient-to-r from-copper-500 to-transparent" />
             </div>
-            <div className="w-full">
-              <details className="group relative [&_summary::-webkit-details-marker]:hidden">
+            
+            {/* Methodology section */}
+            <div className="w-full mb-6">
+              <details className="group relative [&_summary::-webkit-details-marker]:hidden panel p-4">
                 <summary
-                  className="w-full flex justify-between items-center text-acadia-100 
-                    rounded-lg transition-colors cursor-pointer 
+                  className="w-full flex justify-between items-center 
+                    rounded transition-colors cursor-pointer 
                     [&::-webkit-details-marker]:hidden list-none"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-lg">
+                    <span className="font-medium text-sm uppercase tracking-wide text-[var(--text-muted)]">
                       {t("calculator.methodology.title")}
                     </span>
                   </div>
-                  <ChevronDown className="h-5 w-5 transform group-open:rotate-180 transition-transform" />
+                  <ChevronDown className="h-5 w-5 text-[var(--text-muted)] transform group-open:rotate-180 transition-transform" />
                 </summary>
-                <div className="mt-2 text-acadia-100 rounded-lg">
+                <div className="mt-4 text-[var(--text-secondary)] border-t border-[var(--border-default)] pt-4">
                   <div className="prose prose-invert max-w-none">
                     <p
                       className="text-sm/7 text-justify"
@@ -129,23 +124,21 @@ function HomePage() {
                 </div>
               </details>
             </div>
+            
+            {/* Calculator */}
             <div className={`${!isMinimized ? "blur-sm lg:blur-none" : ""}`}>
-              <Calculator
-                onOpenAmortizationModal={() => setIsAmortizationModalOpen(true)}
-              />
+              <Calculator />
             </div>
           </div>
-          <div className="w-full lg:w-2/5 sticky lg:top-4 bottom-0 lg:self-start rounded-t-lg">
+          
+          {/* Results sidebar */}
+          <div className="w-full lg:w-2/5 sticky lg:top-20 bottom-0 lg:self-start rounded-t-lg">
             <ResponsiveResults
               setIsMinimized={setIsMinimized}
               isMinimized={isMinimized}
             />
           </div>
         </div>
-        <AmortizationModal
-          isOpen={isAmortizationModalOpen}
-          onClose={() => setIsAmortizationModalOpen(false)}
-        />
       </CalculatorProvider>
     </StrictMode>
   );

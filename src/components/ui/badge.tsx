@@ -17,20 +17,32 @@ export const Badge = memo(function Badge({
   ...props
 }: BadgeProps) {
   const variants = {
-    default: "bg-slate-100 text-slate-700",
-    sale: "bg-emerald-50 text-emerald-700",
-    rent: "bg-sky-50 text-sky-700",
-    success: "bg-emerald-50 text-emerald-700",
-    warning: "bg-amber-50 text-amber-700",
+    default: "",
+    sale: "badge-sale",
+    rent: "badge-rent",
+    success: "badge-sale",
+    warning: "bg-copper-500/15 text-copper-400 border border-copper-500/30",
+  };
+
+  const getDefaultStyle = () => {
+    if (variant === "default") {
+      return {
+        background: "var(--bg-muted)",
+        color: "var(--text-secondary)",
+        border: "1px solid var(--border-default)",
+      };
+    }
+    return {};
   };
 
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full",
+        "inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-mono font-medium rounded uppercase tracking-wider",
         variants[variant],
         className
       )}
+      style={getDefaultStyle()}
       {...props}
     >
       {children}

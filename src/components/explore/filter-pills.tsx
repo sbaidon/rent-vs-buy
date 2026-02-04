@@ -11,7 +11,7 @@ interface FilterPillsProps {
 
 // Hoist static styles outside component (Vercel best practice: rendering-hoist-jsx)
 const baseStyles =
-  "px-4 py-2 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2";
+  "px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs font-medium uppercase tracking-wide transition-all focus:outline-none focus:ring-2 focus:ring-copper-500/50 focus:ring-offset-2";
 
 /**
  * Filter pills for switching between All/Buy/Rent views
@@ -27,7 +27,7 @@ export const FilterPills = memo(function FilterPills({
   const handleRentClick = useCallback(() => onFilterChange("rent"), [onFilterChange]);
 
   return (
-    <div className="flex items-center gap-2" role="tablist">
+    <div className="flex items-center gap-1.5 sm:gap-2" role="tablist">
       <button
         role="tab"
         aria-selected={activeFilter === "all"}
@@ -35,9 +35,14 @@ export const FilterPills = memo(function FilterPills({
         className={clsx(
           baseStyles,
           activeFilter === "all"
-            ? "bg-slate-900 text-white shadow-sm"
-            : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+            ? "bg-copper-600 text-white shadow-lg shadow-copper-500/20 border border-copper-500"
+            : "border"
         )}
+        style={activeFilter !== "all" ? {
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+          color: "var(--text-secondary)",
+        } : undefined}
       >
         All
       </button>
@@ -47,13 +52,18 @@ export const FilterPills = memo(function FilterPills({
         onClick={handleSaleClick}
         className={clsx(
           baseStyles,
-          "flex items-center gap-2",
+          "flex items-center gap-1.5 sm:gap-2",
           activeFilter === "sale"
-            ? "bg-emerald-500 text-white shadow-sm"
-            : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+            ? "bg-green-600 text-white shadow-lg shadow-green-500/20 border border-green-500"
+            : "border"
         )}
+        style={activeFilter !== "sale" ? {
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+          color: "var(--text-secondary)",
+        } : undefined}
       >
-        <Home className="w-4 h-4" />
+        <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         Buy
       </button>
       <button
@@ -62,13 +72,18 @@ export const FilterPills = memo(function FilterPills({
         onClick={handleRentClick}
         className={clsx(
           baseStyles,
-          "flex items-center gap-2",
+          "flex items-center gap-1.5 sm:gap-2",
           activeFilter === "rent"
-            ? "bg-sky-500 text-white shadow-sm"
-            : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+            ? "bg-blueprint-500 text-white shadow-lg shadow-blueprint-500/20 border border-blueprint-400"
+            : "border"
         )}
+        style={activeFilter !== "rent" ? {
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+          color: "var(--text-secondary)",
+        } : undefined}
       >
-        <Building2 className="w-4 h-4" />
+        <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         Rent
       </button>
     </div>

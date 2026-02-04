@@ -112,128 +112,132 @@ const Results = React.memo(() => {
   };
 
   return (
-    <div className="p-8 lg:p-0 mx-auto max-w-[600px] lg:max-w-full flex flex-col gap-6 items-center">
+    <div className="p-4 sm:p-8 lg:p-0 mx-auto max-w-[600px] lg:max-w-full flex flex-col gap-6 items-center">
       {showToast && (
-        <div className="fixed bottom-4 right-4 bg-acadia-950 text-acadia-100 px-4 py-2 rounded-lg shadow-lg transition-opacity z-0 isolate">
+        <div className="fixed bottom-4 right-4 bg-[var(--bg-elevated)] text-[var(--text-primary)] px-4 py-2 rounded shadow-lg transition-opacity z-0 isolate border border-[var(--border-default)] font-mono text-sm">
           {t("calculator.linkCopied")}
         </div>
       )}
-      <div
-        className={`max-h-[900px] rounded-lg p-6 w-full shadow ${
-          isRentingBetter ? "bg-acadia-200" : "bg-acadia-400"
-        } text-acadia-950`}
-      >
-        <div className={`p-4 mb-6 text-center`}>
-          <h3 className="text-acadia-950">
-            <span className="text-2xl underline decoration-wavy font-bold">
+      
+      {/* Main results card with copper accent */}
+      <div className="card max-h-[900px] p-4 sm:p-6 w-full glow-copper">
+        {/* Hero result section */}
+        <div className="p-4 sm:p-6 mb-6 text-center border-b border-[var(--border-default)]">
+          <p className="stat-label mb-2">{t("calculator.results.savesYou")}</p>
+          <h3 className="text-[var(--text-primary)] mb-3">
+            <span className={`text-xl sm:text-2xl font-display italic ${isRentingBetter ? 'text-blueprint-400' : 'text-copper-400'}`}>
               {results.buying.totalCost > results.renting.totalCost
                 ? t("calculator.results.renting")
                 : t("calculator.results.buying")}
-              &nbsp;
             </span>
-            {t("calculator.results.savesYou")}
           </h3>
-          <p className="text-2xl text-acadia-950">
-            <span className="text-4xl font-bold">
-              {formatCurrency(Math.abs(savings), currency)}&nbsp;
-            </span>
+          <p className="stat-value text-[var(--text-primary)]">
+            {formatCurrency(Math.abs(savings), currency)}
+          </p>
+          <p className="text-[var(--text-muted)] text-sm mt-2 font-mono">
             {t("calculator.results.overYears", { years: values.yearsToStay })}
           </p>
         </div>
 
-        <div className="w-full text-acadia-950">
-          <div className="grid grid-cols-3 text-left mb-2">
-            <div className="font-semibold">{t("calculator.results.costs")}</div>
-            <div className="font-semibold">{t("calculator.rent")}</div>
-            <div className="font-semibold">{t("calculator.results.buy")}</div>
-          </div>
-          <div className="divide-y divide-acadia-900">
-            {[
-              [
-                t("calculator.results.initialCosts"),
-                results.renting.initialCost,
-                results.buying.initialCost,
-              ],
-              [
-                t("calculator.results.recurringCosts"),
-                results.renting.recurringCost,
-                results.buying.recurringCost,
-              ],
-              [
-                t("calculator.results.opportunityCosts"),
-                results.renting.opportunityCost,
-                results.buying.opportunityCost,
-              ],
-              [
-                t("calculator.results.netProceeds"),
-                results.renting.netProceeds,
-                results.buying.netProceeds,
-              ],
-            ].map(([label, rent, buy]) => (
-              <div key={label} className="grid grid-cols-3 py-2">
-                <p className="text-acadia-950">{label}</p>
-                <div
-                  className={`truncate slashed-zero tabular-nums ${
-                    (rent as number) > 0 ? "text-red-800" : "text-green-800"
+        {/* Cost breakdown table */}
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[320px]">
+            <thead>
+              <tr className="border-b border-[var(--border-default)]">
+                <th className="stat-label text-left pb-3 pr-4">{t("calculator.results.costs")}</th>
+                <th className="stat-label text-right pb-3 px-2">{t("calculator.rent")}</th>
+                <th className="stat-label text-right pb-3 pl-2">{t("calculator.results.buy")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border-default)]">
+              {[
+                [
+                  t("calculator.results.initialCosts"),
+                  results.renting.initialCost,
+                  results.buying.initialCost,
+                ],
+                [
+                  t("calculator.results.recurringCosts"),
+                  results.renting.recurringCost,
+                  results.buying.recurringCost,
+                ],
+                [
+                  t("calculator.results.opportunityCosts"),
+                  results.renting.opportunityCost,
+                  results.buying.opportunityCost,
+                ],
+                [
+                  t("calculator.results.netProceeds"),
+                  results.renting.netProceeds,
+                  results.buying.netProceeds,
+                ],
+              ].map(([label, rent, buy]) => (
+                <tr key={label as string}>
+                  <td className="text-[var(--text-secondary)] text-sm py-3 pr-4">{label}</td>
+                  <td
+                    className={`font-mono text-sm py-3 px-2 text-right tabular-nums ${
+                      (rent as number) > 0 ? "text-red-400" : "text-green-400"
+                    }`}
+                  >
+                    {formatCurrency(rent as number, currency)}
+                  </td>
+                  <td
+                    className={`font-mono text-sm py-3 pl-2 text-right tabular-nums ${
+                      (buy as number) > 0 ? "text-red-400" : "text-green-400"
+                    }`}
+                  >
+                    {formatCurrency(buy as number, currency)}
+                  </td>
+                </tr>
+              ))}
+              <tr className="bg-[var(--bg-muted)]/30">
+                <td className="text-[var(--text-primary)] font-medium text-sm py-3 pr-4">{t("calculator.results.total")}</td>
+                <td
+                  className={`font-mono font-semibold py-3 px-2 text-right tabular-nums ${
+                    results.renting.totalCost > 0
+                      ? "text-red-400"
+                      : "text-green-400"
                   }`}
                 >
-                  {formatCurrency(rent as number, currency)}
-                </div>
-                <div
-                  className={`truncate slashed-zero tabular-nums ${
-                    (buy as number) > 0 ? "text-red-800" : "text-green-800"
+                  {formatCurrency(results.renting.totalCost, currency)}
+                </td>
+                <td
+                  className={`font-mono font-semibold py-3 pl-2 text-right tabular-nums ${
+                    results.buying.totalCost > 0
+                      ? "text-red-400"
+                      : "text-green-400"
                   }`}
                 >
-                  {formatCurrency(buy as number, currency)}
-                </div>
-              </div>
-            ))}
-            <div className="grid grid-cols-3 py-2">
-              <div>{t("calculator.results.total")}</div>
-              <div
-                className={`truncate slashed-zero tabular-nums ${
-                  results.renting.totalCost > 0
-                    ? "text-red-800"
-                    : "text-green-800"
-                }`}
-              >
-                {formatCurrency(results.renting.totalCost, currency)}
-              </div>
-              <div
-                className={`truncate slashed-zero tabular-nums ${
-                  results.buying.totalCost > 0
-                    ? "text-red-800"
-                    : "text-green-800"
-                }`}
-              >
-                {formatCurrency(results.buying.totalCost, currency)}
-              </div>
-            </div>
-          </div>
+                  {formatCurrency(results.buying.totalCost, currency)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div className="mt-6">
-          <h4 className="text-lg font-semibold mb-3 text-acadia-950 flex items-center">
+        {/* Monthly breakdown */}
+        <div className="mt-6 pt-4 border-t border-[var(--border-default)]">
+          <h4 className="stat-label mb-3 flex items-center">
             {t("calculator.results.monthlyBreakdown")}
             <Tooltip
               content={t("calculator.tooltips.monthlyPayment")}
-              iconClassName="text-acadia-800"
+              iconClassName="text-[var(--text-muted)]"
             />
           </h4>
-          <div className="w-full text-acadia-950">
-            <div className="grid grid-cols-2 text-left mb-2">
-              <div className="font-semibold">{t("calculator.rent")}</div>
-              <div className="font-semibold">{t("calculator.results.buy")}</div>
+          <div className="w-full">
+            <div className="grid grid-cols-2 text-left mb-2 gap-4">
+              <div className="text-[var(--text-muted)] text-xs uppercase tracking-wider">{t("calculator.rent")}</div>
+              <div className="text-[var(--text-muted)] text-xs uppercase tracking-wider">{t("calculator.results.buy")}</div>
             </div>
-            <div className="border-t border-acadia-900">
-              <div className="grid grid-cols-2 py-2">
-                <div className="truncate slashed-zero tabular-nums text-red-800">
+            <div className="border-t border-[var(--border-default)]">
+              <div className="grid grid-cols-2 py-3 gap-4">
+                <div className="font-mono text-base sm:text-lg text-red-400 tabular-nums">
                   {formatCurrency(
                     results.renting.totalCost / (values.yearsToStay * 12),
                     currency
                   )}
                 </div>
-                <div className="truncate slashed-zero tabular-nums text-red-800">
+                <div className="font-mono text-base sm:text-lg text-red-400 tabular-nums">
                   {formatCurrency(
                     results.buying.totalCost / (values.yearsToStay * 12),
                     currency
@@ -244,38 +248,41 @@ const Results = React.memo(() => {
           </div>
         </div>
 
-        <div className="flex justify-end mt-4 space-x-2">
+        {/* Action buttons */}
+        <div className="flex justify-end mt-6 pt-4 border-t border-[var(--border-default)] gap-2">
           <button
             onClick={handleShare}
-            className="px-4 py-2 text-sm font-medium text-acadia-950 rounded hover:bg-acadia-100 transition-colors cursor-pointer"
+            className="btn btn-ghost text-xs"
           >
             {t("calculator.share")}
           </button>
           <button
             onClick={reset}
-            className="px-4 py-2 text-sm font-medium text-acadia-950 rounded hover:bg-acadia-100 transition-colors cursor-pointer"
+            className="btn btn-ghost text-xs"
           >
             {t("calculator.reset")}
           </button>
         </div>
       </div>
-      <div className="max-h-[500px] w-full rounded-lg p-6 bg-acadia-950 shadow text-acadia-100">
-        <div className="flex-col lg:flex-row gap-4 lg:gap-0 flex justify-between items-center mb-3">
-          <div className="flex items-baseline">
-            <h4 className="lg font-semibold flex items-baseline">
+      
+      {/* Chart section */}
+      <div className="max-h-[500px] w-full panel p-4 sm:p-6">
+        <div className="flex-col sm:flex-row gap-4 sm:gap-0 flex justify-between items-start sm:items-center mb-4">
+          <div className="flex items-center gap-2">
+            <h4 className="text-[var(--text-primary)] font-medium text-sm uppercase tracking-wide">
               {t("calculator.results.yearBreakdown")}
             </h4>
             <Tooltip
               content={t("calculator.tooltips.yearBreakdown")}
-              iconClassName="text-acadia-200"
+              iconClassName="text-[var(--text-muted)]"
             />
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <select
               id="view-mode-select"
               value={viewMode}
               onChange={(e) => setViewMode(e.target.value as ViewMode)}
-              className="bg-acadia-800 text-acadia-100 rounded px-2 py-1 text-sm"
+              className="input py-1.5 px-3 text-sm w-auto"
             >
               <option value="regular">{t("calculator.results.regular")}</option>
               <option value="cumulative">
@@ -287,17 +294,17 @@ const Results = React.memo(() => {
             </select>
             <Tooltip
               content={t("calculator.tooltips.viewMode")}
-              iconClassName="text-acadia-200"
+              iconClassName="text-[var(--text-muted)]"
             />
           </div>
         </div>
         <AreaChart
-          className="p-4 w-full"
+          className="w-full h-[300px] sm:h-[350px]"
           data={yearlyData}
           index="date"
           allowDecimals
           categories={chartCategories}
-          yAxisWidth={100}
+          yAxisWidth={80}
           colors={["light", "dark"]}
           fill="solid"
           valueFormatter={(value) => formatCurrency(value, currency)}

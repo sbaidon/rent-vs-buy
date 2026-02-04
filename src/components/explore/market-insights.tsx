@@ -1,6 +1,6 @@
-import { memo } from "react";
-import { TrendingUp, X } from "lucide-react";
-import { Card } from "../ui/card";
+import { memo, useEffect, useState } from "react";
+import { TrendingUp, X, ChevronDown } from "lucide-react";
+import { clsx } from "clsx";
 
 interface MarketInsightsProps {
   isOpen: boolean;
@@ -10,6 +10,8 @@ interface MarketInsightsProps {
 
 /**
  * Market insights panel showing area statistics
+ * Mobile: slides up from bottom
+ * Desktop: positioned at top-right
  * Memoized to prevent re-renders when map state changes
  */
 export const MarketInsights = memo(function MarketInsights({
@@ -17,56 +19,143 @@ export const MarketInsights = memo(function MarketInsights({
   onClose,
   location = "Austin, TX",
 }: MarketInsightsProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Animate in/out
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay to trigger CSS transition
+      const timer = setTimeout(() => setIsVisible(true), 10);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+    }
+  }, [isOpen]);
+
   // Early return for closed state (Vercel best practice: js-early-exit)
   if (!isOpen) return null;
 
   return (
-    <Card className="absolute top-4 right-4 w-80 z-10">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-sky-500" />
-          Market Insights
-        </h3>
-        <button
-          onClick={onClose}
-          className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-          aria-label="Close insights panel"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      <p className="text-sm text-slate-500 mb-4">{location}</p>
-
-      <div className="space-y-4">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Median Home Price" value="$485,000" change="+3.2%" />
-          <StatCard label="Median Rent" value="$1,850/mo" change="+4.5%" />
+    <>
+      {/* Mobile backdrop */}
+      <div 
+        className={clsx(
+          "fixed inset-0 bg-black/50 z-20 sm:hidden transition-opacity duration-300",
+          isVisible ? "opacity-100" : "opacity-0"
+        )}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      
+      {/* Panel */}
+      <div 
+        className={clsx(
+          // Mobile: bottom sheet
+          "fixed bottom-0 left-0 right-0 z-30 rounded-t-2xl max-h-[70vh] overflow-y-auto",
+          // Desktop: top-right panel
+          "sm:absolute sm:bottom-auto sm:top-4 sm:right-4 sm:left-auto sm:w-80 sm:rounded-lg sm:max-h-none",
+          // Transitions
+          "transition-transform duration-300 ease-out",
+          // Mobile slide up animation
+          isVisible ? "translate-y-0" : "translate-y-full sm:translate-y-0",
+          // Desktop fade
+          isVisible ? "sm:opacity-100" : "sm:opacity-0"
+        )}
+        style={{ 
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border-default)",
+          boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.3)"
+        }}
+      >
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div 
+            className="w-10 h-1 rounded-full"
+            style={{ background: "var(--border-default)" }}
+          />
         </div>
 
-        {/* Price to Rent Ratio */}
-        <div className="bg-gradient-to-r from-sky-50 to-sky-100/50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-slate-700">
-              Price-to-Rent Ratio
-            </span>
-            <span className="text-lg font-bold text-sky-700">21.8</span>
+        <div className="p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 
+              className="font-semibold flex items-center gap-2 text-sm uppercase tracking-wide"
+              style={{ color: "var(--text-primary)" }}
+            >
+              <TrendingUp className="w-5 h-5 text-copper-400" />
+              Market Insights
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full transition-colors"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--bg-muted)";
+                e.currentTarget.style.color = "var(--text-primary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--text-muted)";
+              }}
+              aria-label="Close insights panel"
+            >
+              <X className="w-4 h-4 hidden sm:block" />
+              <ChevronDown className="w-5 h-5 sm:hidden" />
+            </button>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Higher than national average (19.2). Renting may be more
-            cost-effective for shorter stays.
-          </p>
-        </div>
 
-        {/* Additional Stats */}
-        <div className="pt-3 border-t border-slate-100 space-y-2">
-          <StatRow label="30-Year Fixed Rate" value="6.89%" />
-          <StatRow label="Days on Market" value="45 days" />
-          <StatRow label="Active Listings" value="1,250" />
+          <p 
+            className="text-sm mb-4 font-mono"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {location}
+          </p>
+
+          <div className="space-y-4">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard label="Median Home Price" value="$485,000" change="+3.2%" />
+              <StatCard label="Median Rent" value="$1,850/mo" change="+4.5%" />
+            </div>
+
+            {/* Price to Rent Ratio */}
+            <div 
+              className="rounded-lg p-3 sm:p-4"
+              style={{ 
+                background: "rgba(224, 107, 71, 0.1)",
+                border: "1px solid rgba(224, 107, 71, 0.3)"
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span 
+                  className="text-sm font-medium"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Price-to-Rent Ratio
+                </span>
+                <span className="text-lg font-mono font-bold text-copper-400">21.8</span>
+              </div>
+              <p 
+                className="text-xs leading-relaxed"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Higher than national average (19.2). Renting may be more
+                cost-effective for shorter stays.
+              </p>
+            </div>
+
+            {/* Additional Stats */}
+            <div 
+              className="pt-3 space-y-2"
+              style={{ borderTop: "1px solid var(--border-default)" }}
+            >
+              <StatRow label="30-Year Fixed Rate" value="6.89%" />
+              <StatRow label="Days on Market" value="45 days" />
+              <StatRow label="Active Listings" value="1,250" />
+            </div>
+          </div>
         </div>
       </div>
-    </Card>
+    </>
   );
 });
 
@@ -83,12 +172,28 @@ const StatCard = memo(function StatCard({
   const isPositive = change.startsWith("+");
   
   return (
-    <div className="bg-slate-50 rounded-xl p-3">
-      <p className="text-xs text-slate-500 mb-1">{label}</p>
-      <p className="text-lg font-semibold text-slate-900">{value}</p>
+    <div 
+      className="rounded-lg p-3"
+      style={{ 
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-default)"
+      }}
+    >
+      <p 
+        className="text-xs mb-1 uppercase tracking-wide"
+        style={{ color: "var(--text-muted)" }}
+      >
+        {label}
+      </p>
+      <p 
+        className="text-base sm:text-lg font-mono font-semibold"
+        style={{ color: "var(--text-primary)" }}
+      >
+        {value}
+      </p>
       <p
-        className={`text-xs font-medium ${
-          isPositive ? "text-emerald-600" : "text-rose-600"
+        className={`text-xs font-mono font-medium ${
+          isPositive ? "text-green-400" : "text-red-400"
         }`}
       >
         {change} YoY
@@ -106,8 +211,18 @@ const StatRow = memo(function StatRow({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-slate-600">{label}</span>
-      <span className="text-sm font-semibold text-slate-900">{value}</span>
+      <span 
+        className="text-sm"
+        style={{ color: "var(--text-muted)" }}
+      >
+        {label}
+      </span>
+      <span 
+        className="text-sm font-mono font-semibold"
+        style={{ color: "var(--text-primary)" }}
+      >
+        {value}
+      </span>
     </div>
   );
 });

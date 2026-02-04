@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { CalculatorValues, useCalculator } from "../context/calculator-context";
 import FlameGraph from "./flame-graph";
 import { useTranslation } from "react-i18next";
@@ -6,26 +6,11 @@ import { formatCurrency } from "../utils/format-currency";
 import { useAppContext } from "../context/app-context";
 import { INPUT_CONFIG_PER_COUNTRY } from "../config/calculator-config";
 import Tooltip from "./tooltip";
-import AmortizationModal from "./amortization-modal";
-import { Table } from "lucide-react";
 
-interface CalculatorProps {
-  onOpenAmortizationModal?: () => void;
-}
-
-const Calculator: React.FC<CalculatorProps> = ({ onOpenAmortizationModal }) => {
+const Calculator: React.FC = () => {
   const { values, updateValue } = useCalculator();
   const { t } = useTranslation();
   const { currency, country } = useAppContext();
-  const [isAmortizationModalOpen, setIsAmortizationModalOpen] = useState(false);
-
-  const handleOpenAmortizationModal = () => {
-    if (onOpenAmortizationModal) {
-      onOpenAmortizationModal();
-    } else {
-      setIsAmortizationModalOpen(true);
-    }
-  };
 
   const formatPercentage = useCallback(
     (value: number) => `${(value * 100).toFixed(2)}%`,
@@ -50,7 +35,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onOpenAmortizationModal }) => {
   const renderLabel = useCallback(
     (labelKey: string, tooltipKey: string) => (
       <div className="flex items-center">
-        <span className="text-acadia-100">{t(labelKey)}</span>
+        <span className="text-ink-200">{t(labelKey)}</span>
         <Tooltip content={t(tooltipKey)} />
       </div>
     ),
@@ -177,16 +162,6 @@ const Calculator: React.FC<CalculatorProps> = ({ onOpenAmortizationModal }) => {
               )}
             />
           </div>
-
-          <div className="flex justify-center">
-            <button
-              onClick={handleOpenAmortizationModal}
-              className="flex items-center gap-2 px-4 py-2 bg-acadia-800 rounded hover:bg-acadia-700 text-acadia-100 hover:text-white transition-colors duration-200"
-            >
-              <Table className="h-5 w-5" />
-              <span>{t("calculator.amortization.view_schedule")}</span>
-            </button>
-          </div>
         </div>
       </section>
 
@@ -259,26 +234,26 @@ const Calculator: React.FC<CalculatorProps> = ({ onOpenAmortizationModal }) => {
             <h2 className="900 mb-2">{t("calculator.sections.taxes.title")}</h2>
             <div className="space-y-8">
               <div className="flex items-center space-x-4 mb-4">
-                <p>{t("calculator.sections.taxes.filingType")}</p>
-                <label className="inline-flex items-center">
+                <p className="text-ink-300">{t("calculator.sections.taxes.filingType")}</p>
+                <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="radio"
-                    className="form-radio"
+                    className="form-radio accent-copper-500"
                     checked={!values.isJointReturn}
                     onChange={() => updateValue("isJointReturn", false)}
                   />
-                  <span className="text-acadia-100 ml-2">
+                  <span className="text-ink-200 ml-2">
                     {t("calculator.sections.taxes.individual")}
                   </span>
                 </label>
-                <label className="inline-flex items-center">
+                <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="radio"
-                    className="form-radio"
+                    className="form-radio accent-copper-500"
                     checked={values.isJointReturn}
                     onChange={() => updateValue("isJointReturn", true)}
                   />
-                  <span className="text-acadia-100 ml-2">
+                  <span className="text-ink-200 ml-2">
                     {t("calculator.sections.taxes.joint")}
                   </span>
                 </label>
@@ -327,26 +302,26 @@ const Calculator: React.FC<CalculatorProps> = ({ onOpenAmortizationModal }) => {
               />
 
               <div className="flex items-center space-x-4">
-                <p>{t("calculator.sections.taxes.taxCutsQuestion")}</p>
-                <label className="inline-flex items-center">
+                <p className="text-ink-300">{t("calculator.sections.taxes.taxCutsQuestion")}</p>
+                <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="radio"
-                    className="form-radio"
+                    className="form-radio accent-copper-500"
                     checked={values.taxCutsExpire}
                     onChange={() => updateValue("taxCutsExpire", true)}
                   />
-                  <span className="text-acadia-100 ml-2">
+                  <span className="text-ink-200 ml-2">
                     {t("calculator.sections.taxes.expire")}
                   </span>
                 </label>
-                <label className="inline-flex items-center">
+                <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="radio"
-                    className="form-radio"
+                    className="form-radio accent-copper-500"
                     checked={!values.taxCutsExpire}
                     onChange={() => updateValue("taxCutsExpire", false)}
                   />
-                  <span className="text-acadia-100 ml-2">
+                  <span className="text-ink-200 ml-2">
                     {t("calculator.sections.taxes.renew")}
                   </span>
                 </label>
@@ -492,11 +467,6 @@ const Calculator: React.FC<CalculatorProps> = ({ onOpenAmortizationModal }) => {
           </div>
         </div>
       </section>
-
-      <AmortizationModal
-        isOpen={isAmortizationModalOpen}
-        onClose={() => setIsAmortizationModalOpen(false)}
-      />
     </>
   );
 };

@@ -35,15 +35,18 @@ export const SearchBar = memo(function SearchBar({
   );
 
   return (
-    <form onSubmit={handleSubmit} className="relative flex-1 max-w-xl">
+    <form onSubmit={handleSubmit} className="relative flex-1 sm:max-w-xl w-full">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+        <Search 
+          className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 pointer-events-none"
+          style={{ color: "var(--text-muted)" }}
+        />
         <input
           type="text"
           value={value}
           onChange={handleChange}
           placeholder={placeholder}
-          className="w-full pl-12 pr-4 h-12 rounded-xl bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 shadow-sm transition-all hover:border-slate-300 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:outline-none"
+          className="input pl-10 sm:pl-12 pr-4 h-10 sm:h-12 text-sm sm:text-base"
         />
       </div>
     </form>

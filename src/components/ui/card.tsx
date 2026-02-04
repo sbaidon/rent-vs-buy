@@ -27,12 +27,16 @@ export const Card = memo(
       <div
         ref={ref}
         className={clsx(
-          "bg-white rounded-2xl border border-slate-100",
-          "shadow-sm shadow-slate-100/50",
-          hover && "transition-all duration-200 hover:shadow-md hover:shadow-slate-200/50 hover:-translate-y-0.5",
+          "rounded-lg shadow-lg",
+          hover && "transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5",
           paddingSizes[padding],
           className
         )}
+        style={{
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border-default)",
+          ...props.style,
+        }}
         {...props}
       >
         {children}
@@ -70,7 +74,7 @@ export const CardTitle = memo(function CardTitle({
 }: CardTitleProps) {
   return (
     <Component
-      className={clsx("font-semibold text-slate-900", className)}
+      className={clsx("font-semibold text-ink-50", className)}
       {...props}
     >
       {children}

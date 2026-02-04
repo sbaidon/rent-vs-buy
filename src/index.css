@@ -1,267 +1,559 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Modern Light Blue Color Palette */
-  --color-sky-50: oklch(0.977 0.013 236.62);
-  --color-sky-100: oklch(0.951 0.026 236.62);
-  --color-sky-200: oklch(0.901 0.058 230.9);
-  --color-sky-300: oklch(0.828 0.111 230.32);
-  --color-sky-400: oklch(0.746 0.16 232.66);
-  --color-sky-500: oklch(0.685 0.169 237.32);
-  --color-sky-600: oklch(0.588 0.158 241.97);
-  --color-sky-700: oklch(0.5 0.134 242.75);
-  --color-sky-800: oklch(0.443 0.11 240.79);
-  --color-sky-900: oklch(0.391 0.09 240.88);
-  --color-sky-950: oklch(0.293 0.066 243.16);
+  /* 
+   * DESIGN CONCEPT: "Architectural Blueprint"
+   * A premium financial tool that feels like planning your dream home.
+   * Dark, sophisticated, with warm copper accents.
+   * Technical precision meets editorial elegance.
+   */
 
-  /* Slate for neutral tones */
-  --color-slate-50: oklch(0.984 0.003 247.86);
-  --color-slate-100: oklch(0.968 0.007 247.86);
-  --color-slate-200: oklch(0.929 0.013 255.51);
-  --color-slate-300: oklch(0.869 0.022 252.89);
-  --color-slate-400: oklch(0.704 0.04 256.79);
-  --color-slate-500: oklch(0.554 0.046 257.42);
-  --color-slate-600: oklch(0.446 0.043 257.28);
-  --color-slate-700: oklch(0.372 0.044 257.29);
-  --color-slate-800: oklch(0.279 0.041 260.03);
-  --color-slate-900: oklch(0.208 0.042 265.75);
-  --color-slate-950: oklch(0.129 0.042 264.7);
+  /* Primary: Deep architectural navy (dark mode) */
+  --color-ink-50: #f8fafc;
+  --color-ink-100: #e2e8f0;
+  --color-ink-200: #cbd5e1;
+  --color-ink-300: #94a3b8;
+  --color-ink-400: #64748b;
+  --color-ink-500: #475569;
+  --color-ink-600: #334155;
+  --color-ink-700: #1e293b;
+  --color-ink-800: #0f172a;
+  --color-ink-900: #0a0f1a;
+  --color-ink-950: #030712;
 
-  /* Accent colors */
-  --color-emerald-500: oklch(0.696 0.17 162.48);
-  --color-emerald-600: oklch(0.596 0.145 163.23);
-  --color-rose-500: oklch(0.645 0.246 16.44);
-  --color-rose-600: oklch(0.586 0.253 17.59);
+  /* Accent: Warm copper/terracotta */
+  --color-copper-50: #fdf4f3;
+  --color-copper-100: #fce8e4;
+  --color-copper-200: #fad4cc;
+  --color-copper-300: #f5b5a5;
+  --color-copper-400: #ed8c72;
+  --color-copper-500: #e06b47;
+  --color-copper-600: #cd5132;
+  --color-copper-700: #ac4228;
+  --color-copper-800: #8e3925;
+  --color-copper-900: #763425;
+  --color-copper-950: #40170f;
 
-  /* Legacy acadia colors (for backwards compatibility during transition) */
-  --color-acadia-50: var(--color-slate-50);
-  --color-acadia-100: var(--color-slate-100);
-  --color-acadia-200: var(--color-slate-200);
-  --color-acadia-300: var(--color-slate-300);
-  --color-acadia-400: var(--color-slate-400);
-  --color-acadia-500: var(--color-slate-500);
-  --color-acadia-600: var(--color-slate-600);
-  --color-acadia-700: var(--color-slate-700);
-  --color-acadia-800: var(--color-slate-800);
-  --color-acadia-900: var(--color-slate-900);
-  --color-acadia-950: var(--color-slate-950);
+  /* Blueprint cyan for grids/technical elements */
+  --color-blueprint-400: #38bdf8;
+  --color-blueprint-500: #0ea5e9;
+  --color-blueprint-600: #0284c7;
 
-  /* Modern font stack */
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Plus Jakarta Sans", var(--font-sans);
+  /* Success/Error states */
+  --color-gain: #22c55e;
+  --color-loss: #ef4444;
+
+  /* Legacy compatibility */
+  --color-acadia-100: var(--color-ink-200);
+  --color-acadia-200: var(--color-ink-300);
+  --color-acadia-700: var(--color-ink-700);
+  --color-acadia-800: var(--color-ink-800);
+  --color-acadia-900: var(--color-ink-900);
+  --color-acadia-950: var(--color-ink-950);
+
+  /* Typography - distinctive choices */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Outfit", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", monospace;
 }
 
 @layer base {
+  /* ===== DARK MODE (default) ===== */
+  :root, .dark {
+    --bg-base: var(--color-ink-950);
+    --bg-surface: var(--color-ink-900);
+    --bg-elevated: var(--color-ink-800);
+    --bg-muted: var(--color-ink-700);
+    --text-primary: var(--color-ink-50);
+    --text-secondary: var(--color-ink-200);
+    --text-muted: var(--color-ink-400);
+    --border-default: var(--color-ink-700);
+    --border-subtle: var(--color-ink-800);
+    color-scheme: dark;
+  }
+
+  /* ===== LIGHT MODE ===== */
+  .light {
+    --bg-base: #fafafa;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f5f5f5;
+    --bg-muted: #e5e5e5;
+    --text-primary: var(--color-ink-900);
+    --text-secondary: var(--color-ink-600);
+    --text-muted: var(--color-ink-500);
+    --border-default: var(--color-ink-200);
+    --border-subtle: var(--color-ink-100);
+    color-scheme: light;
+  }
+
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-slate-200);
+    border-color: var(--border-default);
+  }
+
+  html {
+    background-color: var(--bg-base);
   }
 
   body {
-    background-color: var(--color-slate-50);
-    color: var(--color-slate-900);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: var(--font-body);
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Blueprint grid - dark mode only */
+  .dark body {
+    background-image: 
+      linear-gradient(var(--color-ink-800) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-ink-800) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
+  }
+
+  /* Subtle grid for light mode */
+  .light body {
+    background-image: 
+      linear-gradient(var(--color-ink-100) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-ink-100) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
+  }
+
+  /* Selection styling */
+  ::selection {
+    background-color: var(--color-copper-500);
+    color: white;
+  }
+
   a {
-    color: var(--color-sky-600);
+    color: var(--color-copper-500);
     text-decoration: none;
     transition: color 0.15s ease;
   }
 
   a:hover {
-    color: var(--color-sky-700);
+    color: var(--color-copper-400);
+  }
+
+  .light a {
+    color: var(--color-copper-600);
+  }
+
+  .light a:hover {
+    color: var(--color-copper-500);
   }
 
   p, span {
-    color: var(--color-slate-600);
-    line-height: 1.6;
+    color: var(--text-secondary);
+    line-height: 1.7;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: var(--color-slate-900);
+    color: var(--text-primary);
     font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.025em;
-  }
-
-  h1 {
-    font-weight: 700;
-    font-size: var(--text-4xl);
+    font-weight: 500;
+    letter-spacing: -0.02em;
     line-height: 1.1;
   }
 
+  h1 {
+    font-weight: 300;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-style: italic;
+  }
+
   h2 {
-    font-size: var(--text-2xl);
-    font-weight: 600;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 400;
   }
 
   h3 {
-    font-size: var(--text-xl);
+    font-size: 1.25rem;
+    font-weight: 500;
   }
 
-  h4 {
-    font-size: var(--text-lg);
+  /* Monospace for all numbers - technical precision */
+  .font-data, input[type="number"], .tabular-nums {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum";
+    letter-spacing: -0.02em;
   }
 
-  h5 {
-    font-size: var(--text-base);
-  }
-
-  /* Form elements */
-  input, select, textarea {
-    font-family: inherit;
-  }
-
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
-  }
-
-  /* Custom scrollbar */
+  /* Custom scrollbar - thin and subtle */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
-  ::-webkit-scrollbar-track {
-    background: var(--color-slate-100);
-    border-radius: 4px;
+  .dark ::-webkit-scrollbar-track {
+    background: var(--color-ink-900);
   }
 
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-slate-300);
-    border-radius: 4px;
+  .dark ::-webkit-scrollbar-thumb {
+    background: var(--color-ink-600);
+    border-radius: 3px;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-slate-400);
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-500);
+  }
+
+  .light ::-webkit-scrollbar-track {
+    background: var(--color-ink-100);
+  }
+
+  .light ::-webkit-scrollbar-thumb {
+    background: var(--color-ink-300);
+    border-radius: 3px;
+  }
+
+  .light ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-400);
   }
 }
 
 @layer components {
-  /* Card component */
+  /* Glass panels - the main containers */
+  .panel {
+    background: var(--bg-elevated);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+  }
+
+  .dark .panel {
+    background: linear-gradient(
+      135deg,
+      rgba(15, 23, 42, 0.8) 0%,
+      rgba(15, 23, 42, 0.6) 100%
+    );
+  }
+
+  .panel-solid {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+  }
+
+  /* Cards with architectural feel */
   .card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 
-      0 1px 3px rgba(0, 0, 0, 0.04),
-      0 4px 12px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--color-slate-100);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    position: relative;
   }
 
-  .card-hover {
-    transition: all 0.2s ease;
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 16px;
+    right: 16px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-copper-500), transparent);
   }
 
-  .card-hover:hover {
-    box-shadow: 
-      0 4px 12px rgba(0, 0, 0, 0.08),
-      0 8px 24px rgba(0, 0, 0, 0.06);
-    transform: translateY(-2px);
-  }
-
-  /* Button styles */
+  /* Distinctive button styles */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
+    padding: 0.75rem 1.5rem;
+    font-family: var(--font-body);
     font-weight: 500;
     font-size: 0.875rem;
-    border-radius: 10px;
-    transition: all 0.15s ease;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, var(--color-sky-500), var(--color-sky-600));
+    background: linear-gradient(135deg, var(--color-copper-600), var(--color-copper-700));
     color: white;
-    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.25);
+    border: 1px solid var(--color-copper-500);
+    box-shadow: 
+      0 0 20px rgba(224, 107, 71, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .btn-primary:hover {
-    background: linear-gradient(135deg, var(--color-sky-600), var(--color-sky-700));
-    box-shadow: 0 4px 8px rgba(14, 165, 233, 0.3);
+    background: linear-gradient(135deg, var(--color-copper-500), var(--color-copper-600));
+    box-shadow: 
+      0 0 30px rgba(224, 107, 71, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
     transform: translateY(-1px);
   }
 
   .btn-secondary {
-    background: white;
-    color: var(--color-slate-700);
-    border: 1px solid var(--color-slate-200);
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
   }
 
   .btn-secondary:hover {
-    background: var(--color-slate-50);
-    border-color: var(--color-slate-300);
+    background: var(--bg-muted);
+    border-color: var(--color-copper-400);
+    color: var(--text-primary);
   }
 
-  /* Input styles */
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+  }
+
+  .btn-ghost:hover {
+    color: var(--color-copper-500);
+    background: rgba(224, 107, 71, 0.1);
+  }
+
+  /* Input styles - technical/blueprint feel */
   .input {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: white;
-    border: 1px solid var(--color-slate-200);
-    border-radius: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    font-family: var(--font-mono);
     font-size: 0.9375rem;
-    color: var(--color-slate-900);
+    color: var(--text-primary);
     transition: all 0.15s ease;
   }
 
+  .dark .input {
+    background: var(--color-ink-900);
+  }
+
   .input:hover {
-    border-color: var(--color-slate-300);
+    border-color: var(--color-copper-300);
   }
 
   .input:focus {
-    border-color: var(--color-sky-400);
-    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    outline: none;
+    border-color: var(--color-copper-500);
+    box-shadow: 0 0 0 3px rgba(224, 107, 71, 0.15);
   }
 
   .input::placeholder {
-    color: var(--color-slate-400);
+    color: var(--text-muted);
+    font-family: var(--font-body);
   }
 
   /* Badge styles */
   .badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.625rem;
-    font-size: 0.75rem;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
     font-weight: 500;
-    border-radius: 6px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 2px;
   }
 
   .badge-sale {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--color-emerald-600);
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  .light .badge-sale {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
   }
 
   .badge-rent {
-    background: rgba(14, 165, 233, 0.1);
-    color: var(--color-sky-600);
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
   }
 
-  /* Glass effect */
-  .glass {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+  .light .badge-rent {
+    background: rgba(56, 189, 248, 0.1);
+    color: #0284c7;
   }
 
-  /* Gradient backgrounds */
-  .gradient-sky {
-    background: linear-gradient(135deg, var(--color-sky-50), var(--color-sky-100));
+  /* Stat display - big numbers */
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--text-primary);
   }
 
-  .gradient-hero {
-    background: linear-gradient(135deg, var(--color-sky-500), var(--color-sky-600), var(--color-sky-700));
+  .stat-label {
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* Divider with blueprint aesthetic */
+  .divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--border-default) 20%,
+      var(--border-default) 80%,
+      transparent
+    );
+  }
+
+  /* Copper accent line */
+  .accent-line {
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--color-copper-600),
+      var(--color-copper-400),
+      var(--color-copper-600)
+    );
+  }
+
+  /* Glow effects - dark mode only */
+  .glow-copper {
+    box-shadow: 0 0 40px rgba(224, 107, 71, 0.15);
+  }
+
+  .light .glow-copper {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .glow-text {
+    text-shadow: 0 0 30px rgba(224, 107, 71, 0.5);
+  }
+
+  .light .glow-text {
+    text-shadow: none;
+  }
+
+  /* Map marker styles */
+  .marker {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .marker:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .marker-sale {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: white;
+  }
+
+  .marker-rent {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+  }
+
+  /* MapLibre popup styling */
+  .maplibregl-popup-content {
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .maplibregl-popup-tip {
+    display: none !important;
+  }
+
+  .maplibregl-popup-close-button {
+    display: none !important;
+  }
+
+  /* Map controls styling for theme support */
+  .maplibregl-ctrl-group {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-default) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .maplibregl-ctrl-group button {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .dark .maplibregl-ctrl-group button {
+    background-color: transparent !important;
+  }
+
+  .dark .maplibregl-ctrl-group button:hover {
+    background-color: var(--bg-muted) !important;
+  }
+
+  .dark .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    filter: invert(1);
+  }
+
+  .maplibregl-ctrl-group button + button {
+    border-top: 1px solid var(--border-default) !important;
+  }
+
+  /* Geolocate control */
+  .maplibregl-ctrl-geolocate {
+    border-radius: 8px !important;
+  }
+
+  /* Tabs component */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-default);
+    gap: 0;
+  }
+
+  .tab {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .tab:hover {
+    color: var(--text-secondary);
+  }
+
+  .tab.active {
+    color: var(--color-copper-500);
+    border-bottom-color: var(--color-copper-500);
+  }
+
+  .tab-panel {
+    padding: 1.5rem 0;
   }
 }
 
@@ -277,5 +569,39 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Grain overlay for texture */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+
+  /* Stagger animations */
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
+
+  /* Fade in animation */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
   }
 }
