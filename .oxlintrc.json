@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true
+  },
+  "globals": {
+    "React": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": "off",
+    "react/jsx-key": "warn",
+    "react/no-direct-mutation-state": "error",
+    "react/no-string-refs": "error"
+  },
+  "ignorePatterns": [
+    "dist",
+    ".output",
+    "node_modules",
+    "*.config.js",
+    "*.config.ts"
+  ]
+}

@@ -1,4 +1,8 @@
 {
+  "nav": {
+    "calculator": "Calculadora",
+    "explore": "Explorar"
+  },
   "calculator": {
     "title": "Rentar vs Comprar",
     "methodology": {
@@ -19,12 +23,17 @@
       "of": "de",
       "close": "Cerrar",
       "view_schedule": "Ver Tabla de Amortización",
+      "short": "Amortización",
       "loan_summary": "Resumen del Préstamo",
       "original_loan": "Monto Original del Préstamo",
       "total_interest": "Interés Total Pagado",
       "total_paid": "MONTO TOTAL PAGADO",
       "the_original_loan": "del monto original del préstamo"
     },
+    "showAdvanced": "Mostrar opciones avanzadas",
+    "hideAdvanced": "Ocultar opciones avanzadas",
+    "advanced": "Avanzado",
+    "basic": "Básico",
     "share": "Compartir",
     "linkCopied": "Enlace copiado",
     "propertyValue": "Valor de la Propiedad",
@@ -69,7 +78,21 @@
       "runningTotal": "Total Acumulado",
       "difference": "Diferencia",
       "viewMode": "Modo de Vista",
-      "regular": "Regular"
+      "regular": "Regular",
+      "summary": "Resumen",
+      "chart": "Gráfico",
+      "advancedMetrics": "Métricas Avanzadas",
+      "breakEven": "Punto de Equilibrio",
+      "year": "Año",
+      "rentalYield": "Rendimiento de Renta",
+      "sensitivity": "Sensibilidad",
+      "sensitivityHint": "Verde favorece comprar, rojo favorece rentar.",
+      "equity": "Capital vs Portafolio",
+      "homeEquity": "Capital de la Casa",
+      "renterPortfolio": "Portafolio del Inquilino",
+      "real": "Real",
+      "nominal": "Nominal",
+      "realToggleHint": "Alternar valores ajustados por inflación (reales)"
     },
     "sections": {
       "basics": {
@@ -125,6 +148,7 @@
         "monthlyRentersInsurance": "Seguro de inquilino mensual"
       }
     },
+    "reset": "Reiniciar",
     "tooltips": {
       "homePrice": "El precio actual de mercado de la casa que deseas comprar. Este es el precio de lista o el precio esperado de compra.",
       "monthlyRent": "La renta mensual que pagarías por una propiedad similar en la misma área.",
@@ -155,6 +179,21 @@
     }
   },
   "reset": "Reiniciar",
+  "settings": {
+    "currency": "Moneda",
+    "language": "Idioma",
+    "country": "País"
+  },
+  "countries": {
+    "US": "Estados Unidos",
+    "CA": "Canadá",
+    "MX": "México",
+    "GB": "Reino Unido",
+    "DE": "Alemania",
+    "FR": "Francia",
+    "IT": "Italia",
+    "ES": "España"
+  },
   "currency": "Moneda",
   "currency_usd": "Dólar estadounidense",
   "currency_cad": "Dólar canadiense",
@@ -168,5 +207,6 @@
   "country_mexico": "México",
   "more_countries_soon": "Más países próximamente",
   "month": "mes",
-  "months": "meses"
+  "months": "meses",
+  "years": "años"
 } 

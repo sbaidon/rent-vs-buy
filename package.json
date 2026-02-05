@@ -8,16 +8,25 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "bun run build && wrangler deploy",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "lint": "oxlint --react-plugin --vitest-plugin -D perf --ignore-pattern 'dist' --ignore-pattern '.output' --ignore-pattern 'src/api/generated' src/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
+    "generate:api": "openapi-ts"
   },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021"
   },
   "dependencies": {
+    "@hey-api/client-fetch": "^0.13.1",
     "@remixicon/react": "^4.6.0",
     "@tanstack/react-router": "^1.93.0",
     "@tanstack/react-start": "^1.146.2",
+    "@tanstack/zod-adapter": "^1.158.0",
     "clsx": "^2.1.1",
     "i18next": "^24.2.2",
     "i18next-browser-languagedetector": "^8.0.2",
@@ -35,11 +44,13 @@
     "recharts": "^2.15.1",
     "tailwind-merge": "^3.0.1",
     "tailwind-variants": "^0.3.1",
-    "vite-tsconfig-paths": "^6.0.3"
+    "vite-tsconfig-paths": "^6.0.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.23.0",
-    "@eslint/js": "^9.9.1",
+    "@hey-api/openapi-ts": "^0.91.1",
+    "@playwright/test": "^1.58.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "@tanstack/router-plugin": "^1.93.0",
@@ -47,19 +58,17 @@
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
     "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@welldone-software/why-did-you-render": "^10.0.1",
     "babel-plugin-react-compiler": "^19.0.0-beta-decd7b8-20250118",
-    "eslint": "^9.9.1",
-    "eslint-plugin-react-compiler": "^19.0.0-beta-decd7b8-20250118",
-    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
-    "eslint-plugin-react-refresh": "^0.4.11",
-    "globals": "^15.9.0",
+    "oxlint": "^1.43.0",
     "postcss": "^8.5.1",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.3.0",
     "vite": "^7.3.1",
     "vite-plugin-webfont-dl": "^3.10.4",
+    "vitest": "^4.0.18",
     "wrangler": "^4.62.0"
   }
 }

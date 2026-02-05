@@ -1,4 +1,4 @@
-import { memo, forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { memo, type ButtonHTMLAttributes, type ReactNode, type Ref } from "react";
 import { clsx } from "clsx";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -6,26 +6,25 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "md" | "lg";
   children: ReactNode;
   isLoading?: boolean;
+  /** React 19: ref is now a regular prop */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /**
  * Button component following Vercel design system
- * Uses forwardRef for proper ref forwarding
+ * React 19: ref is now a regular prop, no forwardRef needed
  * Memoized to prevent unnecessary re-renders
  */
-export const Button = memo(
-  forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-    {
-      variant = "primary",
-      size = "md",
-      className,
-      children,
-      disabled,
-      isLoading,
-      ...props
-    },
-    ref
-  ) {
+export const Button = memo(function Button({
+  variant = "primary",
+  size = "md",
+  className,
+  children,
+  disabled,
+  isLoading,
+  ref,
+  ...props
+}: ButtonProps) {
     const baseStyles =
       "inline-flex items-center justify-center gap-1.5 sm:gap-2 font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-copper-500/50 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide text-xs";
 
@@ -92,5 +91,4 @@ export const Button = memo(
         {children}
       </button>
     );
-  })
-);
+});

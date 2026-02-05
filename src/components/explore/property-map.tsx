@@ -1,33 +1,15 @@
-import { memo, useCallback, useRef, Suspense, lazy, useMemo } from "react";
+import { memo, useCallback, useRef, useMemo, useEffect, useState } from "react";
 import { clsx } from "clsx";
 import type { Property } from "./property-card";
-
-// Lazy load MapLibre components (Vercel best practice: bundle-dynamic-imports)
-// This reduces initial bundle by ~1MB
-const Map = lazy(() =>
-  import("react-map-gl/maplibre").then((mod) => ({ default: mod.default }))
-);
-const Marker = lazy(() =>
-  import("react-map-gl/maplibre").then((mod) => ({ default: mod.Marker }))
-);
-const Popup = lazy(() =>
-  import("react-map-gl/maplibre").then((mod) => ({ default: mod.Popup }))
-);
-const NavigationControl = lazy(() =>
-  import("react-map-gl/maplibre").then((mod) => ({
-    default: mod.NavigationControl,
-  }))
-);
-const GeolocateControl = lazy(() =>
-  import("react-map-gl/maplibre").then((mod) => ({
-    default: mod.GeolocateControl,
-  }))
-);
-
-// Import CSS only on client side
-if (typeof window !== "undefined") {
-  import("maplibre-gl/dist/maplibre-gl.css");
-}
+import Map, {
+  Marker,
+  Popup,
+  NavigationControl,
+  GeolocateControl,
+  type MapRef,
+} from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { Search, Loader2 } from "lucide-react";
 
 // Map styles for different themes
 const MAP_STYLES = {
@@ -41,58 +23,74 @@ export interface ViewState {
   zoom: number;
 }
 
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+  center: { lat: number; lng: number };
+}
+
 interface PropertyMapProps {
-  viewState: ViewState;
-  onViewStateChange: (viewState: ViewState) => void;
+  initialViewState: ViewState;
+  // Optional: fly to this location when it changes
+  flyToLocation?: { longitude: number; latitude: number; zoom: number } | null;
   properties: Property[];
   selectedProperty: Property | null;
   onPropertySelect: (property: Property | null) => void;
   renderPopup: (property: Property) => React.ReactNode;
   theme?: "light" | "dark";
+  // Called when user moves the map and we should show "Search this area"
+  onBoundsChange?: (bounds: MapBounds) => void;
+  // Called when user clicks "Search this area"
+  onSearchArea?: (bounds: MapBounds) => void;
+  // Whether we're currently loading new properties
+  isLoading?: boolean;
+  // Whether the current view matches the search area
+  isSearchInSync?: boolean;
 }
-
-// Map skeleton for loading state
-const MapSkeleton = memo(function MapSkeleton() {
-  return (
-    <div 
-      className="w-full h-full animate-pulse flex items-center justify-center"
-      style={{ background: "var(--bg-muted)" }}
-    >
-      <div className="text-center">
-        <div 
-          className="w-12 h-12 rounded-full mx-auto mb-3"
-          style={{ background: "var(--bg-elevated)" }}
-        />
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading map...</p>
-      </div>
-    </div>
-  );
-});
 
 /**
  * Property map component with lazy-loaded MapLibre
- * Uses Suspense for progressive loading (Vercel best practice: async-suspense-boundaries)
+ * Uses uncontrolled mode (initialViewState) to avoid re-render loops
+ * Uses flyTo for programmatic navigation
  */
 export const PropertyMap = memo(function PropertyMap({
-  viewState,
-  onViewStateChange,
+  initialViewState,
+  flyToLocation,
   properties,
   selectedProperty,
   onPropertySelect,
   renderPopup,
   theme = "dark",
+  onBoundsChange,
+  onSearchArea,
+  isLoading = false,
+  isSearchInSync = true,
 }: PropertyMapProps) {
-  const mapRef = useRef(null);
+  const mapRef = useRef<MapRef>(null);
+  const [currentBounds, setCurrentBounds] = useState<MapBounds | null>(null);
+  const [hasUserPanned, setHasUserPanned] = useState(false);
+  
+  // Derive showSearchButton from props and local state - no useEffect needed!
+  // This follows the "derive state during render" best practice
+  const showSearchButton = hasUserPanned && !isSearchInSync;
   
   // Memoize map style based on theme
   const mapStyle = useMemo(() => MAP_STYLES[theme], [theme]);
 
-  const handleMove = useCallback(
-    (evt: { viewState: ViewState }) => {
-      onViewStateChange(evt.viewState);
-    },
-    [onViewStateChange]
-  );
+  // Fly to location when it changes (for search results)
+  useEffect(() => {
+    if (flyToLocation && mapRef.current) {
+      // Reset user panned state when flying to a new location
+      setHasUserPanned(false);
+      mapRef.current.flyTo({
+        center: [flyToLocation.longitude, flyToLocation.latitude],
+        zoom: flyToLocation.zoom,
+        duration: 1500,
+      });
+    }
+  }, [flyToLocation]);
 
   const handleMarkerClick = useCallback(
     (property: Property) => (e: { originalEvent: MouseEvent }) => {
@@ -113,15 +111,45 @@ export const PropertyMap = memo(function PropertyMap({
     }
   }, [selectedProperty, onPropertySelect]);
 
+  // Handle map movement end - show "Search this area" button
+  const handleMoveEnd = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const bounds = map.getBounds();
+    const center = map.getCenter();
+    
+    const newBounds: MapBounds = {
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest(),
+      center: { lat: center.lat, lng: center.lng },
+    };
+
+    setCurrentBounds(newBounds);
+    setHasUserPanned(true);
+    onBoundsChange?.(newBounds);
+  }, [onBoundsChange]);
+
+  // Handle "Search this area" click
+  const handleSearchArea = useCallback(() => {
+    if (currentBounds && onSearchArea) {
+      setHasUserPanned(false);
+      onSearchArea(currentBounds);
+    }
+  }, [currentBounds, onSearchArea]);
+
   return (
-    <Suspense fallback={<MapSkeleton />}>
+    <div className="relative w-full h-full">
       <Map
         ref={mapRef}
-        {...viewState}
-        onMove={handleMove}
+        initialViewState={initialViewState}
         onClick={handleMapClick}
+        onMoveEnd={handleMoveEnd}
         style={{ width: "100%", height: "100%" }}
         mapStyle={mapStyle}
+        reuseMaps
       >
         <NavigationControl position="bottom-right" showCompass={false} />
         <GeolocateControl position="bottom-right" />
@@ -153,7 +181,52 @@ export const PropertyMap = memo(function PropertyMap({
           </Popup>
         )}
       </Map>
-    </Suspense>
+
+      {/* Search this area button */}
+      {showSearchButton && onSearchArea && !isLoading && (
+        <button
+          onClick={handleSearchArea}
+          className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
+          style={{
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-default)",
+            color: "var(--text-primary)",
+          }}
+        >
+          <Search className="w-4 h-4 text-copper-400" />
+          <span className="text-sm font-medium">Search this area</span>
+        </button>
+      )}
+
+      {/* Loading indicator when searching */}
+      {isLoading && (
+        <div
+          className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg"
+          style={{
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-default)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          <Loader2 className="w-4 h-4 text-copper-400 animate-spin" />
+          <span className="text-sm">Searching...</span>
+        </div>
+      )}
+
+      {/* No results message */}
+      {!isLoading && properties.length === 0 && isSearchInSync && (
+        <div
+          className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg"
+          style={{
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-default)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          <span className="text-sm">No properties found in this area</span>
+        </div>
+      )}
+    </div>
   );
 });
 

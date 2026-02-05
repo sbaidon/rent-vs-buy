@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { StrictMode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Calculator from "../components/calculator";
 import { CalculatorProvider } from "../context/calculator-context";
 import TabbedResults from "../components/tabbed-results";
 import { ChevronDown, X } from "lucide-react";
+import { calculatorSearchSchema } from "../schemas/calculator";
 
 // ============================================================================
 // Responsive Results Component
@@ -40,21 +42,21 @@ function ResponsiveResults({
       }
     `}
     >
-      <div className="flex items-center justify-between p-4 lg:hidden">
-        {!isMinimized && (
-          <>
-            <h2 className="text-lg font-display text-[var(--text-primary)]">
-              {t("calculator.results.title")}
-            </h2>
-            <button
-              onClick={toggleMinimized}
-              className="text-[var(--text-muted)] hover:bg-copper-500/20 hover:text-copper-400 rounded p-2 cursor-pointer transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </>
-        )}
-      </div>
+      {/* Mobile header with close button - sticky at top with safe area padding */}
+      {!isMinimized && (
+        <div className="sticky top-0 z-10 flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] bg-[var(--bg-base)] border-b border-[var(--border-default)] lg:hidden">
+          <h2 className="text-lg font-display text-[var(--text-primary)]">
+            {t("calculator.results.title")}
+          </h2>
+          <button
+            onClick={toggleMinimized}
+            className="text-[var(--text-muted)] hover:bg-copper-500/20 hover:text-copper-400 rounded-full p-2 cursor-pointer transition-colors -mr-2"
+            aria-label="Close results"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+      )}
       {isMinimized && (
         <button
           className="cursor-pointer rounded p-3 w-full sm:w-1/2 text-white bg-copper-600 hover:bg-copper-500 flex items-center justify-center lg:hidden mx-auto font-medium uppercase tracking-wide text-sm shadow-lg shadow-copper-500/20 transition-all"
@@ -76,19 +78,15 @@ function ResponsiveResults({
 
 function HomePage() {
   const { t } = useTranslation();
-  const { q } = Route.useSearch();
+  const searchParams = Route.useSearch();
 
-  const [isMinimized, setIsMinimized] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("resultsMinimized");
-      return stored !== null ? JSON.parse(stored) : true;
-    }
-    return true;
-  });
+  // Always start minimized on mobile - user must tap to open
+  // This prevents the results panel from blocking the calculator on load
+  const [isMinimized, setIsMinimized] = useState(true);
 
   return (
     <StrictMode>
-      <CalculatorProvider initialEncodedState={q}>
+      <CalculatorProvider searchParams={searchParams}>
         <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto py-4 sm:py-8">
           <div className="w-full lg:w-3/5 px-4 sm:px-6">
             {/* Header section */}
@@ -145,10 +143,9 @@ function HomePage() {
 }
 
 // Route definition with search params validation for URL state
+// Uses Zod schema for type-safe, validated URL state
 // IMPORTANT: Must be after the component definition since we reference HomePage
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
-    q: typeof search.q === "string" ? search.q : undefined,
-  }),
+  validateSearch: zodValidator(calculatorSearchSchema),
   component: HomePage,
 });

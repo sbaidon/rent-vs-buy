@@ -4,15 +4,16 @@ import React, {
   useCallback,
   useState,
   useRef,
-  startTransition,
 } from "react";
 import { CalculatorValues, useCalculator } from "../context/calculator-context";
-import { RentingCostsCalculator } from "../utils/rent-costs-calculator";
-import { BuyingCostsCalculator } from "../utils/buy-costs-calculator";
-import { findIntersectionPoint } from "../utils/calculator";
+import { createRentingCalculator } from "../utils/country-rent-calculator";
+import { createBuyingCalculator } from "../utils/country-buy-calculator";
+import { findIntersectionPoints } from "../utils/calculator";
 import { type PriceOutcome } from "../utils/calculator";
 import { FlameGraphCanvas } from "./flame-graph-canvas";
-import { COLORS } from "../constants/colors";
+import { COLORS, COLORS_LIGHT } from "../constants/colors";
+import { useAppContext } from "../context/app-context";
+import { useTheme } from "../context/theme-context";
 
 type FlameGraphProps = {
   value: number;
@@ -37,67 +38,28 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
   step,
   onChange,
   format = (v) => v.toString(),
-  leftColor = COLORS.RENT,
-  rightColor = COLORS.BUY,
+  leftColor,
+  rightColor,
   label,
   sublabel,
   parameter,
 }) => {
   const { values } = useCalculator();
+  const { country } = useAppContext();
+  const { resolvedTheme } = useTheme();
 
-  const handleChange = useCallback(
-    (newValue: number) => {
-      startTransition(() => {
-        onChange(newValue);
-      });
-    },
-    [onChange]
+  const palette = resolvedTheme === "light" ? COLORS_LIGHT : COLORS;
+  const resolvedLeftColor = leftColor ?? palette.RENT;
+  const resolvedRightColor = rightColor ?? palette.BUY;
+
+  // Visual segment count — decoupled from the slider's step size.
+  // A minimum of 500 segments ensures the crossover point renders
+  // accurately regardless of how coarse the input step is.
+  // The bisection is O(log n) so this costs ~9 evaluations, not 500.
+  const MIN_VISUAL_SEGMENTS = 500;
+  const segments = Math.ceil(
+    Math.min(Math.max(Math.abs(max - min) / step, MIN_VISUAL_SEGMENTS), 100000)
   );
-
-  const segments = Math.ceil(Math.min(Math.abs(max - min) / step, 100000));
-
-  const minValues = useMemo(
-    () => ({
-      ...values,
-      [parameter]: min,
-    }),
-    [min, parameter, values]
-  );
-  const maxValues = useMemo(
-    () => ({
-      ...values,
-      [parameter]: max,
-    }),
-    [max, parameter, values]
-  );
-
-  const priceOutcome: PriceOutcome = useMemo(() => {
-    const buyingCalculator = new BuyingCostsCalculator(minValues);
-    const rentingCalculator = new RentingCostsCalculator(minValues);
-
-    const rentStart = rentingCalculator.getTotalCost(minValues);
-    const rentEnd = rentingCalculator.getTotalCost(maxValues);
-
-    const buyStart = buyingCalculator.getTotalCost(minValues);
-    const buyEnd = buyingCalculator.getTotalCost(maxValues);
-
-    const isRentingBetterAtStart = rentStart < buyStart;
-    const isRentingBetterAtEnd = rentEnd < buyEnd;
-
-    let outcome: PriceOutcome;
-
-    if (isRentingBetterAtStart && isRentingBetterAtEnd) {
-      outcome = "rent";
-    } else if (!isRentingBetterAtStart && !isRentingBetterAtEnd) {
-      outcome = "buy";
-    } else if (isRentingBetterAtStart && !isRentingBetterAtEnd) {
-      outcome = "start-rent-end-buy";
-    } else {
-      outcome = "start-buy-end-rent";
-    }
-
-    return outcome;
-  }, [maxValues, minValues]);
 
   const flameGraphStep = useMemo(
     () => (max - min) / segments,
@@ -105,63 +67,63 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
   );
 
   const segmentValues = useMemo(() => {
-    const length = segments;
-    const arr = new Array<{
-      value: number;
-      rentingIsBetter: boolean;
-    }>(length);
+    const minValues = { ...values, [parameter]: min };
+    const maxValues = { ...values, [parameter]: max };
 
-    switch (priceOutcome) {
-      case "rent":
-        for (let i = 0; i < length; i++) {
-          const x = min + i * flameGraphStep;
-          arr[i] = { value: x, rentingIsBetter: true };
-        }
-        break;
-      case "buy":
-        for (let i = 0; i < length; i++) {
-          const x = min + i * flameGraphStep;
-          arr[i] = { value: x, rentingIsBetter: false };
-        }
-        break;
-      case "start-buy-end-rent": {
-        const intersectionIndex = findIntersectionPoint(
-          values,
-          parameter,
-          min,
-          max,
-          segments,
-          flameGraphStep
-        );
-        for (let i = 0; i < length; i++) {
-          arr[i] = {
-            value: min + i * flameGraphStep,
-            rentingIsBetter: i > intersectionIndex,
-          };
-        }
-        break;
-      }
-      case "start-rent-end-buy": {
-        const intersectionIndex = findIntersectionPoint(
-          values,
-          parameter,
-          min,
-          max,
-          segments,
-          flameGraphStep
-        );
-        for (let i = 0; i < length; i++) {
-          arr[i] = {
-            value: min + i * flameGraphStep,
-            rentingIsBetter: i < intersectionIndex,
-          };
-        }
-        break;
-      }
+    // Create country-aware calculators once — reused for both outcome and intersection
+    const buyingCalculator = createBuyingCalculator(country, minValues);
+    const rentingCalculator = createRentingCalculator(country, minValues);
+
+    const rentStart = rentingCalculator.getTotalCost(minValues);
+    const rentEnd = rentingCalculator.getTotalCost(maxValues);
+    const buyStart = buyingCalculator.getTotalCost(minValues);
+    const buyEnd = buyingCalculator.getTotalCost(maxValues);
+
+    const isRentingBetterAtStart = rentStart < buyStart;
+    const isRentingBetterAtEnd = rentEnd < buyEnd;
+
+    let priceOutcome: PriceOutcome;
+    if (isRentingBetterAtStart && isRentingBetterAtEnd) {
+      priceOutcome = "rent";
+    } else if (!isRentingBetterAtStart && !isRentingBetterAtEnd) {
+      priceOutcome = "buy";
+    } else if (isRentingBetterAtStart && !isRentingBetterAtEnd) {
+      priceOutcome = "start-rent-end-buy";
+    } else {
+      priceOutcome = "start-buy-end-rent";
     }
 
-    return arr;
-  }, [min, max, segments, parameter, values, priceOutcome, flameGraphStep]);
+    // For uniform outcomes, no search needed
+    if (priceOutcome === "rent" || priceOutcome === "buy") {
+      const rentingIsBetter = priceOutcome === "rent";
+      return Array.from({ length: segments }, (_, i) => ({
+        value: min + i * flameGraphStep,
+        rentingIsBetter,
+      }));
+    }
+
+    // Find the root of f(x) = rentCost(x) - buyCost(x) via bisection.
+    // The caller guarantees opposite signs at the endpoints.
+    const [crossover] = findIntersectionPoints({
+      values,
+      parameter,
+      min,
+      max,
+      segments,
+      step: flameGraphStep,
+      buyingCalculator,
+      rentingCalculator,
+    });
+
+    // "start-rent-end-buy" → renting is better before the crossover
+    // "start-buy-end-rent" → buying is better before the crossover
+    const rentingBetterAtStart = priceOutcome === "start-rent-end-buy";
+
+    return Array.from({ length: segments }, (_, i) => ({
+      value: min + i * flameGraphStep,
+      rentingIsBetter: i < crossover ? rentingBetterAtStart : !rentingBetterAtStart,
+    }));
+  }, [min, max, segments, parameter, values, country, flameGraphStep]);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -176,7 +138,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
   const commitValue = (value: number) => {
     if (!isNaN(value)) {
       const clampedValue = Math.min(Math.max(value, min), max);
-      handleChange(clampedValue);
+      onChange(clampedValue);
       return [true, clampedValue] as const;
     }
     return [false, value] as const;
@@ -210,13 +172,13 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
 
   const handleRangeChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      handleChange(Number(e.target.value));
+      onChange(Number(e.target.value));
     },
-    [handleChange]
+    [onChange]
   );
 
   return (
-    <div className="space-y-2 min-h-full h-auto w-full" ref={containerRef}>
+    <div className="space-y-2 min-h-full h-auto w-full" ref={containerRef} data-testid={`flamegraph-${parameter}`}>
       <div className="flex justify-between items-baseline">
         <div className="relative border-b-2">
           <input
@@ -225,7 +187,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
             min={min}
             step={step}
             max={max}
-            className={`w-32 border-b text-acadia-100 border-gray-300 ${
+            className={`w-32 border-b text-[var(--text-primary)] border-[var(--border-default)] ${
               isEditing ? "opacity-100" : "opacity-0 absolute"
             }`}
             value={isEditing ? tempValue : value}
@@ -234,6 +196,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
             onBlur={handleInputBlur}
             onFocus={handleStartEditing}
             aria-label={`Enter ${label}`}
+            data-testid={`input-${parameter}`}
           />
           <p
             className={`cursor-text ${
@@ -253,8 +216,8 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
           <FlameGraphCanvas
             segmentValues={segmentValues}
             height={height}
-            leftColor={leftColor}
-            rightColor={rightColor}
+            leftColor={resolvedLeftColor}
+            rightColor={resolvedRightColor}
             value={value}
             min={min}
             max={max}
@@ -287,4 +250,11 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
   );
 };
 
-export default memo(FlameGraph);
+const MemoizedFlameGraph = memo(FlameGraph);
+
+// Track re-renders in development
+if (import.meta.env.DEV) {
+  MemoizedFlameGraph.whyDidYouRender = true;
+}
+
+export default MemoizedFlameGraph;

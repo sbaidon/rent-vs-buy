@@ -1,0 +1,494 @@
+openapi: 3.1.0
+info:
+  title: Realtor.com API
+  description: Real estate listings API via RapidAPI
+  version: 3.0.0
+servers:
+  - url: https://realty-in-us.p.rapidapi.com
+    description: RapidAPI Production
+
+paths:
+  /properties/v3/list:
+    post:
+      operationId: searchProperties
+      summary: Search for property listings
+      description: Search for sale or rental properties by location
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized - Invalid API key
+        '429':
+          description: Rate limit exceeded
+
+  /properties/v3/detail:
+    post:
+      operationId: getPropertyDetail
+      summary: Get property details
+      description: Get detailed information about a specific property
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertyDetailRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyDetailResponse'
+
+components:
+  securitySchemes:
+    RapidAPIKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+    RapidAPIHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+
+  schemas:
+    SearchRequest:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+          description: Number of results to return
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+        status:
+          type: array
+          items:
+            type: string
+            enum:
+              - for_sale
+              - ready_to_build
+              - for_rent
+              - sold
+              - off_market
+          description: Property listing status filter
+        city:
+          type: string
+          description: City name (e.g., "Austin")
+        state_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+          description: Two-letter state code (e.g., "TX")
+        postal_code:
+          type: string
+          pattern: '^\d{5}$'
+          description: 5-digit ZIP code
+        county:
+          type: string
+          description: County name
+        list_price_min:
+          type: integer
+          minimum: 0
+          description: Minimum listing price
+        list_price_max:
+          type: integer
+          minimum: 0
+          description: Maximum listing price
+        beds_min:
+          type: integer
+          minimum: 0
+          description: Minimum number of bedrooms
+        beds_max:
+          type: integer
+          minimum: 0
+          description: Maximum number of bedrooms
+        baths_min:
+          type: integer
+          minimum: 0
+          description: Minimum number of bathrooms
+        baths_max:
+          type: integer
+          minimum: 0
+          description: Maximum number of bathrooms
+        sqft_min:
+          type: integer
+          minimum: 0
+          description: Minimum square footage
+        sqft_max:
+          type: integer
+          minimum: 0
+          description: Maximum square footage
+        type:
+          type: array
+          items:
+            type: string
+            enum:
+              - single_family
+              - multi_family
+              - condo
+              - townhome
+              - mobile
+              - land
+              - farm
+              - other
+          description: Property types to include
+        sort:
+          type: object
+          properties:
+            direction:
+              type: string
+              enum: [asc, desc]
+              default: desc
+            field:
+              type: string
+              enum:
+                - list_date
+                - list_price
+                - beds
+                - baths
+                - sqft
+                - lot_sqft
+                - price_reduced_date
+              default: list_date
+          description: Sort options
+
+    SearchResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            home_search:
+              type: object
+              properties:
+                count:
+                  type: integer
+                  description: Total number of matching results
+                total:
+                  type: integer
+                  description: Total available results
+                results:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PropertyListing'
+
+    PropertyListing:
+      type: object
+      properties:
+        property_id:
+          type: string
+          description: Unique property identifier
+        listing_id:
+          type: string
+          description: Listing identifier
+        status:
+          type: string
+          enum: [for_sale, for_rent, sold, off_market, ready_to_build]
+        list_price:
+          type: integer
+          description: Listing price in dollars (or monthly rent for rentals)
+        list_price_min:
+          type: integer
+          nullable: true
+        list_price_max:
+          type: integer
+          nullable: true
+        list_date:
+          type: string
+          format: date-time
+          description: Date when property was listed
+        last_sold_date:
+          type: string
+          format: date-time
+          nullable: true
+        last_sold_price:
+          type: integer
+          nullable: true
+        description:
+          type: object
+          properties:
+            beds:
+              type: integer
+              nullable: true
+              description: Number of bedrooms
+            beds_min:
+              type: integer
+              nullable: true
+            beds_max:
+              type: integer
+              nullable: true
+            baths:
+              type: number
+              nullable: true
+              description: Number of bathrooms
+            baths_min:
+              type: number
+              nullable: true
+            baths_max:
+              type: number
+              nullable: true
+            baths_full:
+              type: integer
+              nullable: true
+            baths_half:
+              type: integer
+              nullable: true
+            sqft:
+              type: integer
+              nullable: true
+              description: Interior square footage
+            sqft_min:
+              type: integer
+              nullable: true
+            sqft_max:
+              type: integer
+              nullable: true
+            lot_sqft:
+              type: integer
+              nullable: true
+              description: Lot size in square feet
+            rooms:
+              type: integer
+              nullable: true
+            stories:
+              type: integer
+              nullable: true
+            garage:
+              type: integer
+              nullable: true
+              description: Number of garage spaces
+            pool:
+              type: boolean
+              nullable: true
+            year_built:
+              type: integer
+              nullable: true
+              description: Year the property was built
+            type:
+              type: string
+              nullable: true
+              description: Property type (e.g., "single_family", "condo")
+            text:
+              type: string
+              nullable: true
+              description: Full description text
+        location:
+          type: object
+          properties:
+            address:
+              type: object
+              properties:
+                line:
+                  type: string
+                  nullable: true
+                  description: Street address
+                street_number:
+                  type: string
+                  nullable: true
+                street_name:
+                  type: string
+                  nullable: true
+                street_suffix:
+                  type: string
+                  nullable: true
+                city:
+                  type: string
+                  nullable: true
+                state:
+                  type: string
+                  nullable: true
+                  description: Full state name
+                state_code:
+                  type: string
+                  nullable: true
+                  description: Two-letter state code
+                postal_code:
+                  type: string
+                  nullable: true
+                county:
+                  type: string
+                  nullable: true
+                country:
+                  type: string
+                  nullable: true
+                coordinate:
+                  type: object
+                  nullable: true
+                  properties:
+                    lat:
+                      type: number
+                      description: Latitude
+                    lon:
+                      type: number
+                      description: Longitude
+            neighborhoods:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  city:
+                    type: string
+                  state_code:
+                    type: string
+        primary_photo:
+          type: object
+          nullable: true
+          properties:
+            href:
+              type: string
+              format: uri
+              description: URL of the primary photo
+        photos:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              href:
+                type: string
+                format: uri
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Property feature tags
+        flags:
+          type: object
+          nullable: true
+          properties:
+            is_new_construction:
+              type: boolean
+              nullable: true
+            is_new_listing:
+              type: boolean
+              nullable: true
+            is_pending:
+              type: boolean
+              nullable: true
+            is_contingent:
+              type: boolean
+              nullable: true
+            is_foreclosure:
+              type: boolean
+              nullable: true
+            is_price_reduced:
+              type: boolean
+              nullable: true
+        open_houses:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              start_date:
+                type: string
+                format: date-time
+              end_date:
+                type: string
+                format: date-time
+
+    PropertyDetailRequest:
+      type: object
+      required:
+        - property_id
+      properties:
+        property_id:
+          type: string
+          description: Property ID to fetch details for
+
+    PropertyDetailResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            home:
+              $ref: '#/components/schemas/PropertyDetail'
+
+    PropertyDetail:
+      allOf:
+        - $ref: '#/components/schemas/PropertyListing'
+        - type: object
+          properties:
+            property_history:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  event_name:
+                    type: string
+                  price:
+                    type: integer
+                    nullable: true
+                  source_name:
+                    type: string
+                    nullable: true
+            tax_history:
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  year:
+                    type: integer
+                  tax:
+                    type: number
+                  assessment:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      building:
+                        type: number
+                        nullable: true
+                      land:
+                        type: number
+                        nullable: true
+            estimates:
+              type: object
+              nullable: true
+              properties:
+                estimate:
+                  type: integer
+                  nullable: true
+                  description: Estimated property value
+                estimate_high:
+                  type: integer
+                  nullable: true
+                estimate_low:
+                  type: integer
+                  nullable: true
+                rent_estimate:
+                  type: integer
+                  nullable: true
+                  description: Estimated monthly rent
+
+security:
+  - RapidAPIKey: []
+    RapidAPIHost: []

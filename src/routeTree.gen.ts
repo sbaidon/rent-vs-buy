@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DebugRouteImport } from './routes/debug'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DebugRoute = DebugRouteImport.update({
+  id: '/debug',
+  path: '/debug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +31,31 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/debug': typeof DebugRoute
   '/explore': typeof ExploreRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/debug': typeof DebugRoute
   '/explore': typeof ExploreRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/debug': typeof DebugRoute
   '/explore': typeof ExploreRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/explore'
+  fullPaths: '/' | '/debug' | '/explore'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/explore'
-  id: '__root__' | '/' | '/explore'
+  to: '/' | '/debug' | '/explore'
+  id: '__root__' | '/' | '/debug' | '/explore'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DebugRoute: typeof DebugRoute
   ExploreRoute: typeof ExploreRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/debug': {
+      id: '/debug'
+      path: '/debug'
+      fullPath: '/debug'
+      preLoaderRoute: typeof DebugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DebugRoute: DebugRoute,
   ExploreRoute: ExploreRoute,
 }
 export const routeTree = rootRouteImport

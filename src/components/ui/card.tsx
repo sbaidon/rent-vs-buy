@@ -1,21 +1,27 @@
-import { memo, forwardRef, type HTMLAttributes, type ReactNode } from "react";
+import { memo, type HTMLAttributes, type ReactNode, type Ref } from "react";
 import { clsx } from "clsx";
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   hover?: boolean;
   padding?: "none" | "sm" | "md" | "lg";
+  /** React 19: ref is now a regular prop */
+  ref?: Ref<HTMLDivElement>;
 }
 
 /**
  * Card component with glass effect option
+ * React 19: ref is now a regular prop, no forwardRef needed
  * Memoized to prevent unnecessary re-renders
  */
-export const Card = memo(
-  forwardRef<HTMLDivElement, CardProps>(function Card(
-    { className, children, hover = false, padding = "md", ...props },
-    ref
-  ) {
+export const Card = memo(function Card({
+  className,
+  children,
+  hover = false,
+  padding = "md",
+  ref,
+  ...props
+}: CardProps) {
     const paddingSizes = {
       none: "",
       sm: "p-3",
@@ -42,8 +48,7 @@ export const Card = memo(
         {children}
       </div>
     );
-  })
-);
+});
 
 export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;

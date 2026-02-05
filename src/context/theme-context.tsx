@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, use, useState, useCallback, useEffect, type ReactNode } from "react";
 
 type Theme = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
@@ -9,59 +9,81 @@ interface ThemeContextValue {
   setTheme: (theme: Theme) => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const STORAGE_KEY = "rentvsbuy-theme";
+const STORAGE_KEY = "theme";
 
 function getSystemTheme(): ResolvedTheme {
   if (typeof window === "undefined") return "dark";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function resolveTheme(theme: Theme): ResolvedTheme {
+  return theme === "system" ? getSystemTheme() : theme;
+}
+
+function applyTheme(resolved: ResolvedTheme, animate = false) {
+  const update = () => {
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(resolved);
+    document.documentElement.style.colorScheme = resolved;
+  };
+
+  // Use View Transitions API for smooth theme animation if available and requested
+  if (animate && "startViewTransition" in document) {
+    (document as Document & { startViewTransition: (cb: () => void) => void }).startViewTransition(update);
+  } else {
+    update();
+  }
+}
+
+/**
+ * Get initial theme from localStorage synchronously.
+ * This runs during component initialization to avoid hydration mismatch.
+ * The inline script in __root.tsx already applied the correct classes to the DOM.
+ */
+function getInitialTheme(): { theme: Theme; resolved: ResolvedTheme } {
+  if (typeof window === "undefined") {
+    // SSR: return defaults
+    return { theme: "system", resolved: "dark" };
+  }
+  
+  // Client: read from localStorage to match what the inline script did
+  const stored = localStorage.getItem(STORAGE_KEY);
+  const theme: Theme = 
+    stored === "light" || stored === "dark" || stored === "system" 
+      ? stored 
+      : "system";
+  const resolved = resolveTheme(theme);
+  
+  return { theme, resolved };
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "system";
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      return stored;
-    }
-    return "system";
-  });
+  // Initialize state to match what the inline script already applied to DOM
+  // This avoids hydration mismatch and prevents flash
+  const [{ theme, resolved: resolvedTheme }, setThemeState] = useState(getInitialTheme);
 
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
-    if (theme === "system") return getSystemTheme();
-    return theme;
-  });
+  const setTheme = useCallback((newTheme: Theme) => {
+    const resolved = resolveTheme(newTheme);
+    setThemeState({ theme: newTheme, resolved });
+    localStorage.setItem(STORAGE_KEY, newTheme);
+    applyTheme(resolved, true); // Animate theme transitions
+  }, []);
 
-  // Update resolved theme when theme changes or system preference changes
+  // Listen for system theme changes
   useEffect(() => {
-    const updateResolvedTheme = () => {
-      const resolved = theme === "system" ? getSystemTheme() : theme;
-      setResolvedTheme(resolved);
-      
-      // Update document class
-      document.documentElement.classList.remove("light", "dark");
-      document.documentElement.classList.add(resolved);
-    };
-
-    updateResolvedTheme();
-
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
+    const handler = () => {
       if (theme === "system") {
-        updateResolvedTheme();
+        const resolved = getSystemTheme();
+        setThemeState(prev => ({ ...prev, resolved }));
+        applyTheme(resolved);
       }
     };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
   }, [theme]);
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem(STORAGE_KEY, newTheme);
-  };
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
@@ -71,7 +93,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
+  const context = use(ThemeContext);
   if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }

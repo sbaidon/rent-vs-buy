@@ -3,17 +3,19 @@
 export type ColorUtility = "bg" | "stroke" | "fill" | "text";
 
 export const chartColors = {
+  // Rent color - blueprint cyan (works well in both modes)
   light: {
-    bg: "bg-acadia-200",
-    stroke: "stroke-acadia-200",
-    fill: "fill-acadia-200",
-    text: "text-acadia-200",
+    bg: "bg-blueprint-400",
+    stroke: "stroke-blueprint-400",
+    fill: "fill-blueprint-400",
+    text: "text-blueprint-400",
   },
+  // Buy color - copper (the app's accent color)
   dark: {
-    bg: "bg-acadia-500",
-    stroke: "stroke-acadia-500",
-    fill: "fill-acadia-500",
-    text: "text-acadia-500",
+    bg: "bg-copper-500",
+    stroke: "stroke-copper-500",
+    fill: "fill-copper-500",
+    text: "text-copper-500",
   },
   blue: {
     bg: "bg-blue-500",

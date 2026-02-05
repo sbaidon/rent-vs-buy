@@ -4,11 +4,11 @@ import {
   Link,
   Outlet,
   Scripts,
+  ScriptOnce,
   createRootRoute,
 } from "@tanstack/react-router";
 import { Component, type ReactNode, useEffect, useRef, useState } from "react";
 import { PostHogProvider } from "posthog-js/react";
-import { Monitoring } from "react-scan/monitoring";
 import posthog from "posthog-js";
 import { useTranslation } from "react-i18next";
 import { Map, Calculator, Sun, Moon, Monitor } from "lucide-react";
@@ -16,8 +16,10 @@ import {
   AppProvider,
   Country,
   Currency,
+  COUNTRY_CURRENCY_OPTIONS,
   useAppContext,
 } from "../context/app-context";
+import { SUPPORTED_COUNTRIES } from "../constants/country-rules";
 import { ThemeProvider, useTheme } from "../context/theme-context";
 import "../i18n";
 import appCss from "../index.css?url";
@@ -45,28 +47,33 @@ class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error);
+    console.error("Component stack:", errorInfo.componentStack);
+    console.error("Error stack:", error.stack);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-ink-950 text-ink-100 flex flex-col items-center justify-center p-4">
-          <div className="panel p-8 max-w-md text-center">
-            <h2 className="text-2xl font-display mb-4 text-ink-50">Something went wrong</h2>
-            <p className="text-ink-300 mb-6">
-              An error occurred while loading the calculator.
+        <div className="flex min-h-screen items-center justify-center bg-[var(--bg-base)]">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+              Something went wrong
+            </h1>
+            <p className="text-[var(--text-muted)] mt-2">
+              Please refresh the page and try again.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="btn btn-primary"
-            >
-              Reload Page
-            </button>
-            {import.meta.env.DEV && this.state.error && (
-              <pre className="mt-6 p-4 bg-ink-900 rounded text-red-400 text-xs text-left overflow-auto font-mono border border-ink-700">
-                {this.state.error.stack}
-              </pre>
+            {this.state.error && (
+              <details className="mt-4 text-left max-w-lg mx-auto">
+                <summary className="cursor-pointer text-copper-500">
+                  Error details
+                </summary>
+                <pre className="mt-2 p-4 bg-[var(--bg-surface)] rounded text-xs overflow-auto text-[var(--text-secondary)]">
+                  {this.state.error.message}
+                  {"\n\n"}
+                  {this.state.error.stack}
+                </pre>
+              </details>
             )}
           </div>
         </div>
@@ -78,44 +85,55 @@ class ErrorBoundary extends Component<
 }
 
 // ============================================================================
+// PostHog Configuration
+// ============================================================================
+
+const posthogOptions = {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
+  person_profiles: "always" as const,
+  capture_pageview: true,
+  capture_pageleave: true,
+};
+
+// ============================================================================
 // Theme Toggle
 // ============================================================================
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
+  const getButtonClass = (buttonTheme: "light" | "dark" | "system") => {
+    const isActive = theme === buttonTheme;
+    return `p-1.5 rounded transition-colors ${
+      isActive
+        ? "bg-copper-500 text-white"
+        : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+    }`;
+  };
+
   return (
-    <div className="flex items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] p-0.5">
+    <div className="flex items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] p-0.5" data-testid="theme-toggle">
       <button
         onClick={() => setTheme("light")}
-        className={`p-1.5 rounded transition-colors ${
-          theme === "light"
-            ? "bg-copper-500 text-white"
-            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-        }`}
+        className={getButtonClass("light")}
         aria-label="Light mode"
+        data-testid="theme-light"
       >
         <Sun className="w-4 h-4" />
       </button>
       <button
         onClick={() => setTheme("dark")}
-        className={`p-1.5 rounded transition-colors ${
-          theme === "dark"
-            ? "bg-copper-500 text-white"
-            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-        }`}
+        className={getButtonClass("dark")}
         aria-label="Dark mode"
+        data-testid="theme-dark"
       >
         <Moon className="w-4 h-4" />
       </button>
       <button
         onClick={() => setTheme("system")}
-        className={`p-1.5 rounded transition-colors ${
-          theme === "system"
-            ? "bg-copper-500 text-white"
-            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-        }`}
+        className={getButtonClass("system")}
         aria-label="System theme"
+        data-testid="theme-system"
       >
         <Monitor className="w-4 h-4" />
       </button>
@@ -156,156 +174,106 @@ function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo and Nav Links */}
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-3 group">
+            <Link to="/" viewTransition className="flex items-center gap-3 group">
               <div className="w-9 h-9 rounded bg-gradient-to-br from-copper-500 to-copper-700 flex items-center justify-center border border-copper-400/30 shadow-lg shadow-copper-500/20 group-hover:shadow-copper-500/40 transition-shadow">
                 <span className="text-white font-mono font-semibold text-sm tracking-tight">RB</span>
               </div>
               <span className="font-display text-[var(--text-primary)] text-lg hidden sm:block italic font-light tracking-tight">RentVsBuy</span>
             </Link>
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="flex items-center gap-0.5 sm:gap-1">
               <Link
                 to="/"
-                className="flex items-center gap-2 px-4 py-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-all text-sm font-medium tracking-wide uppercase"
+                viewTransition
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-all text-xs sm:text-sm font-medium tracking-wide uppercase"
                 activeProps={{ className: "!bg-copper-500/10 !text-copper-500" }}
+                activeOptions={{ exact: true }}
               >
                 <Calculator className="w-4 h-4" />
-                Calculator
+                <span className="hidden sm:inline">{t("nav.calculator")}</span>
               </Link>
               <Link
                 to="/explore"
-                className="flex items-center gap-2 px-4 py-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-all text-sm font-medium tracking-wide uppercase"
+                viewTransition
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-all text-xs sm:text-sm font-medium tracking-wide uppercase"
                 activeProps={{ className: "!bg-copper-500/10 !text-copper-500" }}
               >
                 <Map className="w-4 h-4" />
-                Explore
+                <span className="hidden sm:inline">{t("nav.explore")}</span>
               </Link>
             </nav>
           </div>
 
-          {/* Right side controls */}
-          <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
+          {/* Right Side */}
+          <div className="flex items-center gap-4">
             <ThemeToggle />
-            
-            {/* Desktop selects */}
-            <div className="hidden lg:flex items-center gap-2">
-              <select
-                id="currency-select"
-                onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="px-3 py-1.5 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-muted)] cursor-pointer appearance-none border border-[var(--border-default)] focus:ring-2 focus:ring-copper-500/50 focus:border-copper-500 transition-colors font-mono"
-                aria-label={t("currency")}
-                value={currency}
-              >
-                <option value="USD">$ USD</option>
-              </select>
-
-              <select
-                id="language-select"
-                onChange={(e) => i18n.changeLanguage(e.target.value)}
-                className="px-3 py-1.5 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-muted)] cursor-pointer appearance-none border border-[var(--border-default)] focus:ring-2 focus:ring-copper-500/50 focus:border-copper-500 transition-colors font-mono"
-                value={i18n.language}
-                aria-label={t("language")}
-              >
-                <option value="en">EN</option>
-                <option value="es">ES</option>
-              </select>
-
-              <select
-                id="country-select"
-                className="px-3 py-1.5 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-muted)] cursor-pointer appearance-none border border-[var(--border-default)] focus:ring-2 focus:ring-copper-500/50 focus:border-copper-500 transition-colors"
-                aria-label={t("country")}
-                onChange={(e) => setSelectedCountry(e.target.value as Country)}
-                value={country}
-              >
-                <option value="US">US</option>
-              </select>
-            </div>
-
-            {/* Mobile menu button */}
+            {/* Settings Menu Button */}
             <button
-              className="lg:hidden p-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={t("toggle_menu")}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {isMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
+              <span className="text-sm font-medium">{country}</span>
+              <span className="text-[var(--text-muted)]">|</span>
+              <span className="text-sm font-medium">{currency}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Dropdown Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden border-t border-[var(--border-default)] bg-[var(--bg-surface)]">
-          <div className="px-4 py-4 space-y-3">
-            {/* Mobile nav links */}
-            <div className="space-y-1">
-              <Link
-                to="/"
-                className="flex items-center gap-3 px-3 py-2.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Calculator className="w-5 h-5" />
-                <span className="font-medium uppercase tracking-wide text-sm">Calculator</span>
-              </Link>
-              <Link
-                to="/explore"
-                className="flex items-center gap-3 px-3 py-2.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Map className="w-5 h-5" />
-                <span className="font-medium uppercase tracking-wide text-sm">Explore</span>
-              </Link>
-            </div>
-
-            {/* Mobile theme toggle */}
-            <div className="pt-3 border-t border-[var(--border-default)] flex justify-center">
-              <ThemeToggle />
-            </div>
-
-            {/* Mobile selects */}
-            <div className="pt-3 border-t border-[var(--border-default)] grid grid-cols-3 gap-2">
+        <div className="absolute right-4 top-full mt-2 w-56 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-xl z-50 p-3">
+          <div className="space-y-3">
+            {/* Country Select */}
+            <div>
+              <label className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                {t("settings.country")}
+              </label>
               <select
-                onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="px-3 py-2 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] cursor-pointer appearance-none border border-[var(--border-default)] font-mono"
-                value={currency}
-              >
-                <option value="USD">$ USD</option>
-              </select>
-              <select
-                onChange={(e) => i18n.changeLanguage(e.target.value)}
-                className="px-3 py-2 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] cursor-pointer appearance-none border border-[var(--border-default)] font-mono"
-                value={i18n.language}
-              >
-                <option value="en">EN</option>
-                <option value="es">ES</option>
-              </select>
-              <select
-                onChange={(e) => setSelectedCountry(e.target.value as Country)}
-                className="px-3 py-2 rounded text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] cursor-pointer appearance-none border border-[var(--border-default)]"
                 value={country}
+                onChange={(e) => setSelectedCountry(e.target.value as Country)}
+                className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
               >
-                <option value="US">US</option>
+                {SUPPORTED_COUNTRIES.map(({ code, flag }) => (
+                  <option key={code} value={code}>
+                    {flag} {t(`countries.${code}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Currency Select */}
+            <div>
+              <label className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                {t("settings.currency")}
+              </label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as Currency)}
+                className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
+              >
+                {COUNTRY_CURRENCY_OPTIONS.map(({ code, label }) => (
+                  <option key={code} value={code}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Language Select */}
+            <div>
+              <label className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                {t("settings.language")}
+              </label>
+              <select
+                value={i18n.language}
+                onChange={(e) => i18n.changeLanguage(e.target.value)}
+                className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
+              >
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="it">Italiano</option>
               </select>
             </div>
           </div>
@@ -314,15 +282,6 @@ function Navbar() {
     </header>
   );
 }
-
-// ============================================================================
-// PostHog Options
-// ============================================================================
-
-const posthogOptions = {
-  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  capture_pageview: true,
-};
 
 // ============================================================================
 // Root Route
@@ -388,6 +347,23 @@ export const Route = createRootRoute({
       {
         rel: "preconnect",
         href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      // Preconnect to map tile servers for faster map loading
+      { rel: "preconnect", href: "https://basemaps.cartocdn.com" },
+      {
+        rel: "preconnect",
+        href: "https://a.basemaps.cartocdn.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preconnect",
+        href: "https://b.basemaps.cartocdn.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preconnect",
+        href: "https://c.basemaps.cartocdn.com",
         crossOrigin: "anonymous",
       },
       {
@@ -464,12 +440,36 @@ function RootDocument({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <html lang="en">
+    // Default to "dark" class to match CSS :root defaults and prevent flash
+    // ScriptOnce will override this based on localStorage before paint
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <head>
         <HeadContent />
+        <ScriptOnce>
+          {`
+            (function() {
+              var classList = document.documentElement.classList;
+              var style = document.documentElement.style;
+              var theme = localStorage.getItem("theme");
+              if (theme === "dark") {
+                // Already dark, no change needed
+              } else if (theme === "light") {
+                classList.remove("dark");
+                classList.add("light");
+                style.colorScheme = "light";
+              } else {
+                var isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                if (!isDark) {
+                  classList.remove("dark");
+                  classList.add("light");
+                  style.colorScheme = "light";
+                }
+              }
+            })();
+          `}
+        </ScriptOnce>
       </head>
       <body className="min-h-screen antialiased">
-        {/* Only use PostHogProvider on client after init */}
         {posthogReady ? (
           <PostHogProvider client={posthog}>{children}</PostHogProvider>
         ) : (

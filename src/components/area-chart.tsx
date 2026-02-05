@@ -74,9 +74,9 @@ const LegendItem = ({
           // base
           "truncate whitespace-nowrap text-xs",
           // text color
-          "text-acadia-100 dark:text-acadia-100",
+          "text-ink-600 dark:text-ink-200",
           hasOnValueChange &&
-            "group-hover:text-gray-900 dark:group-hover:text-gray-50",
+            "group-hover:text-ink-900 dark:group-hover:text-ink-50",
           activeLegend && activeLegend !== name ? "opacity-40" : "opacity-100"
         )}
       >
@@ -95,7 +95,7 @@ interface ScrollButtonProps {
 const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
   const Icon = icon;
   const [isPressed, setIsPressed] = React.useState(false);
-  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   React.useEffect(() => {
     if (isPressed) {
@@ -103,14 +103,16 @@ const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
         onClick?.();
       }, 300);
     } else {
-      clearInterval(intervalRef.current as NodeJS.Timeout);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
-    return () => clearInterval(intervalRef.current as NodeJS.Timeout);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [isPressed, onClick]);
 
   React.useEffect(() => {
     if (disabled) {
-      clearInterval(intervalRef.current as NodeJS.Timeout);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setIsPressed(false);
     }
   }, [disabled]);
@@ -122,8 +124,8 @@ const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
         // base
         "group inline-flex size-5 items-center truncate rounded transition",
         disabled
-          ? "cursor-not-allowed text-acadia-100 dark:text-acadia-100"
-          : "cursor-pointer text-acadia-100 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-50"
+          ? "cursor-not-allowed text-ink-400 dark:text-ink-400"
+          : "cursor-pointer text-ink-500 hover:bg-ink-100 hover:text-ink-900 dark:text-ink-300 dark:hover:bg-ink-800 dark:hover:text-ink-50"
       )}
       disabled={disabled}
       onClick={(e) => {
@@ -171,7 +173,7 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
   const scrollButtonsRef = React.useRef<HTMLDivElement>(null);
   const [hasScroll, setHasScroll] = React.useState<HasScrollProps | null>(null);
   const [isKeyDowned, setIsKeyDowned] = React.useState<string | null>(null);
-  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   const checkScroll = React.useCallback(() => {
     const scrollable = scrollableRef?.current;
@@ -221,9 +223,11 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
         keyDownHandler(isKeyDowned);
       }, 300);
     } else {
-      clearInterval(intervalRef.current as NodeJS.Timeout);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
-    return () => clearInterval(intervalRef.current as NodeJS.Timeout);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [isKeyDowned, scrollToTest]);
 
   const keyDown = (e: KeyboardEvent) => {
@@ -287,7 +291,7 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
               // base
               "absolute bottom-0 right-0 top-0 flex h-full items-center justify-center pr-1",
               // background color
-              "bg-white dark:bg-gray-950"
+              "bg-white dark:bg-ink-950"
             )}
           >
             <ScrollButton
@@ -395,9 +399,9 @@ const ChartTooltip = ({
           // base
           "rounded-md border text-sm shadow-md",
           // border color
-          "border-acadia-100 dark:border-acadia-100",
+          "border-ink-200 dark:border-ink-700",
           // background color
-          "bg-white dark:bg-gray-950"
+          "bg-white dark:bg-ink-950"
         )}
       >
         <div className={cx("border-b border-inherit px-4 py-2")}>
@@ -406,7 +410,7 @@ const ChartTooltip = ({
               // base
               "font-medium",
               // text color
-              "text-acadia-100 dark:text-gray-50"
+              "text-ink-900 dark:text-ink-50"
             )}
           >
             {label}
@@ -431,7 +435,7 @@ const ChartTooltip = ({
                     // base
                     "whitespace-nowrap text-right",
                     // text color
-                    "text-acadia-100 dark:text-gray-300"
+                    "text-ink-600 dark:text-ink-300"
                   )}
                 >
                   {category}
@@ -442,7 +446,7 @@ const ChartTooltip = ({
                   // base
                   "whitespace-nowrap text-right font-medium tabular-nums",
                   // text color
-                  "text-acadia-100 dark:text-gray-50"
+                  "text-ink-900 dark:text-ink-50"
                 )}
               >
                 {valueFormatter(value)}
@@ -672,7 +676,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
             {showGridLines ? (
               <CartesianGrid
                 className={cx(
-                  "stroke-acadia-100 stroke-1 dark:stroke-gray-800"
+                  "stroke-ink-200 stroke-1 dark:stroke-ink-800"
                 )}
                 horizontal={true}
                 vertical={false}
@@ -695,7 +699,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 // base
                 "text-xs",
                 // text fill
-                "fill-acadia-100 dark:fill-acadia-100"
+                "fill-ink-500 dark:fill-ink-400"
               )}
               tickLine={false}
               axisLine={false}
@@ -705,7 +709,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 <Label
                   position="insideBottom"
                   offset={-20}
-                  className="fill-acadia-100 text-sm font-medium dark:fill-acadia-100"
+                  className="fill-ink-600 text-sm font-medium dark:fill-ink-300"
                 >
                   {xAxisLabel}
                 </Label>
@@ -725,7 +729,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 // base
                 "text-xs",
                 // text fill
-                "fill-acadia-100 dark:fill-acadia-100"
+                "fill-ink-500 dark:fill-ink-400"
               )}
               tickFormatter={
                 type === "percent" ? valueToPercent : valueFormatter
@@ -738,7 +742,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                   style={{ textAnchor: "middle" }}
                   angle={-90}
                   offset={-15}
-                  className="fill-acadia-100 text-sm font-medium dark:fill-acadia-100"
+                  className="fill-ink-600 text-sm font-medium dark:fill-ink-300"
                 >
                   {yAxisLabel}
                 </Label>
@@ -874,7 +878,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                       return (
                         <Dot
                           className={cx(
-                            "stroke-white dark:stroke-gray-950",
+                            "stroke-white dark:stroke-ink-950",
                             onValueChange ? "cursor-pointer" : "",
                             getColorClassName(
                               categoryColors.get(
@@ -916,7 +920,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                         (activeDot?.index === index &&
                           activeDot?.dataKey === category)
                       ) {
-                        return (
+                          return (
                           <Dot
                             key={index}
                             cx={cxCoord}
@@ -928,7 +932,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                             strokeLinejoin={strokeLinejoin}
                             strokeWidth={strokeWidth}
                             className={cx(
-                              "stroke-white dark:stroke-gray-950",
+                              "stroke-white dark:stroke-ink-950",
                               onValueChange ? "cursor-pointer" : "",
                               getColorClassName(
                                 categoryColors.get(

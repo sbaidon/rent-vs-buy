@@ -46,6 +46,7 @@
   /* Legacy compatibility */
   --color-acadia-100: var(--color-ink-200);
   --color-acadia-200: var(--color-ink-300);
+  --color-acadia-500: var(--color-ink-500);
   --color-acadia-700: var(--color-ink-700);
   --color-acadia-800: var(--color-ink-800);
   --color-acadia-900: var(--color-ink-900);
@@ -557,6 +558,88 @@
   }
 }
 
+/* ===== VIEW TRANSITIONS ===== */
+/* Use 'none' to prevent automatic transitions on replaceState/pushState.
+   Transitions are triggered explicitly via TanStack Router's viewTransition option
+   or document.startViewTransition() API. */
+@view-transition {
+  navigation: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: fade-in;
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Page-specific transitions */
+[data-view-transition-name="page"] {
+  view-transition-name: page;
+}
+
+::view-transition-old(page),
+::view-transition-new(page) {
+  animation-duration: 0.35s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(page) {
+  animation-name: slide-out-left;
+}
+
+::view-transition-new(page) {
+  animation-name: slide-in-right;
+}
+
+@keyframes slide-out-left {
+  from { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to { 
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+
+@keyframes slide-in-right {
+  from { 
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 @layer utilities {
   .no-scrollbar {
     -ms-overflow-style: none;
@@ -603,5 +686,119 @@
   .animate-fade-in-up {
     animation: fade-in-up 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     opacity: 0;
+  }
+
+  /* Safe area padding for mobile devices with notches */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ===== VIEW TRANSITIONS FOR UI ELEMENTS ===== */
+
+/* Comparison Tray */
+[data-view-transition-name="comparison-tray"] {
+  view-transition-name: comparison-tray;
+}
+
+::view-transition-old(comparison-tray) {
+  animation: 0.25s ease-out both slide-to-bottom;
+}
+
+::view-transition-new(comparison-tray) {
+  animation: 0.3s ease-out both slide-from-bottom;
+}
+
+@keyframes slide-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes slide-to-bottom {
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+/* Filters Panel */
+[data-view-transition-name="filters-panel"] {
+  view-transition-name: filters-panel;
+}
+
+::view-transition-old(filters-panel) {
+  animation: 0.2s ease-in both slide-to-right;
+}
+
+::view-transition-new(filters-panel) {
+  animation: 0.3s ease-out both slide-from-right;
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slide-to-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Filters Backdrop */
+[data-view-transition-name="filters-backdrop"] {
+  view-transition-name: filters-backdrop;
+}
+
+::view-transition-old(filters-backdrop),
+::view-transition-new(filters-backdrop) {
+  animation-duration: 0.2s;
+}
+
+/* Property Card selection state */
+[data-view-transition-name^="property-"] {
+  view-transition-name: var(--vt-name);
+}
+
+/* Fallback animations for browsers without view transitions */
+@supports not (view-transition-name: test) {
+  @keyframes slide-up-fallback {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-in-right-fallback {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fade-in-fallback {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .animate-slide-up {
+    animation: slide-up-fallback 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right-fallback 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-fade-in {
+    animation: fade-in-fallback 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 }

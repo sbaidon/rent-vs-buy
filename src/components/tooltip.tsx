@@ -7,7 +7,7 @@ interface TooltipProps {
 
 const Tooltip: React.FC<TooltipProps> = ({
   content,
-  iconClassName = "text-acadia-200",
+  iconClassName = "text-[var(--text-muted)]",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -49,7 +49,7 @@ const Tooltip: React.FC<TooltipProps> = ({
         </svg>
       </div>
       <div
-        className={`absolute z-10 max-w-[150px] w-64 p-2 text-sm text-white bg-gray-800 rounded-lg right-0 mr-2 ${
+        className={`absolute z-10 max-w-[150px] w-64 p-2 text-sm text-[var(--text-primary)] bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-lg rounded-lg right-0 mr-2 ${
           isOpen ? "visible" : "invisible group-hover:visible"
         }`}
       >

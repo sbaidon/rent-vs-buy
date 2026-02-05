@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { TrendingUp, X, ChevronDown } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -19,19 +19,7 @@ export const MarketInsights = memo(function MarketInsights({
   onClose,
   location = "Austin, TX",
 }: MarketInsightsProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  
-  // Animate in/out
-  useEffect(() => {
-    if (isOpen) {
-      // Small delay to trigger CSS transition
-      const timer = setTimeout(() => setIsVisible(true), 10);
-      return () => clearTimeout(timer);
-    } else {
-      setIsVisible(false);
-    }
-  }, [isOpen]);
-
+  // No useEffect needed - CSS handles animations via isOpen prop directly
   // Early return for closed state (Vercel best practice: js-early-exit)
   if (!isOpen) return null;
 
@@ -41,7 +29,7 @@ export const MarketInsights = memo(function MarketInsights({
       <div 
         className={clsx(
           "fixed inset-0 bg-black/50 z-20 sm:hidden transition-opacity duration-300",
-          isVisible ? "opacity-100" : "opacity-0"
+          "opacity-100" // Always visible when isOpen is true
         )}
         onClick={onClose}
         aria-hidden="true"
@@ -56,10 +44,9 @@ export const MarketInsights = memo(function MarketInsights({
           "sm:absolute sm:bottom-auto sm:top-4 sm:right-4 sm:left-auto sm:w-80 sm:rounded-lg sm:max-h-none",
           // Transitions
           "transition-transform duration-300 ease-out",
-          // Mobile slide up animation
-          isVisible ? "translate-y-0" : "translate-y-full sm:translate-y-0",
-          // Desktop fade
-          isVisible ? "sm:opacity-100" : "sm:opacity-0"
+          // Animations handled by CSS - always visible when rendered
+          "translate-y-0",
+          "sm:opacity-100"
         )}
         style={{ 
           background: "var(--bg-elevated)",

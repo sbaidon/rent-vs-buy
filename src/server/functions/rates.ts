@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start/server";
+import { createServerFn } from "@tanstack/react-start";
 
 // Types for mortgage rates
 export interface MortgageRate {
@@ -21,8 +21,9 @@ export interface RatesResponse {
 // Server function to get current mortgage rates
 // Uses Zillow's public mortgage rates API
 export const getMortgageRates = createServerFn({ method: "GET" })
-  .validator((params: { state?: string; loanAmount?: number }) => params)
-  .handler(async ({ data: params }) => {
+  .inputValidator((params: { state?: string; loanAmount?: number }) => params)
+  .handler(async ({ data }) => {
+    const params = data;
     try {
       // Try to fetch from Zillow's public rates API
       // This endpoint is publicly accessible without authentication

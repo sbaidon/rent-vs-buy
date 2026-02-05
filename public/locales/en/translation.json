@@ -1,4 +1,8 @@
 {
+  "nav": {
+    "calculator": "Calculator",
+    "explore": "Explore"
+  },
   "calculator": {
     "methodology": {
       "title": "How does it work?",
@@ -18,6 +22,7 @@
       "of": "of",
       "close": "Close",
       "view_schedule": "View Amortization Schedule",
+      "short": "Amortization",
       "loan_summary": "Loan Summary",
       "original_loan": "Original Loan Amount",
       "total_interest": "Total Interest Paid",
@@ -27,6 +32,10 @@
     "share": "Share",
     "linkCopied": "Link copied",
     "title": "Rent vs Buy",
+    "showAdvanced": "Show advanced options",
+    "hideAdvanced": "Hide advanced options",
+    "advanced": "Advanced",
+    "basic": "Basic",
     "propertyValue": "Property Value",
     "downPayment": "Down Payment",
     "calculate": "Calculate",
@@ -69,7 +78,21 @@
       "runningTotal": "Running Total",
       "difference": "Difference",
       "viewMode": "View Mode",
-      "regular": "Regular"
+      "regular": "Regular",
+      "summary": "Summary",
+      "chart": "Chart",
+      "advancedMetrics": "Advanced Metrics",
+      "breakEven": "Break-even",
+      "year": "Year",
+      "rentalYield": "Rental Yield",
+      "sensitivity": "Sensitivity",
+      "sensitivityHint": "Green favours buying, red favours renting.",
+      "equity": "Equity vs Portfolio",
+      "homeEquity": "Home Equity",
+      "renterPortfolio": "Renter Portfolio",
+      "real": "Real",
+      "nominal": "Nominal",
+      "realToggleHint": "Toggle inflation-adjusted (real) values"
     },
     "sections": {
       "basics": {
@@ -151,6 +174,21 @@
       "viewMode": "Choose how to view the chart data: Regular shows actual costs per year, Running Total shows cumulative costs over time, and Difference shows year-over-year changes."
     }
   },
+  "settings": {
+    "currency": "Currency",
+    "language": "Language",
+    "country": "Country"
+  },
+  "countries": {
+    "US": "United States",
+    "CA": "Canada",
+    "MX": "Mexico",
+    "GB": "United Kingdom",
+    "DE": "Germany",
+    "FR": "France",
+    "IT": "Italy",
+    "ES": "Spain"
+  },
   "currency": "Currency",
   "currency_usd": "US Dollar",
   "currency_cad": "Canadian Dollar",
@@ -164,5 +202,6 @@
   "country_mexico": "Mexico",
   "more_countries_soon": "More countries soon",
   "month": "month",
-  "months": "months"
+  "months": "months",
+  "years": "years"
 } 

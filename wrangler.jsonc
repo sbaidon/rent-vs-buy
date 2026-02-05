@@ -12,4 +12,6 @@
     "VITE_PUBLIC_POSTHOG_KEY": "phc_8LcK1repzPHTkkAsOA1CEVjFmk2oaIk6ipeHsYr6DH",
     "VITE_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com"
   }
+  // NOTE: For production, set RAPIDAPI_KEY via: wrangler secret put RAPIDAPI_KEY
+  // For local dev, use .dev.vars file (git-ignored)
 }

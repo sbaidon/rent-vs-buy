@@ -1,7 +1,7 @@
 import React from "react";
 import { useCalculator } from "../context/calculator-context";
-import { BuyingCostsCalculator } from "../utils/buy-costs-calculator";
-import { RentingCostsCalculator } from "../utils/rent-costs-calculator";
+import { createBuyingCalculator } from "../utils/country-buy-calculator";
+import { createRentingCalculator } from "../utils/country-rent-calculator";
 import { formatCurrency } from "../utils/format-currency";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "../context/app-context";
@@ -14,15 +14,16 @@ type ViewMode = "regular" | "cumulative" | "difference";
 const Results = React.memo(() => {
   const { t } = useTranslation();
   const { values, reset } = useCalculator();
-  const { currency } = useAppContext();
+  const { currency, country } = useAppContext();
   const [showToast, setShowToast] = React.useState(false);
 
   // Replace separate toggles with a single view mode state
   const [viewMode, setViewMode] = React.useState<ViewMode>("cumulative");
 
   const results = React.useMemo(() => {
-    const buyingCalculator = new BuyingCostsCalculator(values);
-    const rentingCalculator = new RentingCostsCalculator(values);
+    // Use country-aware calculators
+    const buyingCalculator = createBuyingCalculator(country, values);
+    const rentingCalculator = createRentingCalculator(country, values);
 
     const buying = buyingCalculator.calculate();
     const renting = rentingCalculator.calculate();
@@ -31,7 +32,7 @@ const Results = React.memo(() => {
       buying,
       renting,
     };
-  }, [values]);
+  }, [values, country]);
 
   const savings = React.useMemo(() => {
     return (
@@ -59,7 +60,7 @@ const Results = React.memo(() => {
       aggregatedRentBreakdown.push(rentSum);
     }
 
-    return new Array(values.yearsToStay).fill(0).map((_, index) => {
+    return Array.from({ length: values.yearsToStay }, (_, index) => {
       let rentValue, buyValue;
 
       switch (viewMode) {

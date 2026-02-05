@@ -1,6 +1,4 @@
 import { CalculatorValues } from "../context/calculator-context";
-import { BuyingCostsCalculator } from "./buy-costs-calculator";
-import { RentingCostsCalculator } from "./rent-costs-calculator";
 
 export type CalculatorResults = {
   initialCost: number;
@@ -22,81 +20,72 @@ export interface Calculator {
   calculate(values?: CalculatorValues): CalculatorResults;
 }
 
-const determineDirection = (
-  values: CalculatorValues,
-  parameter: keyof CalculatorValues,
-  min: number,
-  max: number
-): boolean => {
-  const buyingCalculator = new BuyingCostsCalculator(values);
-  const rentingCalculator = new RentingCostsCalculator(values);
+/** Any calculator that can compute a total cost for a given set of values. */
+export interface CostCalculator {
+  getTotalCost(values?: CalculatorValues): number;
+}
 
-  const startValues = { ...values, [parameter]: min };
-  const endValues = { ...values, [parameter]: max };
+/**
+ * Find the root of f(x) = rentCost(x) - buyCost(x) using bisection.
+ *
+ * The caller guarantees that f has opposite signs at the endpoints
+ * (priceOutcome is a crossover type), so by the intermediate value
+ * theorem at least one root exists. Bisection finds the segment index
+ * closest to that root in O(log n) evaluations (~17 for 100k segments).
+ *
+ * Returns the index as a single-element array for consistency with the
+ * consumer, which supports multiple crossovers in principle.
+ */
+export function findIntersectionPoints(options: {
+  values: CalculatorValues;
+  parameter: keyof CalculatorValues;
+  min: number;
+  max: number;
+  segments: number;
+  step: number;
+  /** Pre-built buying calculator (country-aware). */
+  buyingCalculator: CostCalculator;
+  /** Pre-built renting calculator (country-aware). */
+  rentingCalculator: CostCalculator;
+}): number[] {
+  const {
+    values, parameter, min, segments, step,
+    buyingCalculator, rentingCalculator,
+  } = options;
 
-  const startDifference =
-    rentingCalculator.getTotalCost(startValues) -
-    buyingCalculator.getTotalCost(startValues);
+  /** f(idx) = rentCost - buyCost at the given segment index. */
+  const f = (idx: number): number => {
+    const testValues = { ...values, [parameter]: min + idx * step };
+    return (
+      rentingCalculator.getTotalCost(testValues) -
+      buyingCalculator.getTotalCost(testValues)
+    );
+  };
 
-  const endDifference =
-    rentingCalculator.getTotalCost(endValues) -
-    buyingCalculator.getTotalCost(endValues);
+  let lo = 0;
+  let hi = segments - 1;
+  const signAtLo = f(lo) < 0;
 
-  return endDifference > startDifference;
-};
+  // Track the index closest to zero (smallest |f|) as we bisect.
+  let closestIdx = lo;
+  let smallestAbs = Infinity;
 
-export function findIntersectionPoint(
-  values: CalculatorValues,
-  parameter: keyof CalculatorValues,
-  min: number,
-  max: number,
-  segments: number,
-  step: number
-): number {
-  const increasingDifferenceWithValue = determineDirection(
-    values,
-    parameter,
-    min,
-    max
-  );
-  const buyingCalculator = new BuyingCostsCalculator(values);
-  const rentingCalculator = new RentingCostsCalculator(values);
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const fm = f(mid);
+    const absFm = Math.abs(fm);
 
-  let left = 0;
-  let right = segments - 1;
-  let difference;
-  let closestMid = 0;
-  let smallestDifference = Infinity;
-
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    const value = min + mid * step;
-
-    const testValues = { ...values, [parameter]: value };
-    const rentingCost = rentingCalculator.getTotalCost(testValues);
-    const buyingCost = buyingCalculator.getTotalCost(testValues);
-
-    difference = rentingCost - buyingCost;
-
-    if (Math.abs(difference) < Math.abs(smallestDifference)) {
-      smallestDifference = difference;
-      closestMid = mid;
+    if (absFm < smallestAbs) {
+      smallestAbs = absFm;
+      closestIdx = mid;
     }
 
-    if (increasingDifferenceWithValue) {
-      if (difference < 0) {
-        left = mid + 1;
-      } else {
-        right = mid - 1;
-      }
+    if ((fm < 0) === signAtLo) {
+      lo = mid + 1; // same sign as start → root is to the right
     } else {
-      if (difference < 0) {
-        right = mid - 1;
-      } else {
-        left = mid + 1;
-      }
+      hi = mid - 1; // opposite sign → root is to the left
     }
   }
 
-  return closestMid;
+  return [closestIdx];
 }

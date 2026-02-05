@@ -1,4 +1,146 @@
-import { createServerFn } from "@tanstack/react-start/server";
+/// <reference types="node" />
+import { createServerFn } from "@tanstack/react-start";
+
+// HUD Fair Market Rents (FMR) - FREE government API
+// Documentation: https://www.huduser.gov/portal/dataset/fmr-api.html
+export interface FairMarketRent {
+  year: number;
+  stateCode: string;
+  countyName: string;
+  metroName?: string;
+  efficiency: number; // Studio
+  oneBedroom: number;
+  twoBedroom: number;
+  threeBedroom: number;
+  fourBedroom: number;
+}
+
+// Simple cache for HUD data
+const hudCache = new Map<string, { data: FairMarketRent; timestamp: number }>();
+const HUD_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours (FMR data updates annually)
+
+// Get Fair Market Rents from HUD
+export const getFairMarketRents = createServerFn({ method: "GET" })
+  .inputValidator((params: { stateCode: string; year?: number }) => params)
+  .handler(async ({ data }) => {
+    const { stateCode, year = new Date().getFullYear() } = data;
+    const cacheKey = `fmr:${stateCode}:${year}`;
+    
+    // Check cache
+    const cached = hudCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < HUD_CACHE_TTL) {
+      return cached.data;
+    }
+
+    try {
+      // HUD FMR API endpoint
+      const url = `https://www.huduser.gov/hudapi/public/fmr/statedata/${stateCode}?year=${year}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          "Authorization": `Bearer ${process.env.HUD_API_TOKEN || ""}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HUD API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // HUD API returns data in a specific format, parse it
+      // The actual structure depends on the API version
+      const fmrData: FairMarketRent = {
+        year,
+        stateCode,
+        countyName: result.data?.county_name || "Unknown",
+        metroName: result.data?.metro_name,
+        efficiency: result.data?.Efficiency || result.data?.fmr_0 || 900,
+        oneBedroom: result.data?.["One-Bedroom"] || result.data?.fmr_1 || 1000,
+        twoBedroom: result.data?.["Two-Bedroom"] || result.data?.fmr_2 || 1200,
+        threeBedroom: result.data?.["Three-Bedroom"] || result.data?.fmr_3 || 1500,
+        fourBedroom: result.data?.["Four-Bedroom"] || result.data?.fmr_4 || 1800,
+      };
+
+      hudCache.set(cacheKey, { data: fmrData, timestamp: Date.now() });
+      return fmrData;
+    } catch (error) {
+      console.error("Error fetching HUD FMR data:", error);
+      
+      // Return estimated fallback data based on national averages
+      // These should be updated periodically
+      const fallbackFMR: FairMarketRent = {
+        year,
+        stateCode,
+        countyName: "National Average (Fallback)",
+        efficiency: 1100,
+        oneBedroom: 1250,
+        twoBedroom: 1500,
+        threeBedroom: 1900,
+        fourBedroom: 2300,
+      };
+      
+      return fallbackFMR;
+    }
+  });
+
+// Get FMR by ZIP code (more specific)
+export const getFairMarketRentsByZip = createServerFn({ method: "GET" })
+  .inputValidator((params: { zipcode: string; year?: number }) => params)
+  .handler(async ({ data }) => {
+    const { zipcode, year = new Date().getFullYear() } = data;
+    const cacheKey = `fmr:zip:${zipcode}:${year}`;
+    
+    const cached = hudCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < HUD_CACHE_TTL) {
+      return cached.data;
+    }
+
+    try {
+      const url = `https://www.huduser.gov/hudapi/public/fmr/data/${zipcode}?year=${year}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          "Authorization": `Bearer ${process.env.HUD_API_TOKEN || ""}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HUD API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      const fmrData: FairMarketRent = {
+        year,
+        stateCode: result.data?.state_code || "",
+        countyName: result.data?.county_name || "Unknown",
+        metroName: result.data?.metro_name || result.data?.area_name,
+        efficiency: result.data?.Efficiency || result.data?.basicdata?.Efficiency || 900,
+        oneBedroom: result.data?.["One-Bedroom"] || result.data?.basicdata?.["One-Bedroom"] || 1000,
+        twoBedroom: result.data?.["Two-Bedroom"] || result.data?.basicdata?.["Two-Bedroom"] || 1200,
+        threeBedroom: result.data?.["Three-Bedroom"] || result.data?.basicdata?.["Three-Bedroom"] || 1500,
+        fourBedroom: result.data?.["Four-Bedroom"] || result.data?.basicdata?.["Four-Bedroom"] || 1800,
+      };
+
+      hudCache.set(cacheKey, { data: fmrData, timestamp: Date.now() });
+      return fmrData;
+    } catch (error) {
+      console.error("Error fetching HUD FMR data by ZIP:", error);
+      
+      // Fallback
+      return {
+        year,
+        stateCode: "",
+        countyName: "Unknown (Fallback)",
+        efficiency: 1100,
+        oneBedroom: 1250,
+        twoBedroom: 1500,
+        threeBedroom: 1900,
+        fourBedroom: 2300,
+      } satisfies FairMarketRent;
+    }
+  });
 
 // Types for area analysis
 export interface AreaStats {
@@ -44,8 +186,8 @@ export interface AreaAnalysis {
 
 // Server function to get area analysis
 export const getAreaAnalysis = createServerFn({ method: "GET" })
-  .validator((params: { lat: number; lng: number; address?: string }) => params)
-  .handler(async ({ data: params }) => {
+  .inputValidator((params: { lat: number; lng: number; address?: string }) => params)
+  .handler(async ({ data: _params }) => {
     // TODO: Replace with actual API calls to:
     // - Walk Score API
     // - Zillow Neighborhood Data
@@ -151,7 +293,7 @@ function getRecommendation(priceToRentRatio: number): "buy" | "rent" | "neutral"
 }
 
 // Helper function to explain the recommendation
-function getRecommendationReason(priceToRentRatio: number, homeValueChange: number): string {
+function getRecommendationReason(priceToRentRatio: number, _homeValueChange: number): string {
   const recommendation = getRecommendation(priceToRentRatio);
   
   if (recommendation === "buy") {
@@ -165,8 +307,9 @@ function getRecommendationReason(priceToRentRatio: number, homeValueChange: numb
 
 // Server function to geocode an address
 export const geocodeAddress = createServerFn({ method: "GET" })
-  .validator((params: { address: string }) => params)
-  .handler(async ({ data: { address } }) => {
+  .inputValidator((params: { address: string }) => params)
+  .handler(async ({ data }) => {
+    const { address } = data;
     // TODO: Use a geocoding API (Google Maps, Mapbox, or free alternatives)
     // For now, return mock data for Austin
     

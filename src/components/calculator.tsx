@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { CalculatorValues, useCalculator } from "../context/calculator-context";
 import FlameGraph from "./flame-graph";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ const Calculator: React.FC = () => {
   const { values, updateValue } = useCalculator();
   const { t } = useTranslation();
   const { currency, country } = useAppContext();
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
 
   const formatPercentage = useCallback(
     (value: number) => `${(value * 100).toFixed(2)}%`,
@@ -35,7 +36,7 @@ const Calculator: React.FC = () => {
   const renderLabel = useCallback(
     (labelKey: string, tooltipKey: string) => (
       <div className="flex items-center">
-        <span className="text-ink-200">{t(labelKey)}</span>
+        <span className="text-[var(--text-secondary)]">{t(labelKey)}</span>
         <Tooltip content={t(tooltipKey)} />
       </div>
     ),
@@ -44,7 +45,36 @@ const Calculator: React.FC = () => {
 
   return (
     <>
-      <section className="pt-12">
+      {/* Mode Toggle */}
+      <div className="flex items-center justify-end gap-3 mb-2">
+        <span 
+          className={`text-sm font-medium transition-colors ${!isAdvancedMode ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}
+        >
+          {t("calculator.basic")}
+        </span>
+        <button
+          role="switch"
+          aria-checked={isAdvancedMode}
+          onClick={() => setIsAdvancedMode(!isAdvancedMode)}
+          className={`relative w-11 h-6 rounded-full transition-colors ${
+            isAdvancedMode ? 'bg-copper-500' : 'bg-[var(--bg-muted)]'
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+              isAdvancedMode ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
+        <span 
+          className={`text-sm font-medium transition-colors ${isAdvancedMode ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}
+        >
+          {t("calculator.advanced")}
+        </span>
+      </div>
+
+      {/* Basic Fields - Always visible */}
+      <section className="pt-8">
         <div className="space-y-12">
           <div>
             <FlameGraph
@@ -130,43 +160,55 @@ const Calculator: React.FC = () => {
               )}
             />
           </div>
-
-          <div>
-            <FlameGraph
-              value={values.mortgageTerm}
-              parameter="mortgageTerm"
-              min={ranges.mortgageTerm.min}
-              max={ranges.mortgageTerm.max}
-              step={ranges.mortgageTerm.step}
-              onChange={createChangeHandler("mortgageTerm")}
-              format={(v) => `${v} ${t("years")}`}
-              label={renderLabel(
-                "calculator.sections.mortgage.mortgageLength",
-                "calculator.tooltips.mortgageLength"
-              )}
-            />
-          </div>
-
-          <div>
-            <FlameGraph
-              value={values.pmi}
-              parameter="pmi"
-              min={ranges.pmi.min}
-              max={ranges.pmi.max}
-              step={ranges.pmi.step}
-              onChange={createChangeHandler("pmi")}
-              format={formatPercentage}
-              label={renderLabel(
-                "calculator.sections.mortgage.pmi",
-                "calculator.tooltips.pmi"
-              )}
-            />
-          </div>
         </div>
       </section>
 
-      <section className="pt-12">
-        <h2 className="mb-4">{t("calculator.sections.future.title")}</h2>
+
+
+      {/* Advanced Fields - Only visible in advanced mode */}
+      {isAdvancedMode && (
+        <>
+          <section className="pt-8">
+            <h2 className="mb-4 text-sm uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+              {t("calculator.sections.mortgage.title")} ({t("calculator.advanced")})
+            </h2>
+            <div className="space-y-8">
+              <div>
+                <FlameGraph
+                  value={values.mortgageTerm}
+                  parameter="mortgageTerm"
+                  min={ranges.mortgageTerm.min}
+                  max={ranges.mortgageTerm.max}
+                  step={ranges.mortgageTerm.step}
+                  onChange={createChangeHandler("mortgageTerm")}
+                  format={(v) => `${v} ${t("years")}`}
+                  label={renderLabel(
+                    "calculator.sections.mortgage.mortgageLength",
+                    "calculator.tooltips.mortgageLength"
+                  )}
+                />
+              </div>
+
+              <div>
+                <FlameGraph
+                  value={values.pmi}
+                  parameter="pmi"
+                  min={ranges.pmi.min}
+                  max={ranges.pmi.max}
+                  step={ranges.pmi.step}
+                  onChange={createChangeHandler("pmi")}
+                  format={formatPercentage}
+                  label={renderLabel(
+                    "calculator.sections.mortgage.pmi",
+                    "calculator.tooltips.pmi"
+                  )}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="pt-8">
+            <h2 className="mb-4">{t("calculator.sections.future.title")}</h2>
         <div className="space-y-12">
           {/* Future projections section */}
           <div>
@@ -234,7 +276,7 @@ const Calculator: React.FC = () => {
             <h2 className="900 mb-2">{t("calculator.sections.taxes.title")}</h2>
             <div className="space-y-8">
               <div className="flex items-center space-x-4 mb-4">
-                <p className="text-ink-300">{t("calculator.sections.taxes.filingType")}</p>
+                <p className="text-[var(--text-muted)]">{t("calculator.sections.taxes.filingType")}</p>
                 <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="radio"
@@ -242,7 +284,7 @@ const Calculator: React.FC = () => {
                     checked={!values.isJointReturn}
                     onChange={() => updateValue("isJointReturn", false)}
                   />
-                  <span className="text-ink-200 ml-2">
+                   <span className="text-[var(--text-secondary)] ml-2">
                     {t("calculator.sections.taxes.individual")}
                   </span>
                 </label>
@@ -253,7 +295,7 @@ const Calculator: React.FC = () => {
                     checked={values.isJointReturn}
                     onChange={() => updateValue("isJointReturn", true)}
                   />
-                  <span className="text-ink-200 ml-2">
+                   <span className="text-[var(--text-secondary)] ml-2">
                     {t("calculator.sections.taxes.joint")}
                   </span>
                 </label>
@@ -302,7 +344,7 @@ const Calculator: React.FC = () => {
               />
 
               <div className="flex items-center space-x-4">
-                <p className="text-ink-300">{t("calculator.sections.taxes.taxCutsQuestion")}</p>
+                <p className="text-[var(--text-muted)]">{t("calculator.sections.taxes.taxCutsQuestion")}</p>
                 <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="radio"
@@ -310,7 +352,7 @@ const Calculator: React.FC = () => {
                     checked={values.taxCutsExpire}
                     onChange={() => updateValue("taxCutsExpire", true)}
                   />
-                  <span className="text-ink-200 ml-2">
+                   <span className="text-[var(--text-secondary)] ml-2">
                     {t("calculator.sections.taxes.expire")}
                   </span>
                 </label>
@@ -321,7 +363,7 @@ const Calculator: React.FC = () => {
                     checked={!values.taxCutsExpire}
                     onChange={() => updateValue("taxCutsExpire", false)}
                   />
-                  <span className="text-ink-200 ml-2">
+                   <span className="text-[var(--text-secondary)] ml-2">
                     {t("calculator.sections.taxes.renew")}
                   </span>
                 </label>
@@ -466,7 +508,9 @@ const Calculator: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
+        </section>
+        </>
+      )}
     </>
   );
 };
