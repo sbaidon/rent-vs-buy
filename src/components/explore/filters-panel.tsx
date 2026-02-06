@@ -29,7 +29,7 @@ interface FiltersPanelProps {
   onClose: () => void;
   filters: FilterValues;
   onFiltersChange: (filters: FilterValues) => void;
-  onApply: () => void;
+  onApply: (filters: FilterValues) => void;
   activeFilterType: "all" | "sale" | "rent";
 }
 
@@ -146,10 +146,9 @@ export const FiltersPanel = memo(function FiltersPanel({
   }, []);
 
   const handleApply = useCallback(() => {
-    onFiltersChange(localFilters);
-    onApply();
+    onApply(localFilters);
     onClose();
-  }, [localFilters, onFiltersChange, onApply, onClose]);
+  }, [localFilters, onApply, onClose]);
 
   // Count active filters
   const activeFilterCount = [

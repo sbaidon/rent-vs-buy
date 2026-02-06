@@ -11,7 +11,6 @@ export interface LocationResult {
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
-  onSearch: () => void;
   onLocationSelect?: (location: LocationResult) => void;
   placeholder?: string;
 }
@@ -42,7 +41,6 @@ async function searchLocations(query: string): Promise<LocationResult[]> {
 export const SearchBar = memo(function SearchBar({
   value,
   onChange,
-  onSearch,
   onLocationSelect,
   placeholder = "Search by city, neighborhood, or ZIP",
 }: SearchBarProps) {
@@ -55,13 +53,29 @@ export const SearchBar = memo(function SearchBar({
     (e: FormEvent) => {
       e.preventDefault();
       setShowSuggestions(false);
+
+      // If suggestions are available, use the first one immediately
       if (suggestions.length > 0) {
         onLocationSelect?.(suggestions[0]);
-      } else {
-        onSearch();
+        return;
       }
+
+      // Otherwise, geocode the raw query text
+      if (!value.trim()) return;
+      startTransition(async () => {
+        try {
+          const results = await searchLocations(value.trim());
+          if (results.length > 0) {
+            onLocationSelect?.(results[0]);
+          } else {
+            toast.error("No results found for this location");
+          }
+        } catch {
+          toast.error("Location search failed");
+        }
+      });
     },
-    [onSearch, onLocationSelect, suggestions]
+    [value, onLocationSelect, suggestions]
   );
 
   const handleChange = useCallback(

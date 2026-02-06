@@ -43,10 +43,6 @@ function MapSkeleton() {
 function ExploreHeader() {
   const { state, actions, meta } = useExplore();
 
-  const handleSearch = useCallback(() => {
-    console.log("Searching for:", state.searchQuery);
-  }, [state.searchQuery]);
-
   return (
     <header
       className="backdrop-blur-xl border-b px-4 py-3 sm:py-4 z-20"
@@ -59,7 +55,6 @@ function ExploreHeader() {
         <SearchBar
           value={state.searchQuery}
           onChange={actions.setSearchQuery}
-          onSearch={handleSearch}
           onLocationSelect={actions.handleLocationSelect}
         />
         <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar">

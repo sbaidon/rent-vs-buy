@@ -58,7 +58,7 @@ export interface ExploreActions {
   setFilters: (filters: FilterValues) => void;
   openFilters: () => void;
   closeFilters: () => void;
-  applyFilters: () => void;
+  applyFilters: (newFilters: FilterValues) => void;
   
   // UI actions
   openInsights: () => void;
@@ -326,7 +326,10 @@ export function ExploreProvider({ children }: ExploreProviderProps) {
   }, [appliedFilters]);
 
   const closeFilters = useCallback(() => setShowFilters(false), []);
-  const applyFilters = useCallback(() => setAppliedFilters(filters), [filters]);
+  const applyFilters = useCallback((newFilters: FilterValues) => {
+    setFilters(newFilters);
+    setAppliedFilters(newFilters);
+  }, []);
   const openInsights = useCallback(() => setShowInsights(true), []);
   const closeInsights = useCallback(() => setShowInsights(false), []);
 
