@@ -37,14 +37,14 @@ function ResponsiveResults({
       p-2
       ${
         !isMinimized
-          ? "fixed inset-0 bg-[var(--bg-base)] z-50 lg:relative lg:inset-auto lg:bg-transparent isolate overflow-y-auto lg:overflow-visible no-scrollbar"
+          ? "fixed inset-0 bg-[var(--bg-base)] z-50 lg:relative lg:inset-auto lg:bg-transparent lg:z-auto flex flex-col lg:block overflow-hidden lg:overflow-visible"
           : ""
       }
     `}
     >
-      {/* Mobile header with close button - sticky at top with safe area padding */}
+      {/* Mobile header with close button - always visible at top */}
       {!isMinimized && (
-        <div className="sticky top-0 z-10 flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] bg-[var(--bg-base)] border-b border-[var(--border-default)] lg:hidden">
+        <div className="shrink-0 flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] bg-[var(--bg-base)] border-b border-[var(--border-default)] lg:hidden">
           <h2 className="text-lg font-display text-[var(--text-primary)]">
             {t("calculator.results.title")}
           </h2>
@@ -65,7 +65,7 @@ function ResponsiveResults({
           {t("calculator.results.show")}
         </button>
       )}
-      <div className={`${isMinimized ? "hidden lg:block" : ""} p-2 sm:p-4 lg:p-0`}>
+      <div className={`${isMinimized ? "hidden lg:block" : "flex-1 overflow-y-auto no-scrollbar"} p-2 sm:p-4 lg:p-0`}>
         <TabbedResults />
       </div>
     </div>

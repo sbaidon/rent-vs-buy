@@ -186,6 +186,15 @@ function generateCacheKey(type: "sale" | "rent", params: SearchParams): string {
 // Transform API response to app types
 // =============================================================================
 
+/** Max age in days for a listing to be considered active. Older listings are likely stale/abandoned. */
+const MAX_LISTING_AGE_DAYS = 180;
+
+function isListingFresh(listing: PropertyListing): boolean {
+  if (!listing.list_date) return true; // No date = can't determine, keep it
+  const ageMs = Date.now() - new Date(listing.list_date).getTime();
+  return ageMs / (1000 * 60 * 60 * 24) <= MAX_LISTING_AGE_DAYS;
+}
+
 function transformListing(
   listing: PropertyListing,
   type: "sale" | "rent"
@@ -320,7 +329,7 @@ async function searchForSale(params: SearchParams): Promise<Property[]> {
     const body: SearchRequest = {
       limit: 50,
       offset: 0,
-      status: ["for_sale", "ready_to_build"],
+      status: ["for_sale"],
       sort: { direction: "desc", field: "list_date" },
       ...locationParams,
       ...(params.minPrice && { list_price_min: params.minPrice }),
@@ -354,6 +363,11 @@ async function searchForSale(params: SearchParams): Promise<Property[]> {
     console.log("[searchForSale] Raw results count:", rawResults.length);
     
     const properties = rawResults
+      .filter((listing) =>
+        !listing.flags?.is_pending &&
+        !listing.flags?.is_contingent &&
+        isListingFresh(listing)
+      )
       .map((listing) => transformListing(listing, "sale"))
       .filter((p) => p.lat && p.lng);
 
@@ -416,6 +430,11 @@ async function searchForRent(params: SearchParams): Promise<Property[]> {
 
     handleApiSuccess();
     const properties = (data?.data?.home_search?.results || [])
+      .filter((listing) =>
+        !listing.flags?.is_pending &&
+        !listing.flags?.is_contingent &&
+        isListingFresh(listing)
+      )
       .map((listing) => transformListing(listing, "rent"))
       .filter((p) => p.lat && p.lng);
 
