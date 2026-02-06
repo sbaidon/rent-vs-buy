@@ -130,16 +130,16 @@ export const SearchBar = memo(function SearchBar({
 
   return (
     <div className="relative flex-1 sm:max-w-xl w-full">
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="flex">
         <div className="relative flex-1">
           {isPending ? (
             <Loader2 
-              className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 pointer-events-none animate-spin"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none animate-spin"
               style={{ color: "var(--text-muted)" }}
             />
           ) : (
             <Search 
-              className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
               style={{ color: "var(--text-muted)" }}
             />
           )}
@@ -149,17 +149,20 @@ export const SearchBar = memo(function SearchBar({
             onChange={handleChange}
             onBlur={handleBlur}
             placeholder={placeholder}
-            className="input pl-10 sm:pl-12 pr-4 h-10 sm:h-12 text-sm sm:text-base w-full"
+            className="input pl-9 pr-3 h-9 text-sm w-full rounded-r-none border-r-0 focus:z-10"
             autoComplete="off"
           />
         </div>
         <button
           type="submit"
-          className="btn btn-primary h-10 sm:h-12 px-4 flex items-center gap-2 whitespace-nowrap"
-          disabled={!value.trim()}
+          className="h-9 px-3 rounded-l-none rounded-r-md text-xs font-medium uppercase tracking-wide transition-colors border border-[var(--border-default)] disabled:opacity-40"
+          style={{
+            background: "var(--bg-elevated)",
+            color: "var(--text-secondary)",
+          }}
+          disabled={!value.trim() || isPending}
         >
-          <span className="hidden sm:inline">Go</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </form>
       
