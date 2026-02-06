@@ -10,8 +10,6 @@ import { getCountryDefaults, type CountryCode } from "../constants/country-rules
 import { useAppContext } from "./app-context";
 
 export interface CalculatorValues {
-  commonChargeDeductionRate: number;
-  commonChargePerMonth: number;
   homePrice: number;
   monthlyRent: number;
   mortgageRate: number;
@@ -46,6 +44,16 @@ export interface CalculatorValues {
   securityDeposit: number;
   brokerFee: number;
   monthlyRentersInsurance: number;
+
+  // Country-specific toggles
+  /** FR: new build (lower notaire fees ~3%) vs existing (higher ~8%) */
+  isNewBuild: boolean;
+  /** GB: first-time buyer (higher SDLT nil-rate band) */
+  isFirstTimeBuyer: boolean;
+  /** IT: primary residence (2% transfer tax, IMU exempt) vs secondary (9%) */
+  isPrimaryResidence: boolean;
+  /** ES: will reinvest sale proceeds in new primary residence (CGT exempt) */
+  willReinvest: boolean;
 }
 
 export type Results = {

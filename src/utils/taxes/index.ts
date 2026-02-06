@@ -63,6 +63,8 @@ export interface CountryTaxCalculator {
     yearsOwned: number;
     isJointReturn: boolean;
     isPrimaryResidence: boolean;
+    /** ES: whether sale proceeds will be reinvested in a new primary residence */
+    willReinvest?: boolean;
   }): CapitalGainsTax;
 
   /**
@@ -279,6 +281,15 @@ export class UKTaxCalculator implements CountryTaxCalculator {
     { threshold: Infinity, rate: 0.12 },
   ];
 
+  // First-time buyer SDLT brackets (properties up to £625k)
+  private readonly FTB_SDLT_BRACKETS: { threshold: number; rate: number }[] = [
+    { threshold: 425_000, rate: 0 },
+    { threshold: 625_000, rate: 0.05 },
+  ];
+
+  // Maximum price eligible for first-time buyer SDLT relief
+  private readonly FTB_PRICE_CAP = 625_000;
+
   // CGT rates for residential property (non-PPR)
   private readonly CGT_BASIC_RATE = 0.18;
   private readonly CGT_HIGHER_RATE = 0.24;
@@ -322,13 +333,20 @@ export class UKTaxCalculator implements CountryTaxCalculator {
 
   /**
    * Calculate Stamp Duty Land Tax (exact bracket calculation).
-   * Useful if we want to show SDLT breakdown in the UI.
+   * 
+   * First-time buyers get a higher nil-rate band (£425k vs £250k) on
+   * properties up to £625k. Above that, standard brackets apply.
    */
-  calculateSDLT(purchasePrice: number): number {
+  calculateSDLT(purchasePrice: number, isFirstTimeBuyer: boolean = false): number {
+    // First-time buyer relief only applies for properties ≤ £625k
+    const brackets = (isFirstTimeBuyer && purchasePrice <= this.FTB_PRICE_CAP)
+      ? this.FTB_SDLT_BRACKETS
+      : this.SDLT_BRACKETS;
+
     let tax = 0;
     let previousThreshold = 0;
 
-    for (const bracket of this.SDLT_BRACKETS) {
+    for (const bracket of brackets) {
       if (purchasePrice <= previousThreshold) break;
 
       const taxableAmount = Math.min(purchasePrice, bracket.threshold) - previousThreshold;
@@ -693,13 +711,15 @@ export class SpainTaxCalculator implements CountryTaxCalculator {
     yearsOwned: number;
     isJointReturn: boolean;
     isPrimaryResidence: boolean;
+    willReinvest?: boolean;
   }): CapitalGainsTax {
-    const { purchasePrice, salePrice, isPrimaryResidence } = params;
+    const { purchasePrice, salePrice, isPrimaryResidence, willReinvest = true } = params;
 
     const gain = salePrice - purchasePrice;
 
-    // Primary residence exempt if reinvested (we assume reinvestment)
-    if (isPrimaryResidence) {
+    // Primary residence exempt only if proceeds are reinvested in a new
+    // primary residence within 2 years
+    if (isPrimaryResidence && willReinvest) {
       return { taxableGain: 0, taxAmount: 0, qualifiesForExemption: true };
     }
 

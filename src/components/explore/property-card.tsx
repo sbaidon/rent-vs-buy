@@ -118,9 +118,9 @@ export const PropertyCard = memo(function PropertyCard({
         className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm mb-2 font-mono"
         style={{ color: "var(--text-muted)" }}
       >
-        <span>{property.bedrooms} bed</span>
-        <span>{property.bathrooms} bath</span>
-        <span>{property.sqft.toLocaleString()} sqft</span>
+        <span>{property.bedrooms || "—"} bed</span>
+        <span>{property.bathrooms || "—"} bath</span>
+        <span>{property.sqft ? property.sqft.toLocaleString() : "—"} sqft</span>
       </div>
 
       {/* Additional Details */}

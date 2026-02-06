@@ -12,6 +12,7 @@ import { PostHogProvider } from "posthog-js/react";
 import posthog from "posthog-js";
 import { useTranslation } from "react-i18next";
 import { Map, Calculator, Sun, Moon, Monitor } from "lucide-react";
+import { Toaster } from "sonner";
 import {
   AppProvider,
   Country,
@@ -151,6 +152,7 @@ function Navbar() {
   const { t, i18n } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -164,6 +166,20 @@ function Navbar() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Focus first select when dropdown opens; close on Escape
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const firstSelect = dropdownRef.current?.querySelector("select");
+    firstSelect?.focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMenuOpen]);
 
   return (
     <header
@@ -180,24 +196,26 @@ function Navbar() {
               </div>
               <span className="font-display text-[var(--text-primary)] text-lg hidden sm:block italic font-light tracking-tight">RentVsBuy</span>
             </Link>
-            <nav className="flex items-center gap-0.5 sm:gap-1">
+            <nav className="flex items-center gap-0.5 sm:gap-1" aria-label="Main navigation">
               <Link
                 to="/"
                 viewTransition
+                aria-label={t("nav.calculator")}
                 className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-all text-xs sm:text-sm font-medium tracking-wide uppercase"
                 activeProps={{ className: "!bg-copper-500/10 !text-copper-500" }}
                 activeOptions={{ exact: true }}
               >
-                <Calculator className="w-4 h-4" />
+                <Calculator className="w-4 h-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t("nav.calculator")}</span>
               </Link>
               <Link
                 to="/explore"
                 viewTransition
+                aria-label={t("nav.explore")}
                 className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)] transition-all text-xs sm:text-sm font-medium tracking-wide uppercase"
                 activeProps={{ className: "!bg-copper-500/10 !text-copper-500" }}
               >
-                <Map className="w-4 h-4" />
+                <Map className="w-4 h-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t("nav.explore")}</span>
               </Link>
             </nav>
@@ -207,78 +225,92 @@ function Navbar() {
           <div className="flex items-center gap-4">
             <ThemeToggle />
             {/* Settings Menu Button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            >
-              <span className="text-sm font-medium">{country}</span>
-              <span className="text-[var(--text-muted)]">|</span>
-              <span className="text-sm font-medium">{currency}</span>
-            </button>
+            <div className="relative">
+              <button
+                id="settings-button"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label={t("settings.title") || "Settings"}
+                aria-haspopup="true"
+                aria-expanded={isMenuOpen}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <span className="text-sm font-medium">{country}</span>
+                <span className="text-[var(--text-muted)]" aria-hidden="true">|</span>
+                <span className="text-sm font-medium">{currency}</span>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isMenuOpen && (
+                <div
+                  ref={dropdownRef}
+                  role="dialog"
+                  aria-labelledby="settings-button"
+                  className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-xl z-50 p-3"
+                >
+                  <div className="space-y-3">
+                    {/* Country Select */}
+                    <div>
+                      <label htmlFor="country-select" className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                        {t("settings.country")}
+                      </label>
+                      <select
+                        id="country-select"
+                        value={country}
+                        onChange={(e) => setSelectedCountry(e.target.value as Country)}
+                        className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
+                      >
+                        {SUPPORTED_COUNTRIES.map(({ code, flag }) => (
+                          <option key={code} value={code}>
+                            {flag} {t(`countries.${code}`)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Currency Select */}
+                    <div>
+                      <label htmlFor="currency-select" className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                        {t("settings.currency")}
+                      </label>
+                      <select
+                        id="currency-select"
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value as Currency)}
+                        className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
+                      >
+                        {COUNTRY_CURRENCY_OPTIONS.map(({ code, label }) => (
+                          <option key={code} value={code}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Language Select */}
+                    <div>
+                      <label htmlFor="language-select" className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                        {t("settings.language")}
+                      </label>
+                      <select
+                        id="language-select"
+                        value={i18n.language}
+                        onChange={(e) => i18n.changeLanguage(e.target.value)}
+                        className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
+                      >
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="it">Italiano</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Dropdown Menu */}
-      {isMenuOpen && (
-        <div className="absolute right-4 top-full mt-2 w-56 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-xl z-50 p-3">
-          <div className="space-y-3">
-            {/* Country Select */}
-            <div>
-              <label className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
-                {t("settings.country")}
-              </label>
-              <select
-                value={country}
-                onChange={(e) => setSelectedCountry(e.target.value as Country)}
-                className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
-              >
-                {SUPPORTED_COUNTRIES.map(({ code, flag }) => (
-                  <option key={code} value={code}>
-                    {flag} {t(`countries.${code}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Currency Select */}
-            <div>
-              <label className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
-                {t("settings.currency")}
-              </label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
-              >
-                {COUNTRY_CURRENCY_OPTIONS.map(({ code, label }) => (
-                  <option key={code} value={code}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Language Select */}
-            <div>
-              <label className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
-                {t("settings.language")}
-              </label>
-              <select
-                value={i18n.language}
-                onChange={(e) => i18n.changeLanguage(e.target.value)}
-                className="mt-1 w-full px-2.5 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm"
-              >
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-                <option value="it">Italiano</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }
@@ -294,7 +326,7 @@ export const Route = createRootRoute({
       {
         name: "viewport",
         content:
-          "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no",
+          "width=device-width, initial-scale=1.0, shrink-to-fit=no",
       },
       { name: "HandheldFriendly", content: "true" },
       { name: "MobileOptimized", content: "width" },
@@ -350,6 +382,7 @@ export const Route = createRootRoute({
         crossOrigin: "anonymous",
       },
       // Preconnect to map tile servers for faster map loading
+      { rel: "preconnect", href: "https://nominatim.openstreetmap.org" },
       { rel: "preconnect", href: "https://basemaps.cartocdn.com" },
       {
         rel: "preconnect",
@@ -414,11 +447,28 @@ function RootComponent() {
         <ErrorBoundary>
           <AppProvider>
             <div className="min-h-screen">
+              <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[var(--bg-elevated)] focus:text-[var(--text-primary)] focus:rounded focus:border focus:border-[var(--border-default)] focus:shadow-lg"
+              >
+                Skip to main content
+              </a>
               <Navbar />
-              <main>
+              <main id="main-content">
                 <Outlet />
               </main>
             </div>
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                className: "font-mono text-sm",
+                style: {
+                  background: "var(--bg-elevated)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border-default)",
+                },
+              }}
+            />
           </AppProvider>
         </ErrorBoundary>
       </ThemeProvider>

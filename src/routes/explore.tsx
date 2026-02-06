@@ -116,7 +116,7 @@ function ExploreMap() {
   return (
     <Suspense fallback={<MapSkeleton />}>
       <PropertyMap
-        initialViewState={state.initialViewState!}
+        initialViewState={state.initialViewState}
         flyToLocation={state.flyToLocation}
         properties={state.properties}
         selectedProperty={state.selectedProperty}
@@ -168,13 +168,15 @@ function InsightsToggle() {
 }
 
 function ExploreInsightsPanel() {
-  const { state, actions } = useExplore();
+  const { state, actions, meta } = useExplore();
 
   return (
     <MarketInsights
       isOpen={state.showInsights}
       onClose={actions.closeInsights}
       location={state.searchQuery}
+      stats={meta.marketStats}
+      isLoading={state.isLoading}
     />
   );
 }
@@ -221,30 +223,11 @@ function ExploreComparisonTray() {
   );
 }
 
-function LoadingScreen() {
-  return (
-    <div
-      className="h-[calc(100vh-64px)] flex flex-col items-center justify-center gap-4"
-      style={{ background: "var(--bg-base)" }}
-    >
-      <Loader2 className="w-8 h-8 text-copper-400 animate-spin" />
-      <p style={{ color: "var(--text-secondary)" }}>Getting your location...</p>
-    </div>
-  );
-}
-
 // =============================================================================
 // Main Page Content - Composed from smaller components
 // =============================================================================
 
 function ExplorePageContent() {
-  const { state } = useExplore();
-
-  // Show loading screen while getting initial location
-  if (state.isGeolocating || !state.initialViewState) {
-    return <LoadingScreen />;
-  }
-
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col" style={{ background: "var(--bg-base)" }}>
       <ExploreHeader />
@@ -275,4 +258,16 @@ function ExplorePage() {
 
 export const Route = createFileRoute("/explore")({
   component: ExplorePage,
+  head: () => ({
+    links: [
+      // Prefetch map style JSON so MapLibre doesn't have to wait for it
+      { rel: "prefetch", href: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json", as: "fetch", crossOrigin: "anonymous" },
+      { rel: "prefetch", href: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json", as: "fetch", crossOrigin: "anonymous" },
+    ],
+  }),
+  loader: () => {
+    // Eagerly start downloading the heavy map chunk (~1MB) as soon as the
+    // route is matched, before React renders the Suspense boundary.
+    import("../components/explore/property-map");
+  },
 });

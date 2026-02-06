@@ -11,7 +11,7 @@
 import type { CalculatorValues } from "../context/calculator-context";
 import type { CountryCode } from "../constants/country-rules";
 import { getCountryConfig } from "../constants/country-rules";
-import { getTaxCalculator, type CountryTaxCalculator } from "./taxes/index";
+import { getTaxCalculator, UKTaxCalculator, type CountryTaxCalculator } from "./taxes/index";
 import type { CostCalculationResult } from "./calculator-factory";
 
 export interface BuyingCalculationOptions {
@@ -97,14 +97,62 @@ export class CountryBuyingCalculator {
   private get buyingClosingCosts(): number {
     // Use values from calculator if provided, otherwise use country defaults
     if (this.values.buyingCosts > 0) {
-      return this.values.homePrice * this.values.buyingCosts;
+      // Even with user-specified buyingCosts, apply country-specific overrides
+      let costs = this.values.homePrice * this.values.buyingCosts;
+
+      // FR: new build gets reduced notaire fees (~3% vs ~8%)
+      if (this.countryCode === "FR" && this.values.isNewBuild) {
+        // Replace the existing-property notaire fees with new-build rate
+        const existingRate = this.config.closingCosts.notaryFees; // 0.08
+        const newBuildRate = 0.03;
+        costs -= this.values.homePrice * (existingRate - newBuildRate);
+        costs = Math.max(0, costs);
+      }
+
+      // IT: primary residence gets 2% transfer tax vs 9%
+      if (this.countryCode === "IT" && this.values.isPrimaryResidence) {
+        const secondaryRate = this.config.closingCosts.transferTax; // 0.09
+        const primaryRate = 0.02;
+        costs -= this.values.homePrice * (secondaryRate - primaryRate);
+        costs = Math.max(0, costs);
+      }
+
+      return costs;
     }
 
     const { closingCosts } = this.config;
-    const baseCosts =
-      closingCosts.notaryFees +
-      closingCosts.transferTax +
-      closingCosts.registrationFees;
+    let notaryFees = closingCosts.notaryFees;
+    let transferTax = closingCosts.transferTax;
+
+    // FR: new build gets reduced notaire fees (~3% vs ~8%)
+    if (this.countryCode === "FR" && this.values.isNewBuild) {
+      notaryFees = 0.03;
+    }
+
+    // IT: primary residence gets 2% transfer tax vs 9%
+    if (this.countryCode === "IT" && this.values.isPrimaryResidence) {
+      transferTax = 0.02;
+    }
+
+    // GB: use exact SDLT bracket calculation (with first-time buyer relief)
+    if (this.countryCode === "GB" && this.taxCalculator instanceof UKTaxCalculator) {
+      const sdlt = this.taxCalculator.calculateSDLT(
+        this.values.homePrice,
+        this.values.isFirstTimeBuyer
+      );
+      const registrationFees = this.values.homePrice * closingCosts.registrationFees;
+
+      const buyerAgentCost =
+        closingCosts.agentCommissionPaidBy === "buyer"
+          ? this.values.homePrice * closingCosts.agentCommission
+          : closingCosts.agentCommissionPaidBy === "split"
+            ? this.values.homePrice * closingCosts.agentCommission / 2
+            : 0;
+
+      return sdlt + registrationFees + buyerAgentCost;
+    }
+
+    const baseCosts = notaryFees + transferTax + closingCosts.registrationFees;
 
     // Add buyer's share of agent commission if applicable
     const buyerAgentCost =
@@ -240,7 +288,8 @@ export class CountryBuyingCalculator {
       salePrice,
       yearsOwned: this.values.yearsToStay,
       isJointReturn: this.values.isJointReturn,
-      isPrimaryResidence: true,
+      isPrimaryResidence: this.values.isPrimaryResidence,
+      willReinvest: this.values.willReinvest,
     });
 
     return result.taxAmount;
@@ -319,7 +368,11 @@ export class CountryBuyingCalculator {
       }
 
       // Annual costs
-      const propertyTax = currentHomeValue * this.values.propertyTaxRate;
+      // IT: primary residence is exempt from IMU (property tax)
+      const propertyTaxRate = (this.countryCode === "IT" && this.values.isPrimaryResidence)
+        ? 0
+        : this.values.propertyTaxRate;
+      const propertyTax = currentHomeValue * propertyTaxRate;
       const insurance = currentHomeValue * this.values.homeInsuranceRate;
       const maintenance =
         this.values.homePrice * this.values.maintenanceRate * inflationFactor;

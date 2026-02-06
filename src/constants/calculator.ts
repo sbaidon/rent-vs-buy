@@ -9,8 +9,6 @@ export const initialValues: CalculatorValues = {
   mortgageTerm: 30,
   downPayment: 0.2,
   yearsToStay: 10,
-  commonChargeDeductionRate: 0,
-  commonChargePerMonth: 0,
 
   // Future projections
   homePriceGrowth: 0.03,
@@ -38,4 +36,10 @@ export const initialValues: CalculatorValues = {
   securityDeposit: 1,
   brokerFee: 0,
   monthlyRentersInsurance: 100,
+
+  // Country-specific toggles
+  isNewBuild: false,
+  isFirstTimeBuyer: false,
+  isPrimaryResidence: true,
+  willReinvest: true,
 };

@@ -94,6 +94,14 @@
       "nominal": "Nominal",
       "realToggleHint": "Toggle inflation-adjusted (real) values"
     },
+    "scenarios": {
+      "save": "Save",
+      "compare": "Compare",
+      "saved": "Scenario saved",
+      "clear": "Clear All",
+      "maxReached": "Maximum 3 scenarios. Remove one first.",
+      "namePrompt": "Name this scenario:"
+    },
     "sections": {
       "basics": {
         "homePrice": "Home price",
@@ -124,7 +132,11 @@
         "otherDeductions": "Other itemized deductions",
         "taxCutsQuestion": "Assume the 2017 Tax Cuts and Jobs Act will:",
         "expire": "Expire",
-        "renew": "Be renewed"
+        "renew": "Be renewed",
+        "firstTimeBuyer": "First-time buyer (higher SDLT nil-rate band)",
+        "newBuild": "New build (reduced notaire fees)",
+        "primaryResidence": "Primary residence (lower transfer tax, IMU exempt)",
+        "willReinvest": "Will reinvest in new primary residence (CGT exempt)"
       },
       "closingCosts": {
         "title": "Closing Costs",

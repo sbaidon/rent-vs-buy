@@ -223,6 +223,7 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
             max={max}
             step={step}
             onChange={onChange}
+            aria-hidden="true"
           />
           <input
             type="range"
@@ -232,6 +233,11 @@ const FlameGraph: React.FC<FlameGraphProps> = ({
             step={step}
             onChange={handleRangeChange}
             id={`${parameter}-input`}
+            aria-label={typeof label === "string" ? label : parameter}
+            aria-valuemin={min}
+            aria-valuemax={max}
+            aria-valuenow={value}
+            aria-valuetext={format(value)}
             className="absolute top-0 left-0 w-full h-full cursor-pointer appearance-none bg-transparent
               [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 
               [&::-webkit-slider-thumb]:rounded-none [&::-webkit-slider-thumb]:bg-white/80 [&::-webkit-slider-thumb]:cursor-pointer

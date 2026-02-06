@@ -1,5 +1,6 @@
 import { memo, useCallback, useState, useRef, useTransition, type FormEvent } from "react";
 import { Search, MapPin, Loader2, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 export interface LocationResult {
   displayName: string;
@@ -88,6 +89,7 @@ export const SearchBar = memo(function SearchBar({
             setShowSuggestions(results.length > 0);
           } catch (err) {
             console.error("[SearchBar] Search error:", err);
+            toast.error("Location search failed");
           }
         });
       }, 300);

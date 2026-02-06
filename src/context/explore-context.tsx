@@ -7,6 +7,7 @@ import type { FilterValues } from "../components/explore/filters-panel";
 import { defaultFilters } from "../components/explore/filters-panel";
 import type { ComparisonSelection } from "../components/explore/comparison-tray";
 import { searchProperties } from "../server/functions/listings";
+import { toast } from "sonner";
 
 // =============================================================================
 // Context Interface (state, actions, meta)
@@ -16,11 +17,11 @@ export interface ExploreState {
   // Location state
   searchQuery: string;
   apiLocationQuery: string;
-  searchLocation: { lat: number; lng: number } | null;
+  searchLocation: { lat: number; lng: number };
   isGeolocating: boolean;
   
   // Map state
-  initialViewState: ViewState | null;
+  initialViewState: ViewState;
   flyToLocation: ViewState | null;
   selectedProperty: Property | null;
   isSearchInSync: boolean;
@@ -68,9 +69,18 @@ export interface ExploreActions {
   removeFromComparison: (type: "buy" | "rent") => void;
 }
 
+export interface MarketStats {
+  medianHomePrice: number | null;
+  medianRent: number | null;
+  priceToRentRatio: number | null;
+  daysOnMarket: number | null;
+  inventoryCount: number;
+}
+
 export interface ExploreMeta {
   activeFilterCount: number;
   showComparisonTray: boolean;
+  marketStats: MarketStats;
 }
 
 export interface ExploreContextValue {
@@ -114,14 +124,21 @@ interface ExploreProviderProps {
 export function ExploreProvider({ children }: ExploreProviderProps) {
   const hasRequestedLocation = useRef(false);
   
-  // Location state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [apiLocationQuery, setApiLocationQuery] = useState("");
-  const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // Location state — start with fallback so map + fetch can begin immediately
+  const [searchQuery, setSearchQuery] = useState(FALLBACK_LOCATION.name);
+  const [apiLocationQuery, setApiLocationQuery] = useState(FALLBACK_LOCATION.name);
+  const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number }>({
+    lat: FALLBACK_LOCATION.lat,
+    lng: FALLBACK_LOCATION.lng,
+  });
   const [isGeolocating, setIsGeolocating] = useState(true);
   
-  // Map state
-  const [initialViewState, setInitialViewState] = useState<ViewState | null>(null);
+  // Map state — initialise with fallback so <Map> can render immediately
+  const [initialViewState] = useState<ViewState>({
+    latitude: FALLBACK_LOCATION.lat,
+    longitude: FALLBACK_LOCATION.lng,
+    zoom: 13,
+  });
   const [flyToLocation, setFlyToLocation] = useState<ViewState | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isSearchInSync, setIsSearchInSync] = useState(true);
@@ -154,54 +171,44 @@ export function ExploreProvider({ children }: ExploreProviderProps) {
     hasRequestedLocation.current = true;
 
     if (!navigator.geolocation) {
-      setSearchLocation({ lat: FALLBACK_LOCATION.lat, lng: FALLBACK_LOCATION.lng });
-      setSearchQuery(FALLBACK_LOCATION.name);
-      setApiLocationQuery(FALLBACK_LOCATION.name);
-      setInitialViewState({
-        latitude: FALLBACK_LOCATION.lat,
-        longitude: FALLBACK_LOCATION.lng,
-        zoom: 13,
-      });
+      // Fallback values already set as initial state
       setIsGeolocating(false);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const { latitude, longitude } = position.coords;
-        
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          );
-          const data = await response.json();
-          const city = data.address?.city || data.address?.town || data.address?.village || "";
-          const state = data.address?.state || "";
-          const locationName = city && state ? `${city}, ${state}` : city || state || "Your Location";
-          
-          setSearchQuery(locationName);
-          setApiLocationQuery(locationName);
-        } catch {
-          setSearchQuery("Your Location");
-          setApiLocationQuery("Austin, TX");
-        }
-        
+
+        // Fly map to user location and update search coords immediately
         setSearchLocation({ lat: latitude, lng: longitude });
-        setInitialViewState({ latitude, longitude, zoom: 13 });
+        setFlyToLocation({ latitude, longitude, zoom: 13 });
         setIsGeolocating(false);
+
+        // Reverse geocode runs in parallel — only updates the display name
+        // Property fetch can already start with the fallback apiLocationQuery
+        fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+        )
+          .then((r) => r.json())
+          .then((data: any) => {
+            const city = data.address?.city || data.address?.town || data.address?.village || "";
+            const state = data.address?.state || "";
+            const locationName = city && state ? `${city}, ${state}` : city || state || "Your Location";
+            setSearchQuery(locationName);
+            setApiLocationQuery(locationName);
+          })
+          .catch(() => {
+            setSearchQuery("Your Location");
+            toast.error("Could not determine your location name");
+          });
       },
       () => {
-        setSearchLocation({ lat: FALLBACK_LOCATION.lat, lng: FALLBACK_LOCATION.lng });
-        setSearchQuery(FALLBACK_LOCATION.name);
-        setApiLocationQuery(FALLBACK_LOCATION.name);
-        setInitialViewState({
-          latitude: FALLBACK_LOCATION.lat,
-          longitude: FALLBACK_LOCATION.lng,
-          zoom: 13,
-        });
+        // Denied / error — fallback values already set as initial state
         setIsGeolocating(false);
+        toast.info("Location access denied — showing Austin, TX");
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
     );
   }, []);
 
@@ -210,7 +217,7 @@ export function ExploreProvider({ children }: ExploreProviderProps) {
   // ==========================================================================
   
   useEffect(() => {
-    if (!searchLocation || !apiLocationQuery) return;
+    if (!apiLocationQuery) return;
     
     let cancelled = false;
     
@@ -220,8 +227,8 @@ export function ExploreProvider({ children }: ExploreProviderProps) {
         const result = await searchProperties({
           data: {
             location: apiLocationQuery,
-            lat: searchLocation!.lat,
-            lng: searchLocation!.lng,
+            lat: searchLocation.lat,
+            lng: searchLocation.lng,
             propertyType: filter === "all" ? "all" : filter === "sale" ? "sale" : "rent",
             minPrice: appliedFilters.priceMin,
             maxPrice: appliedFilters.priceMax,
@@ -235,11 +242,14 @@ export function ExploreProvider({ children }: ExploreProviderProps) {
         });
         
         if (!cancelled) {
-          setProperties(result.properties as Property[]);
+          setProperties((result.properties as Property[]).filter(p => p.price > 0));
           setIsSearchInSync(true);
         }
       } catch (error) {
         console.error("Error fetching properties:", error);
+        if (!cancelled) {
+          toast.error("Failed to load properties");
+        }
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -283,6 +293,7 @@ export function ExploreProvider({ children }: ExploreProviderProps) {
     } catch {
       setSearchQuery("This Area");
       setApiLocationQuery("Austin, TX");
+      toast.error("Could not identify this area");
     }
     
     setIsSearchInSync(true);
@@ -335,6 +346,36 @@ export function ExploreProvider({ children }: ExploreProviderProps) {
 
   const showComparisonTray = comparisonSelection.buy !== null || comparisonSelection.rent !== null;
 
+  // Derive market stats from fetched properties
+  const marketStats: MarketStats = (() => {
+    const sales = properties.filter(p => p.propertyType === "sale" && p.price > 0);
+    const rentals = properties.filter(p => p.propertyType === "rent" && p.price > 0);
+
+    const median = (arr: number[]): number | null => {
+      if (arr.length === 0) return null;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    };
+
+    const medianHomePrice = median(sales.map(p => p.price));
+    const medianRent = median(rentals.map(p => p.price));
+    const priceToRentRatio = medianHomePrice && medianRent
+      ? Math.round((medianHomePrice / (medianRent * 12)) * 10) / 10
+      : null;
+
+    const daysValues = sales.filter(p => p.daysOnMarket != null).map(p => p.daysOnMarket!);
+    const daysOnMarket = median(daysValues);
+
+    return {
+      medianHomePrice,
+      medianRent,
+      priceToRentRatio,
+      daysOnMarket: daysOnMarket != null ? Math.round(daysOnMarket) : null,
+      inventoryCount: sales.length,
+    };
+  })();
+
   // ==========================================================================
   // Context value
   // ==========================================================================
@@ -378,6 +419,7 @@ export function ExploreProvider({ children }: ExploreProviderProps) {
   const meta: ExploreMeta = {
     activeFilterCount,
     showComparisonTray,
+    marketStats,
   };
 
   return (

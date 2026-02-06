@@ -31,8 +31,10 @@ const baseValues: CalculatorValues = {
   securityDeposit: 1,
   brokerFee: 0,
   monthlyRentersInsurance: 100,
-  commonChargeDeductionRate: 0,
-  commonChargePerMonth: 0,
+  isNewBuild: false,
+  isFirstTimeBuyer: false,
+  isPrimaryResidence: true,
+  willReinvest: true,
 };
 
 describe("CountryBuyingCalculator", () => {
@@ -142,16 +144,17 @@ describe("CountryBuyingCalculator", () => {
       });
     });
 
-    it("uses stamp duty for closing costs", () => {
+    it("uses exact SDLT bracket calculation for closing costs", () => {
       const config = getCountryConfig("GB");
       const result = calculator.calculate();
       
       const downPayment = 500000 * 0.2;
-      const stampDuty = 500000 * config.closingCosts.transferTax;
+      // Exact SDLT for £500k: £0-250k at 0% = £0, £250k-500k at 5% = £12,500
+      const sdlt = 12500;
       const registration = 500000 * config.closingCosts.registrationFees;
       
       // UK buyer doesn't pay agent commission (seller pays)
-      expect(result.initialCost).toBeCloseTo(downPayment + stampDuty + registration, -2);
+      expect(result.initialCost).toBeCloseTo(downPayment + sdlt + registration, -2);
     });
   });
 
@@ -171,6 +174,119 @@ describe("CountryBuyingCalculator", () => {
       
       // France has ~8% notary fees (includes transfer tax)
       expect(result.initialCost).toBeGreaterThan(baseValues.homePrice * 0.2 + baseValues.homePrice * 0.07);
+    });
+  });
+
+  describe("UK first-time buyer SDLT relief", () => {
+    it("reduces closing costs for first-time buyers under £625k", () => {
+      const standardCalc = createBuyingCalculator("GB", {
+        ...baseValues,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isFirstTimeBuyer: false,
+      });
+      const ftbCalc = createBuyingCalculator("GB", {
+        ...baseValues,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isFirstTimeBuyer: true,
+      });
+
+      const standardResult = standardCalc.calculate();
+      const ftbResult = ftbCalc.calculate();
+
+      // First-time buyer should have lower initial costs (lower SDLT)
+      expect(ftbResult.initialCost).toBeLessThan(standardResult.initialCost);
+    });
+
+    it("gives 0 SDLT for first-time buyers on £425k property", () => {
+      const calc = createBuyingCalculator("GB", {
+        ...baseValues,
+        homePrice: 425000,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isFirstTimeBuyer: true,
+      });
+      const result = calc.calculate();
+      
+      // £425k is within the nil-rate band for FTB, so SDLT = 0
+      const downPayment = 425000 * 0.2;
+      const registration = 425000 * getCountryConfig("GB").closingCosts.registrationFees;
+      expect(result.initialCost).toBeCloseTo(downPayment + registration, -2);
+    });
+  });
+
+  describe("France new build toggle", () => {
+    it("reduces notaire fees for new builds", () => {
+      const existingCalc = createBuyingCalculator("FR", {
+        ...baseValues,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isNewBuild: false,
+      });
+      const newBuildCalc = createBuyingCalculator("FR", {
+        ...baseValues,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isNewBuild: true,
+      });
+
+      const existingResult = existingCalc.calculate();
+      const newBuildResult = newBuildCalc.calculate();
+
+      // New build should have lower initial costs (~3% vs ~8% notaire fees)
+      expect(newBuildResult.initialCost).toBeLessThan(existingResult.initialCost);
+      // Difference should be approximately 5% of home price
+      const diff = existingResult.initialCost - newBuildResult.initialCost;
+      expect(diff).toBeCloseTo(baseValues.homePrice * 0.05, -3);
+    });
+  });
+
+  describe("Italy primary residence toggle", () => {
+    it("reduces transfer tax for primary residence", () => {
+      const secondaryCalc = createBuyingCalculator("IT", {
+        ...baseValues,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isPrimaryResidence: false,
+      });
+      const primaryCalc = createBuyingCalculator("IT", {
+        ...baseValues,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isPrimaryResidence: true,
+      });
+
+      const secondaryResult = secondaryCalc.calculate();
+      const primaryResult = primaryCalc.calculate();
+
+      // Primary residence should have lower initial costs (2% vs 9% transfer tax)
+      expect(primaryResult.initialCost).toBeLessThan(secondaryResult.initialCost);
+    });
+  });
+
+  describe("Spain willReinvest toggle", () => {
+    it("applies CGT when not reinvesting primary residence proceeds", () => {
+      const reinvestCalc = createBuyingCalculator("ES", {
+        ...baseValues,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isPrimaryResidence: true,
+        willReinvest: true,
+      });
+      const noReinvestCalc = createBuyingCalculator("ES", {
+        ...baseValues,
+        buyingCosts: 0,
+        sellingCosts: 0,
+        isPrimaryResidence: true,
+        willReinvest: false,
+      });
+
+      const reinvestResult = reinvestCalc.calculate();
+      const noReinvestResult = noReinvestCalc.calculate();
+
+      // Not reinvesting should have higher total cost (capital gains tax applies)
+      expect(noReinvestResult.totalCost).toBeGreaterThan(reinvestResult.totalCost);
     });
   });
 

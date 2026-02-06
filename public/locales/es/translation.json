@@ -94,6 +94,14 @@
       "nominal": "Nominal",
       "realToggleHint": "Alternar valores ajustados por inflación (reales)"
     },
+    "scenarios": {
+      "save": "Guardar",
+      "compare": "Comparar",
+      "saved": "Escenario guardado",
+      "clear": "Borrar todo",
+      "maxReached": "Máximo 3 escenarios. Elimina uno primero.",
+      "namePrompt": "Nombre del escenario:"
+    },
     "sections": {
       "basics": {
         "title": "Básicos",
@@ -128,7 +136,11 @@
         "otherDeductions": "Otras deducciones detalladas",
         "taxCutsQuestion": "Asumir que la Ley de Recortes Fiscales y Empleos de 2017:",
         "expire": "Expirará",
-        "renew": "Será renovada"
+        "renew": "Será renovada",
+        "firstTimeBuyer": "Primer comprador (mayor exención de SDLT)",
+        "newBuild": "Obra nueva (gastos notariales reducidos)",
+        "primaryResidence": "Vivienda habitual (menor impuesto de transmisiones, exento de IMU)",
+        "willReinvest": "Reinvertirá en nueva vivienda habitual (exento de plusvalía)"
       },
       "closingCosts": {
         "title": "Costos de Cierre",

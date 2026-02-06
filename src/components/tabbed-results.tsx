@@ -1,174 +1,42 @@
-import React, { useState, useMemo } from "react";
-import { useCalculator, type CalculatorValues } from "../context/calculator-context";
+import React, { useState, useMemo, useRef, useCallback } from "react";
+import { useCalculator } from "../context/calculator-context";
 import { createBuyingCalculator } from "../utils/country-buy-calculator";
 import { createRentingCalculator } from "../utils/country-rent-calculator";
 import { calculateAmortizationSchedule } from "../utils/amortization";
-import { formatCurrency } from "../utils/format-currency";
+import { formatCurrency, formatCurrencyCompact } from "../utils/format-currency";
+import { findBreakEvenYear, buildEquityData, computeSensitivity } from "../utils/results-helpers";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "../context/app-context";
-import type { CountryCode } from "../constants/country-rules";
 import { AreaChart } from "./area-chart";
 import Tooltip from "./tooltip";
-import { BarChart3, Table2, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { BarChart3, Table2, TrendingUp, ChevronLeft, ChevronRight, Save, GitCompareArrows } from "lucide-react";
+import { toast } from "sonner";
+import { useScenarios } from "../hooks/use-scenarios";
+import ScenarioComparison from "./scenario-comparison";
 
 type TabId = "summary" | "chart" | "amortization";
 type ViewMode = "regular" | "cumulative" | "difference" | "equity";
-
-// ============================================================================
-// Advanced computation helpers
-// ============================================================================
-
-/**
- * Find the break-even year: the first year where cumulative buying cost
- * drops below cumulative renting cost. Returns null if buying never
- * becomes cheaper within the analysis period.
- */
-function findBreakEvenYear(
-  buyYearly: number[],
-  rentYearly: number[]
-): number | null {
-  let buyCumulative = 0;
-  let rentCumulative = 0;
-
-  for (let i = 0; i < buyYearly.length; i++) {
-    buyCumulative += buyYearly[i];
-    rentCumulative += rentYearly[i];
-
-    if (buyCumulative <= rentCumulative) {
-      return i + 1; // 1-indexed year
-    }
-  }
-
-  return null;
-}
-
-/**
- * Build wealth-accumulation data: home equity vs. renter's investment portfolio.
- * 
- * Home equity = current home value - remaining loan balance
- * Renter portfolio = cumulative (buy_cost - rent_cost) invested at returns rate
- */
-function buildEquityData(
-  values: CalculatorValues,
-  country: CountryCode,
-  yearsToStay: number
-): { year: number; homeEquity: number; portfolio: number }[] {
-  const data: { year: number; homeEquity: number; portfolio: number }[] = [];
-
-  const loanAmount = values.homePrice * (1 - values.downPayment);
-  const monthlyRate = values.mortgageRate / 12;
-  const totalMonths = values.mortgageTerm * 12;
-  const monthlyPayment =
-    monthlyRate > 0
-      ? (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -totalMonths))
-      : loanAmount / totalMonths;
-
-  let remainingBalance = loanAmount;
-  const effectiveReturn = values.investmentReturn * (1 - 0.15); // after-tax
-  let portfolio = values.homePrice * values.downPayment; // down payment into portfolio
-  // Add buying closing costs to portfolio (renter keeps this)
-  portfolio += values.homePrice * values.buyingCosts;
-
-  for (let year = 1; year <= yearsToStay; year++) {
-    // Home equity
-    const homeValue = values.homePrice * Math.pow(1 + values.homePriceGrowth, year);
-
-    // Pay down mortgage for 12 months
-    for (let m = 0; m < 12; m++) {
-      if (remainingBalance <= 0) break;
-      const interest = remainingBalance * monthlyRate;
-      const principal = Math.min(monthlyPayment - interest, remainingBalance);
-      remainingBalance -= principal;
-    }
-
-    const homeEquity = homeValue - Math.max(0, remainingBalance);
-
-    // Renter portfolio: grows at effective return rate
-    // Renter invests the difference between buying costs and renting costs per year
-    const rentCost = values.monthlyRent * 12 * Math.pow(1 + values.rentGrowth, year - 1);
-    const buyCost =
-      monthlyPayment * 12 +
-      homeValue * (values.propertyTaxRate + values.homeInsuranceRate + values.maintenanceRate) +
-      values.extraPayments * 12;
-
-    const surplus = buyCost - rentCost;
-
-    // Portfolio grows, then surplus is added
-    portfolio = portfolio * (1 + effectiveReturn) + Math.max(0, surplus);
-
-    data.push({ year, homeEquity, portfolio });
-  }
-
-  return data;
-}
-
-/**
- * Sensitivity analysis: compute how total buying cost changes when a key
- * parameter is shifted by ± delta.
- */
-function computeSensitivity(
-  country: CountryCode,
-  baseValues: CalculatorValues,
-  baseBuyingCost: number,
-  baseRentingCost: number,
-): {
-  parameter: string;
-  key: keyof CalculatorValues;
-  lowLabel: string;
-  highLabel: string;
-  // Positive = favours buying, Negative = favours renting
-  lowImpact: number;
-  highImpact: number;
-}[] {
-  const params: {
-    key: keyof CalculatorValues;
-    label: string;
-    delta: number;
-    format: (v: number) => string;
-  }[] = [
-    { key: "mortgageRate", label: "Mortgage Rate", delta: 0.01, format: (v) => `${(v * 100).toFixed(1)}%` },
-    { key: "homePriceGrowth", label: "Home Price Growth", delta: 0.01, format: (v) => `${(v * 100).toFixed(1)}%` },
-    { key: "investmentReturn", label: "Investment Return", delta: 0.01, format: (v) => `${(v * 100).toFixed(1)}%` },
-    { key: "yearsToStay", label: "Years to Stay", delta: 2, format: (v) => `${v}yr` },
-  ];
-
-  const baseDiff = baseBuyingCost - baseRentingCost; // positive = renting wins
-
-  return params.map(({ key, label, delta, format }) => {
-    const lowVal = (baseValues[key] as number) - delta;
-    const highVal = (baseValues[key] as number) + delta;
-
-    const lowValues = { ...baseValues, [key]: lowVal };
-    const highValues = { ...baseValues, [key]: highVal };
-
-    const lowBuy = createBuyingCalculator(country, lowValues).calculate().totalCost;
-    const lowRent = createRentingCalculator(country, lowValues).calculate().totalCost;
-    const lowDiff = lowBuy - lowRent;
-
-    const highBuy = createBuyingCalculator(country, highValues).calculate().totalCost;
-    const highRent = createRentingCalculator(country, highValues).calculate().totalCost;
-    const highDiff = highBuy - highRent;
-
-    return {
-      parameter: label,
-      key,
-      lowLabel: format(lowVal),
-      highLabel: format(highVal),
-      lowImpact: baseDiff - lowDiff,  // positive = low value helps buying
-      highImpact: baseDiff - highDiff, // positive = high value helps buying
-    };
-  });
-}
 
 const TabbedResults = React.memo(() => {
   const { t } = useTranslation();
   const { values, reset } = useCalculator();
   const { currency, country } = useAppContext();
-  const [showToast, setShowToast] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("summary");
   const [viewMode, setViewMode] = useState<ViewMode>("cumulative");
   const [amortizationPage, setAmortizationPage] = useState(1);
   const rowsPerPage = 12;
+
+  // Scenario management
+  const {
+    scenarios,
+    showComparison,
+    canSave,
+    saveScenario,
+    removeScenario,
+    clearScenarios,
+    openComparison,
+    closeComparison,
+  } = useScenarios();
 
   const results = useMemo(() => {
     // Use country-aware calculators
@@ -317,9 +185,26 @@ const TabbedResults = React.memo(() => {
   }, [t, viewMode]);
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
+    navigator.clipboard.writeText(window.location.href).then(
+      () => toast.success(t("calculator.linkCopied")),
+      () => toast.error(t("calculator.linkCopyFailed") || "Failed to copy link"),
+    );
+  };
+
+  const handleSaveScenario = () => {
+    if (!canSave) {
+      toast.error(t("calculator.scenarios.maxReached") || "Maximum 3 scenarios. Remove one first.");
+      return;
+    }
+    const name = window.prompt(
+      t("calculator.scenarios.namePrompt") || "Name this scenario:",
+      `${formatCurrency(values.homePrice, currency)} / ${formatCurrency(values.monthlyRent, currency)}`
+    );
+    if (!name) return;
+    const saved = saveScenario(name, values, country, results);
+    if (saved) {
+      toast.success(t("calculator.scenarios.saved") || `"${name}" saved`);
+    }
   };
 
   const tabs = [
@@ -330,12 +215,6 @@ const TabbedResults = React.memo(() => {
 
   return (
     <div className="flex flex-col gap-4">
-      {showToast && (
-        <div className="fixed bottom-4 right-4 bg-[var(--bg-elevated)] text-[var(--text-primary)] px-4 py-2 rounded shadow-lg border border-[var(--border-default)] font-mono text-sm z-50">
-          {t("calculator.linkCopied")}
-        </div>
-      )}
-
       {/* Hero result - always visible */}
       <div className="card p-4 sm:p-6 glow-copper" data-testid="results-hero">
         <div className="text-center">
@@ -358,21 +237,41 @@ const TabbedResults = React.memo(() => {
 
       {/* Tabs */}
       <div className="panel overflow-hidden" data-testid="results-panel">
-        <div className="tabs" data-testid="results-tabs">
+        <div className="tabs" role="tablist" aria-label={t("calculator.results.title")} data-testid="results-tabs"
+          onKeyDown={(e) => {
+            const tabIds = tabs.map(tab => tab.id);
+            const currentIndex = tabIds.indexOf(activeTab);
+            let newIndex = currentIndex;
+            if (e.key === "ArrowRight") newIndex = (currentIndex + 1) % tabIds.length;
+            else if (e.key === "ArrowLeft") newIndex = (currentIndex - 1 + tabIds.length) % tabIds.length;
+            else if (e.key === "Home") newIndex = 0;
+            else if (e.key === "End") newIndex = tabIds.length - 1;
+            else return;
+            e.preventDefault();
+            setActiveTab(tabIds[newIndex]);
+            (e.currentTarget.children[newIndex] as HTMLElement)?.focus();
+          }}
+        >
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`tabpanel-${tab.id}`}
+              tabIndex={activeTab === tab.id ? 0 : -1}
+              aria-label={tab.label}
               className={`tab flex-1 flex items-center justify-center gap-2 ${activeTab === tab.id ? "active" : ""}`}
               onClick={() => setActiveTab(tab.id)}
               data-testid={`tab-${tab.id}`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-4 h-4" aria-hidden="true" />
               <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6" role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
           {/* Summary Tab */}
           {activeTab === "summary" && (
             <div className="space-y-6">
@@ -396,10 +295,10 @@ const TabbedResults = React.memo(() => {
                       <tr key={label as string}>
                         <td className="text-[var(--text-secondary)] text-sm py-3 pr-4">{label}</td>
                         <td className={`font-mono text-sm py-3 px-2 text-right tabular-nums ${(rent as number) > 0 ? "text-red-400" : "text-green-400"}`}>
-                          {formatCurrency(rent as number, currency)}
+                          {(rent as number) > 0 ? "" : "-"}{formatCurrency(Math.abs(rent as number), currency)}
                         </td>
                         <td className={`font-mono text-sm py-3 pl-2 text-right tabular-nums ${(buy as number) > 0 ? "text-red-400" : "text-green-400"}`}>
-                          {formatCurrency(buy as number, currency)}
+                          {(buy as number) > 0 ? "" : "-"}{formatCurrency(Math.abs(buy as number), currency)}
                         </td>
                       </tr>
                     ))}
@@ -481,7 +380,7 @@ const TabbedResults = React.memo(() => {
                     const highBarWidth = maxAbsImpact > 0 ? Math.abs(s.highImpact) / maxAbsImpact * 100 : 0;
 
                     return (
-                      <div key={s.key} className="text-xs">
+                      <div key={s.key} className="text-xs" role="group" aria-label={s.parameter}>
                         <div className="flex justify-between text-[var(--text-muted)] mb-1">
                           <span>{s.lowLabel}</span>
                           <span className="text-[var(--text-secondary)] font-medium">{s.parameter}</span>
@@ -493,17 +392,23 @@ const TabbedResults = React.memo(() => {
                             <div
                               className={`h-3 rounded-l ${s.lowImpact > 0 ? "bg-green-500/60" : "bg-red-500/60"}`}
                               style={{ width: `${Math.min(lowBarWidth, 100)}%` }}
+                              aria-hidden="true"
                             />
                           </div>
-                          <div className="w-px h-4 bg-[var(--border-default)]" />
+                          <div className="w-px h-4 bg-[var(--border-default)]" aria-hidden="true" />
                           {/* Right bar (high value impact) */}
                           <div className="flex-1">
                             <div
                               className={`h-3 rounded-r ${s.highImpact > 0 ? "bg-green-500/60" : "bg-red-500/60"}`}
                               style={{ width: `${Math.min(highBarWidth, 100)}%` }}
+                              aria-hidden="true"
                             />
                           </div>
                         </div>
+                        <span className="sr-only">
+                          {s.lowLabel}: {s.lowImpact > 0 ? "favours buying" : "favours renting"} by {formatCurrency(Math.abs(s.lowImpact), currency)}.
+                          {s.highLabel}: {s.highImpact > 0 ? "favours buying" : "favours renting"} by {formatCurrency(Math.abs(s.highImpact), currency)}.
+                        </span>
                       </div>
                     );
                   })}
@@ -514,7 +419,26 @@ const TabbedResults = React.memo(() => {
               </div>
 
               {/* Action buttons */}
-              <div className="flex justify-end pt-4 border-t border-[var(--border-default)] gap-2">
+              <div className="flex flex-wrap justify-end pt-4 border-t border-[var(--border-default)] gap-2">
+                <button
+                  onClick={handleSaveScenario}
+                  className="btn btn-ghost text-xs"
+                  aria-label={t("calculator.scenarios.save") || "Save scenario"}
+                >
+                  <Save className="w-3.5 h-3.5" aria-hidden="true" />
+                  {t("calculator.scenarios.save") || "Save"}
+                  {!canSave && <span className="text-[var(--text-muted)] ml-1">(3/3)</span>}
+                </button>
+                {scenarios.length > 0 && (
+                  <button
+                    onClick={openComparison}
+                    className="btn btn-ghost text-xs"
+                    aria-label={t("calculator.scenarios.compare") || "Compare scenarios"}
+                  >
+                    <GitCompareArrows className="w-3.5 h-3.5" aria-hidden="true" />
+                    {t("calculator.scenarios.compare") || "Compare"} ({scenarios.length})
+                  </button>
+                )}
                 <button onClick={handleShare} className="btn btn-ghost text-xs">{t("calculator.share")}</button>
                 <button onClick={reset} className="btn btn-ghost text-xs">{t("calculator.reset")}</button>
               </div>
@@ -524,51 +448,76 @@ const TabbedResults = React.memo(() => {
           {/* Chart Tab */}
           {activeTab === "chart" && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-[var(--text-primary)] font-medium text-sm uppercase tracking-wide">
-                    {t("calculator.results.yearBreakdown")}
-                  </h4>
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="text-[var(--text-primary)] font-medium text-sm uppercase tracking-wide mr-auto flex items-center gap-1.5">
+                  {t("calculator.results.yearBreakdown")}
                   <Tooltip content={t("calculator.tooltips.yearBreakdown")} iconClassName="text-[var(--text-muted)]" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={viewMode}
-                    onChange={(e) => setViewMode(e.target.value as ViewMode)}
-                    className="input py-1.5 px-3 text-sm w-auto"
-                  >
-                    <option value="regular">{t("calculator.results.regular")}</option>
-                    <option value="cumulative">{t("calculator.results.runningTotal")}</option>
-                    <option value="difference">{t("calculator.results.difference")}</option>
-                    <option value="equity">{t("calculator.results.equity") || "Equity vs Portfolio"}</option>
-                  </select>
-                  <Tooltip content={t("calculator.tooltips.viewMode")} iconClassName="text-[var(--text-muted)]" />
-                  <button
-                    onClick={() => setShowReal((v) => !v)}
-                    className={`text-xs px-2 py-1 rounded border transition-colors ${
-                      showReal
-                        ? "bg-copper-500/20 border-copper-500/40 text-copper-400"
-                        : "border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-                    }`}
-                    title={t("calculator.results.realToggleHint") || "Toggle inflation-adjusted (real) values"}
-                  >
-                    {showReal
-                      ? (t("calculator.results.real") || "Real")
-                      : (t("calculator.results.nominal") || "Nominal")}
-                  </button>
-                </div>
+                </h4>
+                <select
+                  value={viewMode}
+                  onChange={(e) => setViewMode(e.target.value as ViewMode)}
+                  className="input py-1 px-2 text-xs w-auto"
+                  aria-label={t("calculator.results.viewMode")}
+                >
+                  <option value="regular">{t("calculator.results.regular")}</option>
+                  <option value="cumulative">{t("calculator.results.runningTotal")}</option>
+                  <option value="difference">{t("calculator.results.difference")}</option>
+                  <option value="equity">{t("calculator.results.equity") || "Equity vs Portfolio"}</option>
+                </select>
+                <button
+                  onClick={() => setShowReal((v) => !v)}
+                  aria-pressed={showReal}
+                  aria-label={t("calculator.results.realToggleHint") || "Toggle inflation-adjusted (real) values"}
+                  className={`text-xs px-2 py-1 rounded border transition-colors ${
+                    showReal
+                      ? "bg-copper-500/20 border-copper-500/40 text-copper-400"
+                      : "border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                  }`}
+                >
+                  {showReal
+                    ? (t("calculator.results.real") || "Real")
+                    : (t("calculator.results.nominal") || "Nominal")}
+                </button>
               </div>
               <div data-testid="chart-container">
                 <AreaChart
                   className="w-full h-[280px] sm:h-[320px]"
                   data={yearlyData}
                   index="date"
-                  allowDecimals
+                  allowDecimals={false}
                   categories={chartCategories}
-                  yAxisWidth={70}
+                  yAxisWidth={56}
                   colors={["light", "dark"]}
-                  fill="solid"
-                  valueFormatter={(value: number) => formatCurrency(value, currency)}
+                  fill="gradient"
+                  valueFormatter={(value: number) => formatCurrencyCompact(value, currency)}
+                  customTooltip={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    return (
+                      <div className="rounded-md border text-sm shadow-lg border-[var(--border-default)] bg-[var(--bg-elevated)]">
+                        <div className="border-b border-inherit px-3 py-1.5">
+                          <p className="font-medium text-[var(--text-primary)]">{label}</p>
+                        </div>
+                        <div className="space-y-1 px-3 py-2">
+                          {payload.map(({ value, category, color }, i) => (
+                            <div key={i} className="flex items-center justify-between gap-6">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  aria-hidden="true"
+                                  className={`h-[3px] w-3 shrink-0 rounded-full ${
+                                    color === "light" ? "bg-blueprint-400" : "bg-copper-500"
+                                  }`}
+                                />
+                                <span className="text-[var(--text-muted)]">{category}</span>
+                              </div>
+                              <span className="font-mono font-medium tabular-nums text-[var(--text-primary)]">
+                                {formatCurrency(value, currency)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }}
                 />
               </div>
             </div>
@@ -637,15 +586,17 @@ const TabbedResults = React.memo(() => {
                     onClick={() => setAmortizationPage(p => Math.max(1, p - 1))}
                     disabled={amortizationPage === 1}
                     className="btn btn-ghost p-2 disabled:opacity-30"
+                    aria-label="Previous page"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                   </button>
                   <button
                     onClick={() => setAmortizationPage(p => Math.min(totalPages, p + 1))}
                     disabled={amortizationPage === totalPages}
                     className="btn btn-ghost p-2 disabled:opacity-30"
+                    aria-label="Next page"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -672,6 +623,15 @@ const TabbedResults = React.memo(() => {
           )}
         </div>
       </div>
+
+      {/* Scenario comparison dialog */}
+      <ScenarioComparison
+        scenarios={scenarios}
+        isOpen={showComparison}
+        onClose={closeComparison}
+        onRemove={removeScenario}
+        onClear={clearScenarios}
+      />
     </div>
   );
 });

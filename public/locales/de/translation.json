@@ -94,6 +94,14 @@
       "nominal": "Nominal",
       "realToggleHint": "Inflationsbereinigte (reale) Werte umschalten"
     },
+    "scenarios": {
+      "save": "Speichern",
+      "compare": "Vergleichen",
+      "saved": "Szenario gespeichert",
+      "clear": "Alle loschen",
+      "maxReached": "Maximal 3 Szenarien. Entfernen Sie zuerst eines.",
+      "namePrompt": "Benennen Sie dieses Szenario:"
+    },
     "sections": {
       "basics": {
         "homePrice": "Kaufpreis",
@@ -124,7 +132,11 @@
         "otherDeductions": "Sonstige Abzuge",
         "taxCutsQuestion": "Annahme zum Tax Cuts and Jobs Act 2017:",
         "expire": "Lauft aus",
-        "renew": "Wird verlangert"
+        "renew": "Wird verlangert",
+        "firstTimeBuyer": "Erstkaeufer (hoeherer SDLT-Freibetrag)",
+        "newBuild": "Neubau (reduzierte Notargebuehren)",
+        "primaryResidence": "Hauptwohnsitz (niedrigere Grunderwerbsteuer, IMU-befreit)",
+        "willReinvest": "Reinvestition in neuen Hauptwohnsitz (Spekulationssteuer-befreit)"
       },
       "closingCosts": {
         "title": "Abschlusskosten",

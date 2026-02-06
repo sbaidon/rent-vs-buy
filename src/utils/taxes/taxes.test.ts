@@ -254,6 +254,23 @@ describe("UKTaxCalculator", () => {
       // 0-250k: 0, 250k-925k: 33,750, 925k-1.5M: 57,500, 1.5M-2M: 500k * 12% = 60,000
       expect(calculator.calculateSDLT(2000000)).toBe(151250);
     });
+
+    it("gives 0 SDLT for first-time buyers up to £425k", () => {
+      expect(calculator.calculateSDLT(425000, true)).toBe(0);
+      expect(calculator.calculateSDLT(300000, true)).toBe(0);
+    });
+
+    it("charges 5% above £425k for first-time buyers up to £625k", () => {
+      // £500k FTB: £0-425k at 0%, £425k-500k at 5% = £3,750
+      expect(calculator.calculateSDLT(500000, true)).toBe(3750);
+      // £625k FTB: £0-425k at 0%, £425k-625k at 5% = £10,000
+      expect(calculator.calculateSDLT(625000, true)).toBe(10000);
+    });
+
+    it("uses standard brackets when FTB property exceeds £625k", () => {
+      // Properties over £625k don't qualify for FTB relief
+      expect(calculator.calculateSDLT(700000, true)).toBe(calculator.calculateSDLT(700000, false));
+    });
   });
 
   it("returns personal allowance as standard deduction", () => {

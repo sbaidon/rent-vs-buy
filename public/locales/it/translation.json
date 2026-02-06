@@ -94,6 +94,14 @@
       "nominal": "Nominale",
       "realToggleHint": "Attiva/disattiva valori aggiustati per l'inflazione (reali)"
     },
+    "scenarios": {
+      "save": "Salva",
+      "compare": "Confronta",
+      "saved": "Scenario salvato",
+      "clear": "Cancella tutto",
+      "maxReached": "Massimo 3 scenari. Rimuovine uno prima.",
+      "namePrompt": "Nome dello scenario:"
+    },
     "sections": {
       "basics": {
         "homePrice": "Prezzo casa",
@@ -124,7 +132,11 @@
         "otherDeductions": "Altre deduzioni dettagliate",
         "taxCutsQuestion": "Supporre che il Tax Cuts and Jobs Act 2017:",
         "expire": "Scadra",
-        "renew": "Sara rinnovato"
+        "renew": "Sara rinnovato",
+        "firstTimeBuyer": "Prima casa (soglia SDLT piu alta)",
+        "newBuild": "Nuova costruzione (spese notarili ridotte)",
+        "primaryResidence": "Residenza principale (imposta di registro ridotta, esente IMU)",
+        "willReinvest": "Reinvestira in nuova residenza principale (esente da plusvalenza)"
       },
       "closingCosts": {
         "title": "Costi di Chiusura",

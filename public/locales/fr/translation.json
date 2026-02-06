@@ -94,6 +94,14 @@
       "nominal": "Nominal",
       "realToggleHint": "Basculer les valeurs ajustees a l'inflation (reelles)"
     },
+    "scenarios": {
+      "save": "Sauvegarder",
+      "compare": "Comparer",
+      "saved": "Scenario sauvegarde",
+      "clear": "Tout effacer",
+      "maxReached": "Maximum 3 scenarios. Supprimez-en un d'abord.",
+      "namePrompt": "Nommez ce scenario :"
+    },
     "sections": {
       "basics": {
         "homePrice": "Prix du bien",
@@ -124,7 +132,11 @@
         "otherDeductions": "Autres deductions",
         "taxCutsQuestion": "Supposer que le Tax Cuts and Jobs Act 2017 :",
         "expire": "Expirera",
-        "renew": "Sera renouvele"
+        "renew": "Sera renouvele",
+        "firstTimeBuyer": "Primo-accedant (abattement SDLT plus eleve)",
+        "newBuild": "Logement neuf (frais de notaire reduits)",
+        "primaryResidence": "Residence principale (taxe de transfert reduite, exoneration IMU)",
+        "willReinvest": "Reinvestira dans une nouvelle residence principale (exoneration plus-value)"
       },
       "closingCosts": {
         "title": "Frais de Cloture",

@@ -4,7 +4,7 @@
 "use client";
 
 import React from "react";
-import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Area,
   CartesianGrid,
@@ -295,7 +295,7 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
             )}
           >
             <ScrollButton
-              icon={RiArrowLeftSLine}
+              icon={ChevronLeft}
               onClick={() => {
                 setIsKeyDowned(null);
                 scrollToTest("left");
@@ -303,7 +303,7 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
               disabled={!hasScroll?.left}
             />
             <ScrollButton
-              icon={RiArrowRightSLine}
+              icon={ChevronRight}
               onClick={() => {
                 setIsKeyDowned(null);
                 scrollToTest("right");
@@ -676,8 +676,9 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
             {showGridLines ? (
               <CartesianGrid
                 className={cx(
-                  "stroke-ink-200 stroke-1 dark:stroke-ink-800"
+                  "stroke-ink-200/50 dark:stroke-ink-800/50"
                 )}
+                strokeDasharray="3 3"
                 horizontal={true}
                 vertical={false}
               />

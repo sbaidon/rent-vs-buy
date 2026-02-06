@@ -68,9 +68,11 @@ function getBaseDefaults(): Partial<CalculatorValues> {
     marginalTaxRate: 0.22,
     otherDeductions: 0,
     taxCutsExpire: true,
-    commonChargeDeductionRate: 0,
-    commonChargePerMonth: 0,
     monthlyRentersInsurance: 100,
+    isNewBuild: false,
+    isFirstTimeBuyer: false,
+    isPrimaryResidence: true,
+    willReinvest: true,
   };
 }
 

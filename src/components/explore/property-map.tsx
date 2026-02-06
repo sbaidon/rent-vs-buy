@@ -79,10 +79,29 @@ export const PropertyMap = memo(function PropertyMap({
   // Memoize map style based on theme
   const mapStyle = useMemo(() => MAP_STYLES[theme], [theme]);
 
-  // Fly to location when it changes (for search results)
+  // Track whether we've already applied flyToLocation so we can handle the
+  // case where it was set before the map finished loading.
+  const appliedFlyRef = useRef<ViewState | null>(null);
+
+  // Fly to location when it changes (for search results / geolocation)
   useEffect(() => {
-    if (flyToLocation && mapRef.current) {
-      // Reset user panned state when flying to a new location
+    if (!flyToLocation || flyToLocation === appliedFlyRef.current) return;
+    if (!mapRef.current) return;
+
+    appliedFlyRef.current = flyToLocation;
+    setHasUserPanned(false);
+    mapRef.current.flyTo({
+      center: [flyToLocation.longitude, flyToLocation.latitude],
+      zoom: flyToLocation.zoom,
+      duration: 1500,
+    });
+  }, [flyToLocation]);
+
+  // Handle the case where flyToLocation was set before the map loaded —
+  // re-check once the map fires its first onLoad/onMoveEnd.
+  const handleLoad = useCallback(() => {
+    if (flyToLocation && flyToLocation !== appliedFlyRef.current && mapRef.current) {
+      appliedFlyRef.current = flyToLocation;
       setHasUserPanned(false);
       mapRef.current.flyTo({
         center: [flyToLocation.longitude, flyToLocation.latitude],
@@ -147,12 +166,18 @@ export const PropertyMap = memo(function PropertyMap({
         initialViewState={initialViewState}
         onClick={handleMapClick}
         onMoveEnd={handleMoveEnd}
+        onLoad={handleLoad}
         style={{ width: "100%", height: "100%" }}
         mapStyle={mapStyle}
         reuseMaps
       >
         <NavigationControl position="bottom-right" showCompass={false} />
-        <GeolocateControl position="bottom-right" />
+        <GeolocateControl
+          position="bottom-right"
+          trackUserLocation={false}
+          showUserLocation
+          positionOptions={{ enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }}
+        />
 
         {/* Property Markers */}
         {properties.map((property) => (

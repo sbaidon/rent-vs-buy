@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { CalculatorValues, useCalculator } from "../context/calculator-context";
 import FlameGraph from "./flame-graph";
 import { useTranslation } from "react-i18next";
 import { formatCurrency } from "../utils/format-currency";
 import { useAppContext } from "../context/app-context";
 import { INPUT_CONFIG_PER_COUNTRY } from "../config/calculator-config";
+import { getCountryConfig } from "../constants/country-rules";
 import Tooltip from "./tooltip";
 
 const Calculator: React.FC = () => {
@@ -32,6 +33,19 @@ const Calculator: React.FC = () => {
 
   // Get the ranges for the current country
   const ranges = INPUT_CONFIG_PER_COUNTRY[country];
+  const countryConfig = useMemo(() => getCountryConfig(country), [country]);
+
+  // Determine which inputs to show/hide based on country
+  const showTCJA = country === "US";
+  const showFilingType = country === "US" || country === "DE";
+  const showMarginalTaxRate = country === "US" || country === "MX";
+  const showOtherDeductions = country === "US";
+  const showPMI = countryConfig.mortgageRules.hasMortgageInsurance;
+
+  // Country-specific property tax label
+  const propertyTaxLabel = countryConfig.labels?.propertyTax
+    ? `${countryConfig.labels.propertyTax} rate`
+    : t("calculator.sections.taxes.propertyTaxRate");
 
   const renderLabel = useCallback(
     (labelKey: string, tooltipKey: string) => (
@@ -47,7 +61,7 @@ const Calculator: React.FC = () => {
     <>
       {/* Mode Toggle */}
       <div className="flex items-center justify-end gap-3 mb-2">
-        <span 
+        <span id="mode-basic-label"
           className={`text-sm font-medium transition-colors ${!isAdvancedMode ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}
         >
           {t("calculator.basic")}
@@ -55,6 +69,7 @@ const Calculator: React.FC = () => {
         <button
           role="switch"
           aria-checked={isAdvancedMode}
+          aria-label={`${t("calculator.basic")} / ${t("calculator.advanced")}`}
           onClick={() => setIsAdvancedMode(!isAdvancedMode)}
           className={`relative w-11 h-6 rounded-full transition-colors ${
             isAdvancedMode ? 'bg-copper-500' : 'bg-[var(--bg-muted)]'
@@ -66,7 +81,7 @@ const Calculator: React.FC = () => {
             }`}
           />
         </button>
-        <span 
+        <span id="mode-advanced-label"
           className={`text-sm font-medium transition-colors ${isAdvancedMode ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}
         >
           {t("calculator.advanced")}
@@ -275,31 +290,37 @@ const Calculator: React.FC = () => {
           <div>
             <h2 className="900 mb-2">{t("calculator.sections.taxes.title")}</h2>
             <div className="space-y-8">
-              <div className="flex items-center space-x-4 mb-4">
-                <p className="text-[var(--text-muted)]">{t("calculator.sections.taxes.filingType")}</p>
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    className="form-radio accent-copper-500"
-                    checked={!values.isJointReturn}
-                    onChange={() => updateValue("isJointReturn", false)}
-                  />
-                   <span className="text-[var(--text-secondary)] ml-2">
-                    {t("calculator.sections.taxes.individual")}
-                  </span>
-                </label>
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    className="form-radio accent-copper-500"
-                    checked={values.isJointReturn}
-                    onChange={() => updateValue("isJointReturn", true)}
-                  />
-                   <span className="text-[var(--text-secondary)] ml-2">
-                    {t("calculator.sections.taxes.joint")}
-                  </span>
-                </label>
-              </div>
+              {showFilingType && (
+                <fieldset className="mb-4">
+                  <legend className="text-[var(--text-muted)] mb-2">{t("calculator.sections.taxes.filingType")}</legend>
+                  <div className="flex items-center space-x-4">
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="filingType"
+                        className="form-radio accent-copper-500"
+                        checked={!values.isJointReturn}
+                        onChange={() => updateValue("isJointReturn", false)}
+                      />
+                       <span className="text-[var(--text-secondary)] ml-2">
+                        {t("calculator.sections.taxes.individual")}
+                      </span>
+                    </label>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="filingType"
+                        className="form-radio accent-copper-500"
+                        checked={values.isJointReturn}
+                        onChange={() => updateValue("isJointReturn", true)}
+                      />
+                       <span className="text-[var(--text-secondary)] ml-2">
+                        {t("calculator.sections.taxes.joint")}
+                      </span>
+                    </label>
+                  </div>
+                </fieldset>
+              )}
 
               <FlameGraph
                 value={values.propertyTaxRate}
@@ -309,65 +330,162 @@ const Calculator: React.FC = () => {
                 step={ranges.propertyTaxRate.step}
                 onChange={createChangeHandler("propertyTaxRate")}
                 format={formatPercentage}
-                label={renderLabel(
-                  "calculator.sections.taxes.propertyTaxRate",
-                  "calculator.tooltips.propertyTaxRate"
-                )}
+                label={
+                  <div className="flex items-center">
+                    <span className="text-[var(--text-secondary)]">{propertyTaxLabel}</span>
+                    <Tooltip content={t("calculator.tooltips.propertyTaxRate")} />
+                  </div>
+                }
               />
 
-              <FlameGraph
-                value={values.marginalTaxRate}
-                parameter="marginalTaxRate"
-                min={ranges.marginalTaxRate.min}
-                max={ranges.marginalTaxRate.max}
-                step={ranges.marginalTaxRate.step}
-                onChange={createChangeHandler("marginalTaxRate")}
-                format={formatPercentage}
-                label={renderLabel(
-                  "calculator.sections.taxes.marginalTaxRate",
-                  "calculator.tooltips.marginalTaxRate"
-                )}
-              />
+              {showMarginalTaxRate && (
+                <FlameGraph
+                  value={values.marginalTaxRate}
+                  parameter="marginalTaxRate"
+                  min={ranges.marginalTaxRate.min}
+                  max={ranges.marginalTaxRate.max}
+                  step={ranges.marginalTaxRate.step}
+                  onChange={createChangeHandler("marginalTaxRate")}
+                  format={formatPercentage}
+                  label={renderLabel(
+                    "calculator.sections.taxes.marginalTaxRate",
+                    "calculator.tooltips.marginalTaxRate"
+                  )}
+                />
+              )}
 
-              <FlameGraph
-                value={values.otherDeductions}
-                parameter="otherDeductions"
-                min={ranges.otherDeductions.min}
-                max={ranges.otherDeductions.max}
-                step={ranges.otherDeductions.step}
-                onChange={createChangeHandler("otherDeductions")}
-                format={formatCurrencyValue}
-                label={renderLabel(
-                  "calculator.sections.taxes.otherDeductions",
-                  "calculator.tooltips.otherDeductions"
-                )}
-              />
+              {showOtherDeductions && (
+                <FlameGraph
+                  value={values.otherDeductions}
+                  parameter="otherDeductions"
+                  min={ranges.otherDeductions.min}
+                  max={ranges.otherDeductions.max}
+                  step={ranges.otherDeductions.step}
+                  onChange={createChangeHandler("otherDeductions")}
+                  format={formatCurrencyValue}
+                  label={renderLabel(
+                    "calculator.sections.taxes.otherDeductions",
+                    "calculator.tooltips.otherDeductions"
+                  )}
+                />
+              )}
 
-              <div className="flex items-center space-x-4">
-                <p className="text-[var(--text-muted)]">{t("calculator.sections.taxes.taxCutsQuestion")}</p>
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    className="form-radio accent-copper-500"
-                    checked={values.taxCutsExpire}
-                    onChange={() => updateValue("taxCutsExpire", true)}
-                  />
-                   <span className="text-[var(--text-secondary)] ml-2">
-                    {t("calculator.sections.taxes.expire")}
+              {showTCJA && (
+                <fieldset>
+                  <legend className="text-[var(--text-muted)] mb-2">{t("calculator.sections.taxes.taxCutsQuestion")}</legend>
+                  <div className="flex items-center space-x-4">
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="taxCuts"
+                        className="form-radio accent-copper-500"
+                        checked={values.taxCutsExpire}
+                        onChange={() => updateValue("taxCutsExpire", true)}
+                      />
+                       <span className="text-[var(--text-secondary)] ml-2">
+                        {t("calculator.sections.taxes.expire")}
+                      </span>
+                    </label>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="taxCuts"
+                        className="form-radio accent-copper-500"
+                        checked={!values.taxCutsExpire}
+                        onChange={() => updateValue("taxCutsExpire", false)}
+                      />
+                       <span className="text-[var(--text-secondary)] ml-2">
+                        {t("calculator.sections.taxes.renew")}
+                      </span>
+                    </label>
+                  </div>
+                </fieldset>
+              )}
+
+              {/* Country-specific toggles */}
+              {country === "GB" && (
+                <div className="flex items-center justify-between p-3 rounded bg-[var(--bg-muted)]/30">
+                  <span id="firstTimeBuyer-label" className="text-[var(--text-secondary)] text-sm">
+                    {t("calculator.sections.taxes.firstTimeBuyer")}
                   </span>
-                </label>
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    className="form-radio accent-copper-500"
-                    checked={!values.taxCutsExpire}
-                    onChange={() => updateValue("taxCutsExpire", false)}
-                  />
-                   <span className="text-[var(--text-secondary)] ml-2">
-                    {t("calculator.sections.taxes.renew")}
+                  <button
+                    role="switch"
+                    aria-checked={values.isFirstTimeBuyer}
+                    aria-labelledby="firstTimeBuyer-label"
+                    onClick={() => updateValue("isFirstTimeBuyer", !values.isFirstTimeBuyer)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      values.isFirstTimeBuyer ? 'bg-copper-500' : 'bg-[var(--bg-muted)]'
+                    }`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      values.isFirstTimeBuyer ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+              )}
+
+              {country === "FR" && (
+                <div className="flex items-center justify-between p-3 rounded bg-[var(--bg-muted)]/30">
+                  <span id="newBuild-label" className="text-[var(--text-secondary)] text-sm">
+                    {t("calculator.sections.taxes.newBuild")}
                   </span>
-                </label>
-              </div>
+                  <button
+                    role="switch"
+                    aria-checked={values.isNewBuild}
+                    aria-labelledby="newBuild-label"
+                    onClick={() => updateValue("isNewBuild", !values.isNewBuild)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      values.isNewBuild ? 'bg-copper-500' : 'bg-[var(--bg-muted)]'
+                    }`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      values.isNewBuild ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+              )}
+
+              {country === "IT" && (
+                <div className="flex items-center justify-between p-3 rounded bg-[var(--bg-muted)]/30">
+                  <span id="primaryResidence-label" className="text-[var(--text-secondary)] text-sm">
+                    {t("calculator.sections.taxes.primaryResidence")}
+                  </span>
+                  <button
+                    role="switch"
+                    aria-checked={values.isPrimaryResidence}
+                    aria-labelledby="primaryResidence-label"
+                    onClick={() => updateValue("isPrimaryResidence", !values.isPrimaryResidence)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      values.isPrimaryResidence ? 'bg-copper-500' : 'bg-[var(--bg-muted)]'
+                    }`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      values.isPrimaryResidence ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+              )}
+
+              {country === "ES" && (
+                <div className="flex items-center justify-between p-3 rounded bg-[var(--bg-muted)]/30">
+                  <span id="willReinvest-label" className="text-[var(--text-secondary)] text-sm">
+                    {t("calculator.sections.taxes.willReinvest")}
+                  </span>
+                  <button
+                    role="switch"
+                    aria-checked={values.willReinvest}
+                    aria-labelledby="willReinvest-label"
+                    onClick={() => updateValue("willReinvest", !values.willReinvest)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      values.willReinvest ? 'bg-copper-500' : 'bg-[var(--bg-muted)]'
+                    }`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      values.willReinvest ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
