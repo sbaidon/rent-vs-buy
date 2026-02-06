@@ -32,6 +32,12 @@ export interface Property {
   yearBuilt?: number;
   homeType?: string;
   daysOnMarket?: number;
+  // Status flags
+  isPending?: boolean;
+  isContingent?: boolean;
+  isNewListing?: boolean;
+  isForeclosure?: boolean;
+  isPriceReduced?: boolean;
 }
 
 export interface SearchParams {
@@ -186,15 +192,6 @@ function generateCacheKey(type: "sale" | "rent", params: SearchParams): string {
 // Transform API response to app types
 // =============================================================================
 
-/** Max age in days for a listing to be considered active. Older listings are likely stale/abandoned. */
-const MAX_LISTING_AGE_DAYS = 180;
-
-function isListingFresh(listing: PropertyListing): boolean {
-  if (!listing.list_date) return true; // No date = can't determine, keep it
-  const ageMs = Date.now() - new Date(listing.list_date).getTime();
-  return ageMs / (1000 * 60 * 60 * 24) <= MAX_LISTING_AGE_DAYS;
-}
-
 function transformListing(
   listing: PropertyListing,
   type: "sale" | "rent"
@@ -226,6 +223,12 @@ function transformListing(
             (1000 * 60 * 60 * 24)
         )
       : undefined,
+    // Status flags
+    isPending: listing.flags?.is_pending || false,
+    isContingent: listing.flags?.is_contingent || false,
+    isNewListing: listing.flags?.is_new_listing || false,
+    isForeclosure: listing.flags?.is_foreclosure || false,
+    isPriceReduced: listing.flags?.is_price_reduced || false,
   };
 }
 
@@ -363,11 +366,6 @@ async function searchForSale(params: SearchParams): Promise<Property[]> {
     console.log("[searchForSale] Raw results count:", rawResults.length);
     
     const properties = rawResults
-      .filter((listing) =>
-        !listing.flags?.is_pending &&
-        !listing.flags?.is_contingent &&
-        isListingFresh(listing)
-      )
       .map((listing) => transformListing(listing, "sale"))
       .filter((p) => p.lat && p.lng);
 
@@ -430,11 +428,6 @@ async function searchForRent(params: SearchParams): Promise<Property[]> {
 
     handleApiSuccess();
     const properties = (data?.data?.home_search?.results || [])
-      .filter((listing) =>
-        !listing.flags?.is_pending &&
-        !listing.flags?.is_contingent &&
-        isListingFresh(listing)
-      )
       .map((listing) => transformListing(listing, "rent"))
       .filter((p) => p.lat && p.lng);
 

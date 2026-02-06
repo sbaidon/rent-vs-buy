@@ -1,5 +1,5 @@
 import { memo, useCallback } from "react";
-import { Home, Building2, X, Sparkles, Plus, Check, Calendar, Ruler, ExternalLink } from "lucide-react";
+import { Home, Building2, X, Sparkles, Plus, Check, Calendar, Ruler, ExternalLink, Clock, AlertTriangle, TrendingDown, Gavel } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 
@@ -24,6 +24,12 @@ export interface Property {
   homeType?: string;
   lotSize?: number;
   daysOnMarket?: number;
+  // Status flags
+  isPending?: boolean;
+  isContingent?: boolean;
+  isNewListing?: boolean;
+  isForeclosure?: boolean;
+  isPriceReduced?: boolean;
 }
 
 interface PropertyCardProps {
@@ -45,6 +51,8 @@ export const PropertyCard = memo(function PropertyCard({
   isSelected = false,
 }: PropertyCardProps) {
   const isForSale = property.propertyType === "sale";
+  const isStale = property.daysOnMarket != null && property.daysOnMarket > 180;
+  const isUnavailable = property.isPending || property.isContingent;
 
   const handleSelect = useCallback(() => {
     onSelect?.(property);
@@ -52,7 +60,7 @@ export const PropertyCard = memo(function PropertyCard({
 
   return (
     <div
-      className="w-[280px] sm:w-72 p-3 sm:p-4 rounded-lg shadow-xl transition-all"
+      className={`w-[280px] sm:w-72 p-3 sm:p-4 rounded-lg shadow-xl transition-all ${isUnavailable ? "opacity-75" : ""}`}
       style={{
         background: "var(--bg-elevated)",
         border: isSelected
@@ -62,18 +70,50 @@ export const PropertyCard = memo(function PropertyCard({
     >
       {/* Header with close button */}
       <div className="flex items-start justify-between mb-2 sm:mb-3">
-        <Badge variant={isForSale ? "sale" : "rent"}>
-          {isForSale ? (
-            <Home className="w-3 h-3" />
-          ) : (
-            <Building2 className="w-3 h-3" />
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant={isForSale ? "sale" : "rent"}>
+            {isForSale ? (
+              <Home className="w-3 h-3" />
+            ) : (
+              <Building2 className="w-3 h-3" />
+            )}
+            {isForSale ? "For Sale" : "For Rent"}
+          </Badge>
+          {property.isPending && (
+            <Badge variant="warning">
+              <Clock className="w-3 h-3" />
+              Pending
+            </Badge>
           )}
-          {isForSale ? "For Sale" : "For Rent"}
-        </Badge>
+          {property.isContingent && (
+            <Badge variant="warning">
+              <AlertTriangle className="w-3 h-3" />
+              Contingent
+            </Badge>
+          )}
+          {property.isForeclosure && (
+            <Badge variant="default">
+              <Gavel className="w-3 h-3" />
+              Foreclosure
+            </Badge>
+          )}
+          {property.isPriceReduced && !isUnavailable && (
+            <Badge variant="default">
+              <TrendingDown className="w-3 h-3" />
+              Reduced
+            </Badge>
+          )}
+          {isStale && !isUnavailable && (
+            <Badge variant="default">
+              <Clock className="w-3 h-3" />
+              Stale
+            </Badge>
+          )}
+        </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 -mt-1 rounded-full transition-colors"
+            className="p-1.5 -mr-1 -mt-1 rounded-full transition-colors shrink-0"
             style={{ color: "var(--text-muted)" }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "var(--bg-muted)";

@@ -267,6 +267,8 @@ const PropertyMarker = memo(function PropertyMarker({
   isSelected,
   onClick,
 }: PropertyMarkerProps) {
+  const isUnavailable = property.isPending || property.isContingent;
+
   return (
     <Marker
       longitude={property.lng}
@@ -277,7 +279,8 @@ const PropertyMarker = memo(function PropertyMarker({
       <div
         className={clsx(
           "group cursor-pointer transition-all duration-200",
-          isSelected && "z-10"
+          isSelected && "z-10",
+          isUnavailable && "opacity-50"
         )}
       >
         <div
@@ -287,7 +290,8 @@ const PropertyMarker = memo(function PropertyMarker({
             property.propertyType === "sale"
               ? "marker-sale"
               : "marker-rent",
-            isSelected && "scale-110 ring-2 ring-white/50"
+            isSelected && "scale-110 ring-2 ring-white/50",
+            isUnavailable && "grayscale"
           )}
         >
           $
