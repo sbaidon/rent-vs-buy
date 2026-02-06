@@ -190,11 +190,31 @@ function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo and Nav Links */}
           <div className="flex items-center gap-8">
-            <Link to="/" viewTransition className="flex items-center gap-3 group">
-              <div className="w-9 h-9 rounded bg-gradient-to-br from-copper-500 to-copper-700 flex items-center justify-center border border-copper-400/30 shadow-lg shadow-copper-500/20 group-hover:shadow-copper-500/40 transition-shadow">
-                <span className="text-white font-mono font-semibold text-sm tracking-tight">RB</span>
+            <Link to="/" viewTransition className="flex items-center gap-2.5 group">
+              <div className="relative w-9 h-9">
+                {/* House shape */}
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-lg group-hover:drop-shadow-xl transition-all">
+                  {/* Roof */}
+                  <path d="M18 4L4 16h4v14h24V16h4L18 4z" fill="url(#logo-gradient)" stroke="rgba(224,107,71,0.3)" strokeWidth="0.5" />
+                  {/* Door */}
+                  <rect x="14" y="20" width="8" height="10" rx="1" fill="rgba(0,0,0,0.25)" />
+                  {/* Window left */}
+                  <rect x="9" y="18" width="4" height="4" rx="0.5" fill="rgba(255,255,255,0.2)" />
+                  {/* Window right */}
+                  <rect x="23" y="18" width="4" height="4" rx="0.5" fill="rgba(255,255,255,0.2)" />
+                  <defs>
+                    <linearGradient id="logo-gradient" x1="4" y1="4" x2="32" y2="30" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#e06b47" />
+                      <stop offset="1" stopColor="#b44d2d" />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
-              <span className="font-display text-[var(--text-primary)] text-lg hidden sm:block italic font-light tracking-tight">RentVsBuy</span>
+              <span className="hidden sm:flex items-baseline gap-0.5 text-lg tracking-tight">
+                <span className="font-display font-medium text-[var(--text-primary)]">Rent</span>
+                <span className="font-display font-light text-[var(--text-muted)] text-sm italic mx-0.5">vs</span>
+                <span className="font-display font-medium text-copper-400">Buy</span>
+              </span>
             </Link>
             <nav className="flex items-center gap-0.5 sm:gap-1" aria-label="Main navigation">
               <Link
