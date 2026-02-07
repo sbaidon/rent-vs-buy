@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback } from "react";
+import React, { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useCalculator } from "../context/calculator-context";
 import { createBuyingCalculator } from "../utils/country-buy-calculator";
 import { createRentingCalculator } from "../utils/country-rent-calculator";
@@ -9,10 +9,140 @@ import { useTranslation } from "react-i18next";
 import { useAppContext } from "../context/app-context";
 import { AreaChart } from "./area-chart";
 import Tooltip from "./tooltip";
-import { BarChart3, Table2, TrendingUp, ChevronLeft, ChevronRight, Save, GitCompareArrows } from "lucide-react";
+import { BarChart3, Table2, TrendingUp, ChevronLeft, ChevronRight, Save, GitCompareArrows, Home, Building2, X, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useScenarios } from "../hooks/use-scenarios";
 import ScenarioComparison from "./scenario-comparison";
+import { Link } from "@tanstack/react-router";
+
+// ============================================================================
+// Comparison context from Explore page
+// ============================================================================
+
+interface ComparisonListing {
+  address: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  sqft: number;
+  homeType?: string;
+}
+
+interface ComparisonContext {
+  buy: ComparisonListing;
+  rent: ComparisonListing;
+}
+
+function useComparisonContext() {
+  const [context, setContext] = useState<ComparisonContext | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("rvb-comparison");
+      if (stored) setContext(JSON.parse(stored));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const dismiss = useCallback(() => {
+    setContext(null);
+    try {
+      sessionStorage.removeItem("rvb-comparison");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  return { context, dismiss };
+}
+
+function ComparisonBanner({
+  context,
+  onDismiss,
+  currency,
+}: {
+  context: ComparisonContext;
+  onDismiss: () => void;
+  currency: string;
+}) {
+  const formatPrice = (price: number, type: "buy" | "rent") => {
+    if (type === "rent") return `${formatCurrency(price, currency)}/mo`;
+    if (price >= 1_000_000) return `${formatCurrency(price, currency)}`;
+    return formatCurrency(price, currency);
+  };
+
+  return (
+    <div
+      className="rounded-lg border text-sm overflow-hidden"
+      style={{
+        background: "var(--bg-surface)",
+        borderColor: "var(--border-default)",
+      }}
+    >
+      <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: "var(--border-default)" }}>
+        <div className="flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-copper-400" aria-hidden="true" />
+          <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+            Comparing from Explore
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Link
+            to="/explore"
+            className="text-[11px] font-medium text-copper-400 hover:text-copper-300 transition-colors px-1.5 py-0.5 rounded hover:bg-copper-500/10"
+          >
+            Back to map
+          </Link>
+          <button
+            onClick={onDismiss}
+            className="p-0.5 rounded transition-colors hover:bg-[var(--bg-muted)]"
+            style={{ color: "var(--text-muted)" }}
+            aria-label="Dismiss comparison context"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 divide-x" style={{ borderColor: "var(--border-default)" }}>
+        {/* Buy listing */}
+        <div className="px-3 py-2">
+          <div className="flex items-center gap-1 mb-1">
+            <Home className="w-3 h-3 text-emerald-400" aria-hidden="true" />
+            <span className="text-[10px] font-medium uppercase tracking-wide text-emerald-400">Buy</span>
+          </div>
+          <p className="font-mono font-medium text-xs truncate" style={{ color: "var(--text-primary)" }}>
+            {formatPrice(context.buy.price, "buy")}
+          </p>
+          <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {context.buy.address}
+          </p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {context.buy.bedrooms || "—"}bd / {context.buy.bathrooms || "—"}ba
+            {context.buy.sqft ? ` / ${context.buy.sqft.toLocaleString()} sqft` : ""}
+          </p>
+        </div>
+        {/* Rent listing */}
+        <div className="px-3 py-2">
+          <div className="flex items-center gap-1 mb-1">
+            <Building2 className="w-3 h-3 text-blueprint-400" aria-hidden="true" />
+            <span className="text-[10px] font-medium uppercase tracking-wide text-blueprint-400">Rent</span>
+          </div>
+          <p className="font-mono font-medium text-xs truncate" style={{ color: "var(--text-primary)" }}>
+            {formatPrice(context.rent.price, "rent")}
+          </p>
+          <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {context.rent.address}
+          </p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {context.rent.bedrooms || "—"}bd / {context.rent.bathrooms || "—"}ba
+            {context.rent.sqft ? ` / ${context.rent.sqft.toLocaleString()} sqft` : ""}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type TabId = "summary" | "chart" | "amortization";
 type ViewMode = "regular" | "cumulative" | "difference" | "equity";
@@ -25,6 +155,9 @@ const TabbedResults = React.memo(() => {
   const [viewMode, setViewMode] = useState<ViewMode>("cumulative");
   const [amortizationPage, setAmortizationPage] = useState(1);
   const rowsPerPage = 12;
+
+  // Comparison context from Explore page
+  const { context: comparisonContext, dismiss: dismissComparison } = useComparisonContext();
 
   // Scenario management
   const {
@@ -215,6 +348,15 @@ const TabbedResults = React.memo(() => {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Comparison context banner from Explore page */}
+      {comparisonContext && (
+        <ComparisonBanner
+          context={comparisonContext}
+          onDismiss={dismissComparison}
+          currency={currency}
+        />
+      )}
+
       {/* Hero result - always visible */}
       <div className="card p-4 sm:p-6 glow-copper" data-testid="results-hero">
         <div className="text-center">

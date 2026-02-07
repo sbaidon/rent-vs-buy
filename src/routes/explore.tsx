@@ -206,6 +206,34 @@ function ExploreComparisonTray() {
       monthlyRent: rent.price,
     };
 
+    // Persist comparison context so the calculator can show which listings
+    // are being compared, with a "Back to Explore" link.
+    try {
+      sessionStorage.setItem(
+        "rvb-comparison",
+        JSON.stringify({
+          buy: {
+            address: buy.streetAddress || buy.address,
+            price: buy.price,
+            bedrooms: buy.bedrooms,
+            bathrooms: buy.bathrooms,
+            sqft: buy.sqft,
+            homeType: buy.homeType,
+          },
+          rent: {
+            address: rent.streetAddress || rent.address,
+            price: rent.price,
+            bedrooms: rent.bedrooms,
+            bathrooms: rent.bathrooms,
+            sqft: rent.sqft,
+            homeType: rent.homeType,
+          },
+        })
+      );
+    } catch {
+      // sessionStorage may be unavailable in some contexts
+    }
+
     navigate({ to: "/", search: { q: encodeState(newValues) } });
   }, [state.comparisonSelection, navigate]);
 
