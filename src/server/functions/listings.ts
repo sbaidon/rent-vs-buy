@@ -117,7 +117,14 @@ function isRateLimited(): boolean {
     console.log(`[RateLimit] Still rate limited for ${Math.ceil((rateLimitedUntil - Date.now()) / 1000)}s`);
     return true;
   }
+  // Reset if backoff period has passed
+  if (rateLimitedUntil && Date.now() >= rateLimitedUntil) {
+    rateLimitedUntil = null;
+    consecutiveErrors = 0;
+  }
   if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+    // Set an explicit backoff so the next check can clear it
+    rateLimitedUntil = Date.now() + ERROR_BACKOFF_MS;
     console.log(`[RateLimit] Too many consecutive errors, backing off`);
     return true;
   }
@@ -562,11 +569,10 @@ export const searchProperties = createServerFn({ method: "GET" })
         } else if (params.propertyType === "rent") {
           properties = await searchForRent(params);
         } else {
-          // Fetch both for "all"
-          const [saleProps, rentProps] = await Promise.all([
-            searchForSale(params),
-            searchForRent(params),
-          ]);
+          // Fetch both for "all" — run sequentially to avoid
+          // hitting the RapidAPI rate limit with parallel requests
+          const saleProps = await searchForSale(params);
+          const rentProps = await searchForRent(params);
           properties = [...saleProps, ...rentProps];
         }
         console.log("[searchProperties] API returned:", properties.length, "properties");
