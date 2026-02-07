@@ -51,6 +51,9 @@ const PRICE_PRESETS = {
     { label: "$3,500 - $5,000", min: 3500, max: 5000 },
     { label: "$5,000+", min: 5000, max: undefined },
   ],
+  all: [
+    { label: "Any", min: undefined, max: undefined },
+  ],
 };
 
 const BEDROOM_OPTIONS = [
@@ -159,8 +162,12 @@ export const FiltersPanel = memo(function FiltersPanel({
     localFilters.propertyTypes.length > 0,
   ].filter(Boolean).length;
 
-  const pricePresets =
-    activeFilterType === "rent" ? PRICE_PRESETS.rent : PRICE_PRESETS.sale;
+  const showBothPriceGroups = activeFilterType === "all";
+  const pricePresets = showBothPriceGroups
+    ? PRICE_PRESETS.all
+    : activeFilterType === "rent"
+      ? PRICE_PRESETS.rent
+      : PRICE_PRESETS.sale;
 
   if (!isOpen) return null;
 
@@ -232,19 +239,57 @@ export const FiltersPanel = memo(function FiltersPanel({
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {/* Price Range */}
           <FilterSection title="Price Range">
-            <div className="grid grid-cols-3 gap-2">
-              {pricePresets.map((preset) => (
-                <PresetButton
-                  key={preset.label}
-                  label={preset.label}
-                  isActive={
-                    localFilters.priceMin === preset.min &&
-                    localFilters.priceMax === preset.max
-                  }
-                  onClick={() => handlePricePreset(preset.min, preset.max)}
-                />
-              ))}
-            </div>
+            {showBothPriceGroups ? (
+              <>
+                {/* "Any" preset */}
+                <div className="mb-3">
+                  <PresetButton
+                    label="Any"
+                    isActive={localFilters.priceMin === undefined && localFilters.priceMax === undefined}
+                    onClick={() => handlePricePreset(undefined, undefined)}
+                  />
+                </div>
+                {/* Sale presets */}
+                <p className="text-[10px] font-medium uppercase tracking-wide mb-1.5" style={{ color: "var(--text-muted)" }}>
+                  For Sale
+                </p>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {PRICE_PRESETS.sale.slice(1).map((preset) => (
+                    <PresetButton
+                      key={preset.label}
+                      label={preset.label}
+                      isActive={localFilters.priceMin === preset.min && localFilters.priceMax === preset.max}
+                      onClick={() => handlePricePreset(preset.min, preset.max)}
+                    />
+                  ))}
+                </div>
+                {/* Rent presets */}
+                <p className="text-[10px] font-medium uppercase tracking-wide mb-1.5" style={{ color: "var(--text-muted)" }}>
+                  For Rent
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {PRICE_PRESETS.rent.slice(1).map((preset) => (
+                    <PresetButton
+                      key={preset.label}
+                      label={preset.label}
+                      isActive={localFilters.priceMin === preset.min && localFilters.priceMax === preset.max}
+                      onClick={() => handlePricePreset(preset.min, preset.max)}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {pricePresets.map((preset) => (
+                  <PresetButton
+                    key={preset.label}
+                    label={preset.label}
+                    isActive={localFilters.priceMin === preset.min && localFilters.priceMax === preset.max}
+                    onClick={() => handlePricePreset(preset.min, preset.max)}
+                  />
+                ))}
+              </div>
+            )}
             {/* Custom inputs */}
             <div className="flex items-center gap-2 mt-3">
               <input
